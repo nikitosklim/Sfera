@@ -1177,18 +1177,47 @@ impl<'ctx> Кодогенератор<'ctx> {
     /// биндингов (в `inkwell` нет готовой обёртки для lld) — отдельный,
     /// больший проект. Поэтому внешний `clang` пока остаётся, но уже только
     /// для финальной линковки уже готового .o файла — не для компиляции.
-    pub fn записать_объектный_файл(&self, путь: &std::path::Path) -> Result<(), ОшибкаКодогенерации> {
+    /// НОВОЕ: "целевая_платформа" — если указана (тройка вида
+    /// "aarch64-linux-gnu"), компилируем НЕ под ту архитектуру, на которой
+    /// запущен сам компилятор ("родную"), а под указанную явно. Раньше
+    /// этот выбор был жёстко зашит — Target::initialize_native берёт ТОЛЬКО
+    /// родную платформу. Возможность генерировать код под любую другую
+    /// архитектуру УЖЕ полностью присутствовала внутри LLVM (мы и так на
+    /// него полагаемся для всей кодогенерации) — не хватало только явного
+    /// способа её запросить, никакой другой логики компилятора это не
+    /// затрагивает (весь путь от исходного кода до LLVM IR полностью
+    /// architecture-independent, архитектура появляется только здесь,
+    /// на самом последнем шаге).
+    pub fn записать_объектный_файл(&self, путь: &std::path::Path, целевая_платформа: Option<&str>) -> Result<(), ОшибкаКодогенерации> {
         use inkwell::targets::{CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetMachine};
 
-        Target::initialize_native(&InitializationConfig::default())
-            .map_err(|e| ошибка(format!("не удалось инициализировать целевую платформу LLVM: {}", e)))?;
+        let (triple, cpu, features) = match целевая_платформа {
+            Some(тройка) => {
+                // Инициализируем ВСЕ платформы, которые умеет LLVM (не
+                // только родную) — при кросс-компиляции заранее не знаем,
+                // какая именно понадобится.
+                Target::initialize_all(&InitializationConfig::default());
+                let triple = inkwell::targets::TargetTriple::create(тройка);
+                // "generic" CPU и пустые "features" — безопасный выбор при
+                // кросс-компиляции: get_host_cpu_name/get_host_cpu_features
+                // дали бы характеристики ЭТОЙ (родной) машины, а не целевой
+                // — в корне неверно для другой архитектуры. LLVM сам
+                // подберёт разумные настройки по умолчанию для указанной
+                // платформы, раз более точные не заданы явно.
+                (triple, "generic".to_string(), String::new())
+            }
+            None => {
+                Target::initialize_native(&InitializationConfig::default())
+                    .map_err(|e| ошибка(format!("не удалось инициализировать целевую платформу LLVM: {}", e)))?;
+                let triple = TargetMachine::get_default_triple();
+                let cpu = TargetMachine::get_host_cpu_name().to_string();
+                let features = TargetMachine::get_host_cpu_features().to_string();
+                (triple, cpu, features)
+            }
+        };
 
-        let triple = TargetMachine::get_default_triple();
         let target = Target::from_triple(&triple)
-            .map_err(|e| ошибка(format!("не удалось определить целевую платформу: {:?}", e)))?;
-
-        let cpu = TargetMachine::get_host_cpu_name().to_string();
-        let features = TargetMachine::get_host_cpu_features().to_string();
+            .map_err(|e| ошибка(format!("не удалось определить целевую платформу '{}': {:?}", triple.as_str().to_string_lossy(), e)))?;
 
         let target_machine = target
             .create_target_machine(
@@ -1199,7 +1228,7 @@ impl<'ctx> Кодогенератор<'ctx> {
                 RelocMode::Default,
                 CodeModel::Default,
             )
-            .ok_or_else(|| ошибка("не удалось создать TargetMachine для текущей платформы"))?;
+            .ok_or_else(|| ошибка(format!("не удалось создать TargetMachine для платформы '{}'", triple.as_str().to_string_lossy())))?;
 
         target_machine
             .write_to_file(&self.модуль, FileType::Object, путь)
