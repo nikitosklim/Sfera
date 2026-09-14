@@ -5,7 +5,7 @@ edition = "2021"
 description = "Компилятор языка программирования «Сфера» (файлы .код)"
 
 [[bin]]
-name = "sfera"
+name = "запустить"
 path = "src/main.rs"
 
 [dependencies]
