@@ -1,0 +1,4 @@
+[target.aarch64-linux-android]
+linker = "/usr/local/share/android-commandlinetools/ndk/27.2.12479018/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android23-clang"
+ar = "/usr/local/share/android-commandlinetools/ndk/27.2.12479018/toolchains/llvm/prebuilt/darwin-x86_64/bin/llvm-ar"
+rustflags = ["-C", "link-arg=/usr/local/share/android-commandlinetools/ndk/27.2.12479018/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/libclang_rt.builtins-aarch64-android.a"]
