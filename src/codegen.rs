@@ -2271,10 +2271,27 @@ impl<'ctx> Кодогенератор<'ctx> {
                 // узкую, единственно доступную initialize_aarch64.
                 if cfg!(target_os = "android") {
                     Target::initialize_aarch64(&InitializationConfig::default());
+                } else if тройка.starts_with("aarch64") {
+                    // НОВОЕ: НАЙДЕНО РЕАЛЬНОЙ ПРОВЕРКОЙ (теперь на Windows) —
+                    // тот же класс бага, что и выше для Android: "initialize_all"
+                    // требует, чтобы АБСОЛЮТНО ВСЕ таргеты LLVM (включая
+                    // редкие — WebAssembly, BPF, Hexagon и т.п.) были реально
+                    // скомпилированы в связанную LLVM. Готовый пакет LLVM для
+                    // Windows (vovkos/llvm-package-windows) часть таких редких
+                    // таргетов не включает — на линковке компилятора это
+                    // вываливается десятками unresolved external symbol для
+                    // функций вроде LLVMInitializeWebAssemblyAsmPrinter, хотя
+                    // WebAssembly нам никогда не был нужен. Единственная
+                    // реально используемая кросс-платформа — aarch64 (Android,
+                    // Linux ARM64) — инициализируем именно её, а не весь список.
+                    Target::initialize_aarch64(&InitializationConfig::default());
                 } else {
-                    // Инициализируем ВСЕ платформы, которые умеет LLVM (не
-                    // только родную) — при кросс-компиляции заранее не знаем,
-                    // какая именно понадобится.
+                    // Инициализируем ВСЕ платформы, которые умеет LLVM — только
+                    // для действительно незнакомой целевой тройки (не aarch64).
+                    // На сборках LLVM, где не все таргеты скомпилированы (как
+                    // описано выше), эта ветка может столкнуться с той же
+                    // проблемой — тройка здесь честно экзотическая, не входит
+                    // в документированные кросс-платформы проекта.
                     Target::initialize_all(&InitializationConfig::default());
                 }
                 let triple = inkwell::targets::TargetTriple::create(тройка);
