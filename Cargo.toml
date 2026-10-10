@@ -13,7 +13,26 @@ path = "src/main.rs"
 # ВАЖНО: помимо этой Rust-зависимости, на компьютере должен быть физически
 # установлен сам LLVM версии 18 (это внешний, системный компилятор,
 # а не то, что подтягивается через cargo). См. README ниже про установку.
-inkwell = { version = "0.5", features = ["llvm18-0", "target-aarch64", "target-x86"] }
+#
+# ⚠️ НАЙДЕНО РЕАЛЬНОЙ ПРОВЕРКОЙ (Windows, после первой попытки исправить
+# линковку через llvm-sys/disable-alltargets-init — не помогло целиком):
+# у самого inkwell в его Cargo.toml есть "default = ["target-all"]" — то
+# есть без явного "default-features = false" ВСЕ таргет-функции inkwell
+# (initialize_webassembly, initialize_loongarch, initialize_systemz и
+# десятки других) всё равно компилировались в саму библиотеку inkwell,
+# СОВЕРШЕННО НЕЗАВИСИМО от "disable-alltargets-init" у llvm-sys (та фича
+# отключает только ОДИН вспомогательный C-файл "target.c" — к этим
+# Rust-функциям inkwell никак не относится). Ни одна из них нигде не
+# вызывается в этом проекте (используются только initialize_native/
+# initialize_all/initialize_aarch64/initialize_x86 — см. codegen.rs), но
+# раз они в принципе СКОМПИЛИРОВАНЫ в inkwell, линковщик на Windows (где
+# готовый пакет LLVM не содержит библиотек для всех таргетов) по-прежнему
+# требовал разрешить все их символы. "default-features = false" — реальное
+# решение: убирает эти функции из сборки inkwell вообще, на всех платформах
+# (не только Windows) — безопасно, потому что initialize_native/
+# initialize_all (используются на macOS/Linux) никакой таргет-фичей не
+# гейтятся вовсе (см. комментарий у initialize_x86 в codegen.rs).
+inkwell = { version = "0.5", default-features = false, features = ["llvm18-0", "target-aarch64", "target-x86"] }
 
 # Для языкового сервера (src/bin/сфера_lsp.rs) — НЕ нужны компилятору
 # самому по себе (main.rs их не использует), но раз уж они в общем списке
