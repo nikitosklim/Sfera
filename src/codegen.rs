@@ -2311,8 +2311,27 @@ impl<'ctx> Кодогенератор<'ctx> {
                 // (Cargo.toml, "disable-alltargets-init") — обе ветки должны
                 // одинаково не зависеть от него, иначе отключение этого файла
                 // сломало бы именно эту ветку вместо предыдущей.
+                //
+                // НОВОЕ: НАЙДЕНО РЕАЛЬНОЙ ПРОВЕРКОЙ (теперь на Windows) — та же
+                // причина, по которой Android выше использует initialize_aarch64
+                // вместо initialize_native, теперь касается и Windows: готовая
+                // сборка LLVM для Windows (vovkos/llvm-package-windows) не
+                // содержит статических библиотек ВСЕХ таргетов LLVM — а
+                // target.c (который требуется для initialize_native) ссылается
+                // на них все разом, даже если реально нужен только родной,
+                // x86_64 — на линковке это падало десятками "unresolved
+                // external symbol" (LLVMInitializeLoongArchTarget,
+                // LLVMInitializeWebAssemblyTarget и т.д.), хотя WebAssembly/
+                // LoongArch компилятору не нужны вообще. Обходим тем же
+                // приёмом: initialize_x86 — НАСТОЯЩАЯ (не inline-обёрточная)
+                // функция самого LLVM, экспортированная напрямую, не требует
+                // target.c (см. Cargo.toml, "disable-alltargets-init" теперь
+                // действует и для target_os = "windows"). Покрывает и x86, и
+                // x86_64 — в LLVM это один и тот же таргет.
                 if cfg!(target_os = "android") {
                     Target::initialize_aarch64(&InitializationConfig::default());
+                } else if cfg!(target_os = "windows") {
+                    Target::initialize_x86(&InitializationConfig::default());
                 } else {
                     Target::initialize_native(&InitializationConfig::default())
                         .map_err(|e| ошибка(format!("не удалось инициализировать целевую платформу LLVM: {}", e)))?;
