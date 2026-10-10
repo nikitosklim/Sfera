@@ -13,7 +13,7 @@ path = "src/main.rs"
 # ВАЖНО: помимо этой Rust-зависимости, на компьютере должен быть физически
 # установлен сам LLVM версии 18 (это внешний, системный компилятор,
 # а не то, что подтягивается через cargo). См. README ниже про установку.
-inkwell = { version = "0.5", features = ["llvm18-0", "target-aarch64"] }
+inkwell = { version = "0.5", features = ["llvm18-0", "target-aarch64", "target-x86"] }
 
 # Для языкового сервера (src/bin/сфера_lsp.rs) — НЕ нужны компилятору
 # самому по себе (main.rs их не использует), но раз уж они в общем списке
@@ -38,12 +38,24 @@ serde_json = "1.0"
 # просто не существуют. "disable-alltargets-init" (родная фича
 # llvm-sys) полностью отключает компиляцию этого файла.
 #
-# ⚠️ Именно поэтому эта зависимость — ТОЛЬКО для target_os = "android":
-# для обычной, host-сборки (macOS/Linux, где LLVM собрана со всеми
-# таргетами) обе ветки codegen.rs по-прежнему используют initialize_all/
-# initialize_native — им этот файл всё ещё нужен, отключать его для
-# всех платформ сразу сломало бы обычную сборку.
-[target.'cfg(target_os = "android")'.dependencies]
+# НОВОЕ: НАЙДЕНО РЕАЛЬНОЙ ПРОВЕРКОЙ (теперь на настоящей Windows-машине) —
+# ТОЧНО ТАКАЯ ЖЕ ошибка (десятки "неразрешённых внешних элементов" для
+# LLVMInitializeLoongArchTarget, LLVMInitializeWebAssemblyTarget и т.д.,
+# "error LNK2019"/"LNK1120"), хотя это самая обычная host-сборка на x86_64,
+# не кросс-компиляция. Причина та же: готовый пакет LLVM для Windows
+# (vovkos/llvm-package-windows, который ставит установить-windows.ps1) не
+# включает статические библиотеки для ВСЕХ таргетов LLVM (в отличие от
+# пакетов LLVM для macOS/Linux из системных менеджеров пакетов, где собраны
+# все) — а target.c требует их все разом, даже если из Rust-кода вызывается
+# только initialize_native() для ОДНОГО, родного таргета (x86_64) — весь
+# .o-файл с wrapper-функциями тянется в линковку целиком, со всеми
+# неиспользуемыми ссылками внутри него. Решение то же, что и для Android:
+# отключаем target.c и для Windows тоже, а codegen.rs (сM. записать_
+# объектный_файл) для Windows переключён на initialize_x86 — это НАСТОЯЩАЯ,
+# не inline-обёрточная функция самого LLVM (LLVMInitializeX86Target
+# экспортирована напрямую из библиотеки), так что target.c ей не нужен —
+# тот же приём, что уже работал для initialize_aarch64 на Android.
+[target.'cfg(any(target_os = "android", target_os = "windows"))'.dependencies]
 llvm-sys = { version = "180.0.0", features = ["disable-alltargets-init"] }
 
 [profile.dev]
