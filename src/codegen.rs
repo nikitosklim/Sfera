@@ -2225,6 +2225,92 @@ impl<'ctx> Кодогенератор<'ctx> {
     /// затрагивает (весь путь от исходного кода до LLVM IR полностью
     /// architecture-independent, архитектура появляется только здесь,
     /// на самом последнем шаге).
+    /// ⚠️ НАЙДЕНО РЕАЛЬНОЙ ПРОВЕРКОЙ (Windows, после трёх попыток подряд) —
+    /// почему это ОТДЕЛЬНАЯ функция, а не просто `if cfg!(target_os =
+    /// "windows") {...} else {...}` прямо внутри записать_объектный_файл,
+    /// как было раньше: "целевая_платформа" — это RUNTIME-значение
+    /// (Option<&str> из аргументов командной строки), а не cfg!() —
+    /// значит ветка "else" (initialize_all/initialize_native для
+    /// экзотических кросс-таргетов) была НАСТОЯЩИМ, достижимым кодом с
+    /// точки зрения компилятора, даже если целевая_платформа==None при
+    /// каждом конкретном запуске на Windows. cfg!() сам по себе НЕ
+    /// гарантирует, что ссылка на внешнюю функцию из другого крейта
+    /// (inkwell::targets::Target::initialize_all/initialize_native)
+    /// будет вырезана из итогового .exe — на деле осталась (см. историю
+    /// ниже), и линковщик по-прежнему требовал резолвить target.c-таргеты,
+    /// которых нет в Windows-сборке LLVM. Настоящая условная компиляция
+    /// (#[cfg(...)] на уровне функции, а не внутри одной функции через
+    /// cfg!()) — единственный способ ГАРАНТИРОВАННО не скомпилировать
+    /// вызовы initialize_all/initialize_native/initialize_aarch64 в
+    /// Windows-сборку вообще, раз уж Windows-пакет LLVM (vovkos/
+    /// llvm-package-windows) содержит только x86/x86_64.
+    #[cfg(target_os = "windows")]
+    fn инициализировать_llvm_и_получить_тройку(
+        целевая_платформа: Option<&str>,
+    ) -> Result<(inkwell::targets::TargetTriple, String, String), ОшибкаКодогенерации> {
+        use inkwell::targets::{InitializationConfig, Target, TargetMachine};
+        match целевая_платформа {
+            // Родная сборка (без --целевая-платформа) — единственный
+            // реально поддерживаемый случай на этой сборке LLVM.
+            None => {
+                Target::initialize_x86(&InitializationConfig::default());
+                let triple = TargetMachine::get_default_triple();
+                let cpu = TargetMachine::get_host_cpu_name().to_string();
+                let features = TargetMachine::get_host_cpu_features().to_string();
+                Ok((triple, cpu, features))
+            }
+            // Явная кросс-компиляция под x86/x86_64 (редкий случай — но
+            // раз initialize_x86 всё равно доступна, честно поддерживаем).
+            Some(тройка) if тройка.starts_with("x86_64") || тройка.starts_with("i686") || тройка.starts_with("i386") => {
+                Target::initialize_x86(&InitializationConfig::default());
+                Ok((inkwell::targets::TargetTriple::create(тройка), "generic".to_string(), String::new()))
+            }
+            // Любая другая целевая платформа (aarch64 и прочие) — честно
+            // отказываем ЗАРАНЕЕ, а не падаем на линковке десятками
+            // unresolved symbol: эта конкретная сборка компилятора (эта
+            // Windows-машина, этот пакет LLVM) умеет генерировать код
+            // только под x86/x86_64.
+            Some(тройка) => Err(ошибка(format!(
+                "кросс-компиляция под '{}' не поддерживается этой сборкой компилятора для Windows — \
+                 здесь доступен только x86/x86_64, т.к. готовый пакет LLVM для Windows не включает \
+                 остальные таргеты (см. комментарий у инициализировать_llvm_и_получить_тройку в codegen.rs)",
+                тройка
+            ))),
+        }
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    fn инициализировать_llvm_и_получить_тройку(
+        целевая_платформа: Option<&str>,
+    ) -> Result<(inkwell::targets::TargetTriple, String, String), ОшибкаКодогенерации> {
+        use inkwell::targets::{InitializationConfig, Target, TargetMachine};
+        match целевая_платформа {
+            Some(тройка) => {
+                // См. подробности в истории комментариев этой функции —
+                // initialize_all требует ВСЕ таргеты LLVM, недоступно на
+                // сборках, где собраны не все (Android — только aarch64).
+                if cfg!(target_os = "android") || тройка.starts_with("aarch64") {
+                    Target::initialize_aarch64(&InitializationConfig::default());
+                } else {
+                    Target::initialize_all(&InitializationConfig::default());
+                }
+                Ok((inkwell::targets::TargetTriple::create(тройка), "generic".to_string(), String::new()))
+            }
+            None => {
+                if cfg!(target_os = "android") {
+                    Target::initialize_aarch64(&InitializationConfig::default());
+                } else {
+                    Target::initialize_native(&InitializationConfig::default())
+                        .map_err(|e| ошибка(format!("не удалось инициализировать целевую платформу LLVM: {}", e)))?;
+                }
+                let triple = TargetMachine::get_default_triple();
+                let cpu = TargetMachine::get_host_cpu_name().to_string();
+                let features = TargetMachine::get_host_cpu_features().to_string();
+                Ok((triple, cpu, features))
+            }
+        }
+    }
+
     pub fn записать_объектный_файл(&self, путь: &std::path::Path, целевая_платформа: Option<&str>) -> Result<(), ОшибкаКодогенерации> {
         use inkwell::targets::{CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetMachine};
 
@@ -2253,95 +2339,14 @@ impl<'ctx> Кодогенератор<'ctx> {
             );
         }
 
-        let (triple, cpu, features) = match целевая_платформа {
-            Some(тройка) => {
-                // НОВОЕ: НАЙДЕНО РЕАЛЬНОЙ ПРОВЕРКОЙ — "initialize_all"
-                // требует, чтобы ВСЕ таргеты LLVM (AMDGPU, ARM, X86,
-                // ...) были реально скомпилированы в связанную LLVM —
-                // при обычной, host-сборке компилятора (macOS/Linux) это
-                // так и есть, но когда САМ компилятор собирается для
-                // Android — та LLVM специально собрана только с AArch64
-                // (кросс-сборка LLVM под все таргеты заняла бы
-                // непропорционально дольше) — "initialize_all" в такой
-                // сборке падает на линковке (undefined symbol для всех
-                // остальных таргетов). Единственная целевая платформа,
-                // для которой Android-версии компилятора вообще имеет
-                // смысл генерировать код — тот же aarch64 (сам
-                // существующий на устройстве процессор) — используем
-                // узкую, единственно доступную initialize_aarch64.
-                if cfg!(target_os = "android") {
-                    Target::initialize_aarch64(&InitializationConfig::default());
-                } else if тройка.starts_with("aarch64") {
-                    // НОВОЕ: НАЙДЕНО РЕАЛЬНОЙ ПРОВЕРКОЙ (теперь на Windows) —
-                    // тот же класс бага, что и выше для Android: "initialize_all"
-                    // требует, чтобы АБСОЛЮТНО ВСЕ таргеты LLVM (включая
-                    // редкие — WebAssembly, BPF, Hexagon и т.п.) были реально
-                    // скомпилированы в связанную LLVM. Готовый пакет LLVM для
-                    // Windows (vovkos/llvm-package-windows) часть таких редких
-                    // таргетов не включает — на линковке компилятора это
-                    // вываливается десятками unresolved external symbol для
-                    // функций вроде LLVMInitializeWebAssemblyAsmPrinter, хотя
-                    // WebAssembly нам никогда не был нужен. Единственная
-                    // реально используемая кросс-платформа — aarch64 (Android,
-                    // Linux ARM64) — инициализируем именно её, а не весь список.
-                    Target::initialize_aarch64(&InitializationConfig::default());
-                } else {
-                    // Инициализируем ВСЕ платформы, которые умеет LLVM — только
-                    // для действительно незнакомой целевой тройки (не aarch64).
-                    // На сборках LLVM, где не все таргеты скомпилированы (как
-                    // описано выше), эта ветка может столкнуться с той же
-                    // проблемой — тройка здесь честно экзотическая, не входит
-                    // в документированные кросс-платформы проекта.
-                    Target::initialize_all(&InitializationConfig::default());
-                }
-                let triple = inkwell::targets::TargetTriple::create(тройка);
-                // "generic" CPU и пустые "features" — безопасный выбор при
-                // кросс-компиляции: get_host_cpu_name/get_host_cpu_features
-                // дали бы характеристики ЭТОЙ (родной) машины, а не целевой
-                // — в корне неверно для другой архитектуры. LLVM сам
-                // подберёт разумные настройки по умолчанию для указанной
-                // платформы, раз более точные не заданы явно.
-                (triple, "generic".to_string(), String::new())
-            }
-            None => {
-                // НОВОЕ: та же самая причина, что и выше для Some(тройка) —
-                // "initialize_native" тоже реализована через LLVM_InitializeNativeTarget(),
-                // C-обёртку из того же вспомогательного файла ("wrappers/target.c"),
-                // который мы собираемся полностью отключить для Android-сборки
-                // (Cargo.toml, "disable-alltargets-init") — обе ветки должны
-                // одинаково не зависеть от него, иначе отключение этого файла
-                // сломало бы именно эту ветку вместо предыдущей.
-                //
-                // НОВОЕ: НАЙДЕНО РЕАЛЬНОЙ ПРОВЕРКОЙ (теперь на Windows) — та же
-                // причина, по которой Android выше использует initialize_aarch64
-                // вместо initialize_native, теперь касается и Windows: готовая
-                // сборка LLVM для Windows (vovkos/llvm-package-windows) не
-                // содержит статических библиотек ВСЕХ таргетов LLVM — а
-                // target.c (который требуется для initialize_native) ссылается
-                // на них все разом, даже если реально нужен только родной,
-                // x86_64 — на линковке это падало десятками "unresolved
-                // external symbol" (LLVMInitializeLoongArchTarget,
-                // LLVMInitializeWebAssemblyTarget и т.д.), хотя WebAssembly/
-                // LoongArch компилятору не нужны вообще. Обходим тем же
-                // приёмом: initialize_x86 — НАСТОЯЩАЯ (не inline-обёрточная)
-                // функция самого LLVM, экспортированная напрямую, не требует
-                // target.c (см. Cargo.toml, "disable-alltargets-init" теперь
-                // действует и для target_os = "windows"). Покрывает и x86, и
-                // x86_64 — в LLVM это один и тот же таргет.
-                if cfg!(target_os = "android") {
-                    Target::initialize_aarch64(&InitializationConfig::default());
-                } else if cfg!(target_os = "windows") {
-                    Target::initialize_x86(&InitializationConfig::default());
-                } else {
-                    Target::initialize_native(&InitializationConfig::default())
-                        .map_err(|e| ошибка(format!("не удалось инициализировать целевую платформу LLVM: {}", e)))?;
-                }
-                let triple = TargetMachine::get_default_triple();
-                let cpu = TargetMachine::get_host_cpu_name().to_string();
-                let features = TargetMachine::get_host_cpu_features().to_string();
-                (triple, cpu, features)
-            }
-        };
+        // НОВОЕ: НАЙДЕНО РЕАЛЬНОЙ ПРОВЕРКОЙ (Windows) — выбор и инициализация
+        // целевой платформы вынесены в инициализировать_llvm_и_получить_тройку
+        // (см. её комментарий чуть выше в этом файле) — обязательно НАСТОЯЩАЯ
+        // условная компиляция (#[cfg(...)] на уровне функции), а не cfg!()
+        // внутри одной общей функции, иначе ссылки на initialize_all/
+        // initialize_native остаются в Windows-сборке, даже когда реально не
+        // вызываются — и линковщик всё равно требует их резолвить.
+        let (triple, cpu, features) = Self::инициализировать_llvm_и_получить_тройку(целевая_платформа)?;
 
         let target = Target::from_triple(&triple)
             .map_err(|e| ошибка(format!("не удалось определить целевую платформу '{}': {:?}", triple.as_str().to_string_lossy(), e)))?;
