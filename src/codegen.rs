@@ -2266,51 +2266,67 @@ impl<'ctx> Кодогенератор<'ctx> {
     /// inkwell-обёртки Target::initialize_x86 целиком — тогда наш код
     /// ссылается только на символы самого LLVM (которые есть в Windows-
     /// пакете), а не на тот "общий" объектный файл inkwell.
-    /// ⚠️ НАЙДЕНО РЕАЛЬНОЙ ПРОВЕРКОЙ (Windows, ПЯТАЯ попытка подряд) — почему
-    /// этого МАЛО, и пришлось пойти ещё дальше, чем просто заменить
-    /// `Target::initialize_x86` на сырые LLVM C-функции (что и было сделано
-    /// четвёртой попыткой, но линковка на Windows всё равно падала с ТЕМИ ЖЕ
-    /// 16 неразрешёнными символами, несмотря на подтверждённо применённый
-    /// патч и полностью чистую пересборку — см. историю этой функции).
-    /// Причина: дело не ТОЛЬКО в `Target::initialize_x86` — `Target::
-    /// from_triple` и `Target::create_target_machine` (обе неизбежно
-    /// вызывались следом, сразу после получения тройки, для ЛЮБОЙ
-    /// платформы) лежат В ТОМ ЖЕ самом скомпилированном объектном файле
-    /// (codegen unit) inkwell, что и `initialize_all`/`initialize_native`/
-    /// `initialize_aarch64`/`initialize_x86` — подтверждено напрямую через
-    /// `nm` по отдельным членам .rlib-архива inkwell: все шесть функций
-    /// (`from_triple`, `create_target_machine`, `initialize_x86`,
-    /// `initialize_all`, `initialize_native`, `initialize_aarch64`)
-    /// оказались в ОДНОМ и том же `cgu.02.rcgu.o`. Поэтому даже вызывая
-    /// только сырые `LLVMInitializeX86*`, мы всё равно тянули этот же
-    /// объектный файл в линковку через `Target::from_triple`/
-    /// `create_target_machine` — и линковщик MSVC по-прежнему требовал
-    /// разрешить ВСЕ внешние ссылки внутри него, включая те, что нужны
-    /// только `initialize_all`/`initialize_native`/`initialize_aarch64`.
+    /// ⚠️ НАЙДЕНО РЕАЛЬНОЙ ПРОВЕРКОЙ (Windows, ШЕСТАЯ попытка подряд) — почему
+    /// даже пятая попытка (обход `Target::initialize_x86`/`from_triple`/
+    /// `create_target_machine` через сырые LLVM C-функции, но с ОБОРАЧИВАНИЕМ
+    /// результата обратно в `inkwell::targets::TargetMachine` через
+    /// `TargetMachine::new`) НЕ ПОМОГЛА — build_log5.txt на реальной Windows-
+    /// машине показал ТЕ ЖЕ 16 неразрешённых символов, с тем же хэшем rlib
+    /// (ожидаемо — Cargo.toml не менялся), ссылающихся на тот же `cgu.2`.
+    /// Причина оказалась ещё глубже: через `nm` по `cgu.02.rcgu.o` внутри
+    /// .rlib-архива inkwell видно, что rustc скомпилировал ВЕСЬ модуль
+    /// `inkwell::targets` (файл targets.rs целиком — `Target`, `TargetTriple`,
+    /// `TargetMachine`, `TargetData`, `TargetMachineOptions`, т.е. БУКВАЛЬНО
+    /// каждую функцию модуля, включая `TargetMachine::new`, `write_to_file`,
+    /// `get_default_triple`, `get_host_cpu_name` и т.д.) в ОДИН и тот же
+    /// объектный файл — судя по всему, таково поведение разбиения на
+    /// codegen units у rustc по умолчанию (группировка по модулю). Значит
+    /// ЛЮБОЕ обращение к ЛЮБОЙ функции `inkwell::targets::*` — пусть даже не
+    /// к `initialize_x86`/`from_triple`/`create_target_machine`, а просто к
+    /// `TargetMachine::new` (как раз то, чем заканчивалась попытка №5) —
+    /// тянет в линковку этот самый объектный файл целиком, а вместе с ним —
+    /// и неразрешимые на Windows ссылки `initialize_all`/`initialize_native`/
+    /// `initialize_aarch64`.
     ///
-    /// Настоящее решение: для Windows полностью обходим обёрточный тип
-    /// `inkwell::targets::Target` (а значит — и весь `cgu.02`) — получаем
-    /// `LLVMTargetRef` напрямую через `LLVMGetTargetFromTriple` и
-    /// `LLVMTargetMachineRef` напрямую через `LLVMCreateTargetMachine` (обе
-    /// — настоящие, напрямую экспортированные C-функции самого LLVM, не
-    /// нуждающиеся в `wrappers/target.c`), а затем оборачиваем готовый
-    /// `LLVMTargetMachineRef` в `inkwell::targets::TargetMachine` через её
-    /// же публичный (хоть и `unsafe`) конструктор `TargetMachine::new` —
-    /// так весь дальнейший код (`write_to_file` и т.д.) остаётся обычным
-    /// inkwell-кодом, а единственное отличие — КАК получен сам TargetMachine.
+    /// Настоящее решение: на Windows НЕ прикасаемся к `inkwell::targets`
+    /// вообще, ни одной функцией — всё, от инициализации до записи готового
+    /// .o-файла на диск, идёт напрямую через сырые C-функции самого LLVM
+    /// (`llvm_sys`, переэкспортирован как `inkwell::llvm_sys`): получение
+    /// тройки/CPU/фич (`LLVMGetDefaultTargetTriple`/`LLVMGetHostCPUName`/
+    /// `LLVMGetHostCPUFeatures`), получение `LLVMTargetRef`
+    /// (`LLVMGetTargetFromTriple`), создание `LLVMTargetMachineRef`
+    /// (`LLVMCreateTargetMachine`) и сама эмиссия объектного файла
+    /// (`LLVMTargetMachineEmitToFile` — сырой аналог `TargetMachine::
+    /// write_to_file`, принимающий `LLVMModuleRef`, который берём через
+    /// публичный `Module::as_mut_ptr()`). Эта функция целиком заменяет собой
+    /// прежнюю пару "получить_target_machine + .write_to_file(...)" для
+    /// Windows — вызывается прямо из записать_объектный_файл.
     #[cfg(target_os = "windows")]
-    fn получить_target_machine(
+    fn записать_объектный_файл_через_llvm(
+        модуль: &Module,
+        путь: &std::path::Path,
         целевая_платформа: Option<&str>,
-    ) -> Result<inkwell::targets::TargetMachine, ОшибкаКодогенерации> {
+    ) -> Result<(), ОшибкаКодогенерации> {
         use inkwell::llvm_sys::target::{
             LLVMInitializeX86AsmParser, LLVMInitializeX86AsmPrinter, LLVMInitializeX86Disassembler,
             LLVMInitializeX86Target, LLVMInitializeX86TargetInfo, LLVMInitializeX86TargetMC,
         };
         use inkwell::llvm_sys::target_machine::{
-            LLVMCodeGenOptLevel, LLVMCodeModel, LLVMCreateTargetMachine, LLVMGetTargetFromTriple,
-            LLVMRelocMode,
+            LLVMCodeGenFileType, LLVMCodeGenOptLevel, LLVMCodeModel, LLVMCreateTargetMachine,
+            LLVMDisposeTargetMachine, LLVMGetDefaultTargetTriple, LLVMGetHostCPUFeatures,
+            LLVMGetHostCPUName, LLVMGetTargetFromTriple, LLVMRelocMode, LLVMTargetMachineEmitToFile,
         };
-        use inkwell::targets::{TargetMachine, TargetTriple};
+
+        // Освобождает строку, выделенную самим LLVM (LLVMDisposeMessage) —
+        // используется для сообщений об ошибках и для результатов
+        // LLVMGetDefaultTargetTriple/LLVMGetHostCPUName/LLVMGetHostCPUFeatures,
+        // которые тоже "нужно освобождать через LLVMDisposeMessage" (см. их
+        // документирующие комментарии в llvm-sys/target_machine.rs).
+        unsafe fn забрать_и_освободить_llvm_строку(указатель: *mut std::os::raw::c_char) -> String {
+            let текст = std::ffi::CStr::from_ptr(указатель).to_string_lossy().into_owned();
+            inkwell::llvm_sys::core::LLVMDisposeMessage(указатель);
+            текст
+        }
 
         fn инициализировать_x86() {
             // Порядок и набор — тот же, что у InitializationConfig::default()
@@ -2325,21 +2341,23 @@ impl<'ctx> Кодогенератор<'ctx> {
             }
         }
 
-        let (triple, cpu, features): (TargetTriple, String, String) = match целевая_платформа {
+        let (triple, cpu, features): (String, String, String) = match целевая_платформа {
             // Родная сборка (без --целевая-платформа) — единственный
             // реально поддерживаемый случай на этой сборке LLVM.
             None => {
                 инициализировать_x86();
-                let triple = TargetMachine::get_default_triple();
-                let cpu = TargetMachine::get_host_cpu_name().to_string();
-                let features = TargetMachine::get_host_cpu_features().to_string();
-                (triple, cpu, features)
+                unsafe {
+                    let triple = забрать_и_освободить_llvm_строку(LLVMGetDefaultTargetTriple());
+                    let cpu = забрать_и_освободить_llvm_строку(LLVMGetHostCPUName());
+                    let features = забрать_и_освободить_llvm_строку(LLVMGetHostCPUFeatures());
+                    (triple, cpu, features)
+                }
             }
             // Явная кросс-компиляция под x86/x86_64 (редкий случай — но
             // раз инициализировать_x86 всё равно доступна, честно поддерживаем).
             Some(тройка) if тройка.starts_with("x86_64") || тройка.starts_with("i686") || тройка.starts_with("i386") => {
                 инициализировать_x86();
-                (TargetTriple::create(тройка), "generic".to_string(), String::new())
+                (тройка.to_string(), "generic".to_string(), String::new())
             }
             // Любая другая целевая платформа (aarch64 и прочие) — честно
             // отказываем ЗАРАНЕЕ, а не падаем на линковке десятками
@@ -2350,46 +2368,34 @@ impl<'ctx> Кодогенератор<'ctx> {
                 return Err(ошибка(format!(
                     "кросс-компиляция под '{}' не поддерживается этой сборкой компилятора для Windows — \
                      здесь доступен только x86/x86_64, т.к. готовый пакет LLVM для Windows не включает \
-                     остальные таргеты (см. комментарий у получить_target_machine в codegen.rs)",
+                     остальные таргеты (см. комментарий у записать_объектный_файл_через_llvm в codegen.rs)",
                     тройка
                 )));
             }
         };
 
-        // Сырой аналог Target::from_triple — не используем inkwell-обёртку
-        // целиком (см. большой комментарий выше у этой функции).
+        let triple_c = std::ffi::CString::new(triple.clone()).unwrap_or_default();
+        let cpu_c = std::ffi::CString::new(cpu).unwrap_or_default();
+        let features_c = std::ffi::CString::new(features).unwrap_or_default();
+
+        // Сырой аналог Target::from_triple.
         let mut сырой_target = std::ptr::null_mut();
-        let mut сообщение_об_ошибке = std::mem::MaybeUninit::uninit();
+        let mut сообщение_об_ошибке: std::mem::MaybeUninit<*mut std::os::raw::c_char> = std::mem::MaybeUninit::uninit();
         let код = unsafe {
-            LLVMGetTargetFromTriple(triple.as_ptr(), &mut сырой_target, сообщение_об_ошибке.as_mut_ptr())
+            LLVMGetTargetFromTriple(triple_c.as_ptr(), &mut сырой_target, сообщение_об_ошибке.as_mut_ptr())
         };
         if код != 0 {
-            // LLVMString::new — приватный для крейта inkwell конструктор, нам
-            // недоступен; читаем выделенную LLVM'ом C-строку напрямую через
-            // CStr и сами освобождаем её через LLVMDisposeMessage (именно
-            // так это делает Drop у самой LLVMString внутри inkwell).
-            let указатель_сообщения = unsafe { сообщение_об_ошибке.assume_init() };
-            let текст_сообщения = unsafe { std::ffi::CStr::from_ptr(указатель_сообщения) }
-                .to_string_lossy()
-                .into_owned();
-            unsafe { inkwell::llvm_sys::core::LLVMDisposeMessage(указатель_сообщения) };
-            return Err(ошибка(format!(
-                "не удалось определить целевую платформу '{}': {}",
-                triple.as_str().to_string_lossy(),
-                текст_сообщения
-            )));
+            let текст_сообщения = unsafe { забрать_и_освободить_llvm_строку(сообщение_об_ошибке.assume_init()) };
+            return Err(ошибка(format!("не удалось определить целевую платформу '{}': {}", triple, текст_сообщения)));
         }
 
         // Сырой аналог Target::create_target_machine — значения перечислений
-        // здесь жёстко заданы напрямую (вместо .into() из OptimizationLevel/
-        // RelocMode/CodeModel), т.к. это именно те, что всегда и так
-        // передавались из записать_объектный_файл (None/Default/Default).
-        let cpu_c = std::ffi::CString::new(cpu).unwrap_or_default();
-        let features_c = std::ffi::CString::new(features).unwrap_or_default();
+        // здесь жёстко заданы напрямую (это именно те, что всегда и так
+        // передавались из записать_объектный_файл: None/Default/Default).
         let сырой_target_machine = unsafe {
             LLVMCreateTargetMachine(
                 сырой_target,
-                triple.as_ptr(),
+                triple_c.as_ptr(),
                 cpu_c.as_ptr(),
                 features_c.as_ptr(),
                 LLVMCodeGenOptLevel::LLVMCodeGenLevelNone,
@@ -2398,20 +2404,42 @@ impl<'ctx> Кодогенератор<'ctx> {
             )
         };
         if сырой_target_machine.is_null() {
-            return Err(ошибка(format!(
-                "не удалось создать TargetMachine для платформы '{}'",
-                triple.as_str().to_string_lossy()
-            )));
+            return Err(ошибка(format!("не удалось создать TargetMachine для платформы '{}'", triple)));
         }
 
-        Ok(unsafe { TargetMachine::new(сырой_target_machine) })
+        // Сырой аналог TargetMachine::write_to_file — напрямую пишет .o-файл,
+        // минуя inkwell::targets::TargetMachine полностью (см. большой
+        // комментарий выше: любое обращение к этому модулю тянет весь cgu.02).
+        let путь_строка = путь.to_str().expect("путь к объектному файлу должен быть валидным Unicode");
+        let путь_c = std::ffi::CString::new(путь_строка).unwrap_or_default();
+        let mut сообщение_записи: std::mem::MaybeUninit<*mut std::os::raw::c_char> = std::mem::MaybeUninit::uninit();
+        let результат = unsafe {
+            LLVMTargetMachineEmitToFile(
+                сырой_target_machine,
+                модуль.as_mut_ptr(),
+                путь_c.as_ptr() as *mut _,
+                LLVMCodeGenFileType::LLVMObjectFile,
+                сообщение_записи.as_mut_ptr(),
+            )
+        };
+
+        unsafe { LLVMDisposeTargetMachine(сырой_target_machine) };
+
+        if результат == 1 {
+            let текст_сообщения = unsafe { забрать_и_освободить_llvm_строку(сообщение_записи.assume_init()) };
+            return Err(ошибка(format!("ошибка записи объектного файла: {}", текст_сообщения)));
+        }
+
+        Ok(())
     }
 
     #[cfg(not(target_os = "windows"))]
-    fn получить_target_machine(
+    fn записать_объектный_файл_через_llvm(
+        модуль: &Module,
+        путь: &std::path::Path,
         целевая_платформа: Option<&str>,
-    ) -> Result<inkwell::targets::TargetMachine, ОшибкаКодогенерации> {
-        use inkwell::targets::{CodeModel, InitializationConfig, RelocMode, Target, TargetMachine};
+    ) -> Result<(), ОшибкаКодогенерации> {
+        use inkwell::targets::{CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetMachine};
         let (triple, cpu, features) = match целевая_платформа {
             Some(тройка) => {
                 if cfg!(target_os = "android") || тройка.starts_with("aarch64") {
@@ -2438,7 +2466,7 @@ impl<'ctx> Кодогенератор<'ctx> {
         let target = Target::from_triple(&triple)
             .map_err(|e| ошибка(format!("не удалось определить целевую платформу '{}': {:?}", triple.as_str().to_string_lossy(), e)))?;
 
-        target
+        let target_machine = target
             .create_target_machine(
                 &triple,
                 &cpu,
@@ -2447,12 +2475,14 @@ impl<'ctx> Кодогенератор<'ctx> {
                 RelocMode::Default,
                 CodeModel::Default,
             )
-            .ok_or_else(|| ошибка(format!("не удалось создать TargetMachine для платформы '{}'", triple.as_str().to_string_lossy())))
+            .ok_or_else(|| ошибка(format!("не удалось создать TargetMachine для платформы '{}'", triple.as_str().to_string_lossy())))?;
+
+        target_machine
+            .write_to_file(модуль, FileType::Object, путь)
+            .map_err(|e| ошибка(format!("ошибка записи объектного файла: {}", e)))
     }
 
     pub fn записать_объектный_файл(&self, путь: &std::path::Path, целевая_платформа: Option<&str>) -> Result<(), ОшибкаКодогенерации> {
-        use inkwell::targets::FileType;
-
         // ⚠️ НАЙДЕНО РЕАЛЬНОЙ ПРОВЕРКОЙ, ГЛУБОКИЙ БАГ САМОГО LLVM (не
         // нашего компилятора): при кросс-компиляции под ARM64 (Android)
         // сам генератор машинного кода LLVM (GlobalISel — сравнительно
@@ -2478,15 +2508,6 @@ impl<'ctx> Кодогенератор<'ctx> {
             );
         }
 
-        // НОВОЕ: НАЙДЕНО РЕАЛЬНОЙ ПРОВЕРКОЙ (Windows) — получение TargetMachine
-        // вынесено в получить_target_machine (см. её комментарий чуть выше в
-        // этом файле) — обязательно НАСТОЯЩАЯ условная компиляция (#[cfg(...)]
-        // на уровне функции, а не cfg!() внутри одной общей функции), и на
-        // Windows этот путь вообще не использует inkwell::targets::Target —
-        // см. подробный комментарий у получить_target_machine про то, почему
-        // одного лишь #[cfg(...)]-разделения инициализации оказалось мало.
-        let target_machine = Self::получить_target_machine(целевая_платформа)?;
-
         // НОВОЕ (отладчик): finalize() ОБЯЗАН быть вызван до верификации/
         // записи модуля — достраивает все отложенные debug-info описания.
         // Безопасно вызывать даже если отладочная информация не включена
@@ -2495,9 +2516,16 @@ impl<'ctx> Кодогенератор<'ctx> {
             отладка.билдер.finalize();
         }
 
-        target_machine
-            .write_to_file(&self.модуль, FileType::Object, путь)
-            .map_err(|e| ошибка(format!("ошибка записи объектного файла: {}", e)))?;
+        // НОВОЕ: НАЙДЕНО РЕАЛЬНОЙ ПРОВЕРКОЙ (Windows) — создание TargetMachine
+        // И запись объектного файла объединены в одну функцию, записать_
+        // объектный_файл_через_llvm (см. её большой комментарий чуть выше в
+        // этом файле) — обязательно НАСТОЯЩАЯ условная компиляция
+        // (#[cfg(...)] на уровне функции, а не cfg!() внутри одной общей
+        // функции), и на Windows этот путь вообще НЕ использует
+        // inkwell::targets:: ни одной функцией — см. подробный комментарий
+        // про то, почему даже частичного обхода (только initialize_x86/
+        // from_triple/create_target_machine) оказалось мало.
+        Self::записать_объектный_файл_через_llvm(&self.модуль, путь, целевая_платформа)?;
 
         Ok(())
     }
