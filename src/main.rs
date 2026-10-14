@@ -423,6 +423,18 @@ fn слинковать_исполняемый_файл(путь_o: &str, имя
                 Ok(вывод) if вывод.status.success() => return,
                 Ok(вывод) => {
                     eprintln!("Ошибка при линковке под Android:");
+                    // ⚠️ НАЙДЕНО РЕАЛЬНОЙ ПРОВЕРКОЙ (Windows): clang сам
+                    // пишет свою финальную сводку об ошибке ("linker
+                    // command failed...") в stderr, но подробности от
+                    // САМОГО линковщика (например, link.exe на Windows:
+                    // "LNK1181: cannot open input file 'SDL2.lib'") часто
+                    // попадают в stdout дочернего процесса — раньше мы его
+                    // молча отбрасывали, и пользователь видел только
+                    // бесполезную сводку без указания, какого именно
+                    // файла не хватает.
+                    if !вывод.stdout.is_empty() {
+                        eprintln!("{}", String::from_utf8_lossy(&вывод.stdout));
+                    }
                     eprintln!("{}", String::from_utf8_lossy(&вывод.stderr));
                     std::process::exit(1);
                 }
@@ -545,6 +557,16 @@ fn слинковать_исполняемый_файл(путь_o: &str, имя
                     Ok(вывод2) if вывод2.status.success() => {}
                     Ok(вывод2) => {
                         eprintln!("Ошибка при линковке:");
+                        // ⚠️ НАЙДЕНО РЕАЛЬНОЙ ПРОВЕРКОЙ (Windows): подробности
+                        // от самого линковщика (link.exe: "LNK1181: cannot
+                        // open input file '...'") часто попадают в stdout
+                        // дочернего процесса, а не в stderr — clang в stderr
+                        // пишет только свою финальную, малополезную сводку
+                        // ("linker command failed with exit code ..."). Раньше
+                        // stdout молча отбрасывался.
+                        if !вывод2.stdout.is_empty() {
+                            eprintln!("{}", String::from_utf8_lossy(&вывод2.stdout));
+                        }
                         eprintln!("{}", String::from_utf8_lossy(&вывод2.stderr));
                         std::process::exit(1);
                     }
@@ -555,6 +577,11 @@ fn слинковать_исполняемый_файл(путь_o: &str, имя
                 }
             } else {
                 eprintln!("Ошибка при линковке:");
+                // См. комментарий чуть выше (повторная попытка после PIE) —
+                // та же причина: подробности линковщика часто в stdout.
+                if !вывод.stdout.is_empty() {
+                    eprintln!("{}", String::from_utf8_lossy(&вывод.stdout));
+                }
                 eprintln!("{}", текст_ошибки);
                 std::process::exit(1);
             }
