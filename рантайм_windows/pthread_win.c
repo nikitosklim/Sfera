@@ -1,6 +1,6 @@
 /* pthread_win.c — НАЙДЕНО РЕАЛЬНОЙ ПРОВЕРКОЙ НА WINDOWS: codegen.rs
  * безусловно объявляет и вызывает pthread_create/pthread_join/
- * pthread_mutex_*/pthread_cond_* в обёртке main КАЖДОЙ собранной
+ * pthread_mutex_* и pthread_cond_* в обёртке main КАЖДОЙ собранной
  * программы — даже такой простой, как "привет.код", которая вообще не
  * использует потоки (см. комментарий в codegen.rs у инициализации
  * sfera_детерм_мьютекс/sfera_детерм_cond: "безусловно, как и у
