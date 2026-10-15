@@ -24,6 +24,31 @@
 
 $ErrorActionPreference = "Stop"
 
+# ⚠️ НАЙДЕНО РЕАЛЬНОЙ ПРОВЕРКОЙ (Windows): если запустить этот скрипт с
+# перенаправлением "*> лог.txt" (все потоки в файл — так мы просили
+# пользователя делать для диагностики), PowerShell конвертирует ЛЮБОЙ
+# вывод внешней программы в stderr (например, обычные предупреждения
+# cargo/rustc вроде "warning: found both '**' and 'c' as identifiers,
+# which look alike") в настоящую завершающую ошибку PowerShell — и при
+# $ErrorActionPreference = "Stop" это обрывает весь скрипт на первом же
+# безобидном предупреждении компилятора, даже если сама команда потом
+# завершилась бы кодом 0. Без "*>" эта проблема не проявляется, но скрипт
+# не должен зависеть от того, как именно его запустят. Оборачиваем вызовы
+# внешних программ этим хелпером: на время вызова ослабляем
+# $ErrorActionPreference до "Continue" (внешний процесс сам решает, что
+# писать в stderr — это не повод останавливать скрипт), а статус
+# проверяем по $LASTEXITCODE, как и раньше.
+function Выполнить-Внешнюю {
+    param([ScriptBlock]$Команда)
+    $прежнийEAP = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        & $Команда
+    } finally {
+        $ErrorActionPreference = $прежнийEAP
+    }
+}
+
 function Написать-Шаг {
     param([string]$Текст)
     Write-Host ""
@@ -99,7 +124,7 @@ if ($rustcУстановлен) {
     Invoke-WebRequest -Uri "https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-msvc/rustup-init.exe" -OutFile $rustupInit
     # -y — без интерактивных вопросов; --default-toolchain stable — обычный,
     # стабильный канал Rust, ничего экзотического компилятору не нужно.
-    & $rustupInit -y --default-toolchain stable --profile default
+    Выполнить-Внешнюю { & $rustupInit -y --default-toolchain stable --profile default }
     if ($LASTEXITCODE -ne 0) {
         Написать-Ошибку "Установка Rust завершилась с ошибкой (код $LASTEXITCODE)."
         exit 1
@@ -165,7 +190,7 @@ if (Test-Path $llvmConfigПуть) {
 
     Написать-Шаг "Распаковываю LLVM в $ПапкаLLVM"
     New-Item -ItemType Directory -Force -Path $ПапкаLLVM | Out-Null
-    & $семьЗип x $архивLLVM "-o$ПапкаLLVM" -y | Out-Null
+    Выполнить-Внешнюю { & $семьЗип x $архивLLVM "-o$ПапкаLLVM" -y | Out-Null }
     if ($LASTEXITCODE -ne 0) {
         Написать-Ошибку "Распаковка LLVM завершилась с ошибкой (код $LASTEXITCODE)."
         exit 1
@@ -243,7 +268,7 @@ if (Test-Path $clangПуть) {
 
     Написать-Шаг "Распаковываю Clang в $ПапкаClang"
     New-Item -ItemType Directory -Force -Path $ПапкаClang | Out-Null
-    & $семьЗип x $архивClang "-o$ПапкаClang" -y | Out-Null
+    Выполнить-Внешнюю { & $семьЗип x $архивClang "-o$ПапкаClang" -y | Out-Null }
     if ($LASTEXITCODE -ne 0) {
         Написать-Ошибку "Распаковка Clang завершилась с ошибкой (код $LASTEXITCODE)."
         exit 1
@@ -289,7 +314,7 @@ if (-not (Test-Path (Join-Path $ПапкаПроекта "Cargo.toml"))) {
     }
     $ПапкаКлона = Join-Path $env:USERPROFILE "Sfera"
     if (-not (Test-Path $ПапкаКлона)) {
-        & git clone https://github.com/nikitosklim/Sfera.git $ПапкаКлона
+        Выполнить-Внешнюю { & git clone https://github.com/nikitosklim/Sfera.git $ПапкаКлона }
     }
     $ПапкаПроекта = $ПапкаКлона
 }
@@ -310,7 +335,7 @@ try {
     # src\bin\ — отдельный бинарник", без отдельной записи [[bin]] в
     # Cargo.toml. Если собрать только "запустить", самоустановка из
     # панели будет молча копировать несуществующие файлы и падать.
-    & cargo build --release --bin запустить --bin сфера_lsp --bin сфера_пакеты
+    Выполнить-Внешнюю { & cargo build --release --bin запустить --bin сфера_lsp --bin сфера_пакеты }
     if ($LASTEXITCODE -ne 0) {
         Написать-Ошибку "Сборка компилятора завершилась с ошибкой (код $LASTEXITCODE) — см. вывод выше."
         exit 1
@@ -371,7 +396,7 @@ if (-not (Test-Path $PthreadИсходник)) {
     Написать-Ошибку "Не найден исходник $PthreadИсходник — обёртка pthread для Windows не установлена. Программы на Сфере не будут линковаться на этой машине."
 } else {
     New-Item -ItemType Directory -Force -Path $ПапкаPthreadОбъектник | Out-Null
-    & $clangПуть -c $PthreadИсходник -o $PthreadОбъектник
+    Выполнить-Внешнюю { & $clangПуть -c $PthreadИсходник -o $PthreadОбъектник }
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path $PthreadОбъектник)) {
         Написать-Ошибку "Не удалось скомпилировать pthread_win.c (код $LASTEXITCODE) — программы на Сфере не будут линковаться на этой машине. Проверьте вывод выше."
     } else {
@@ -506,7 +531,7 @@ $ПриветКод = Join-Path $ПапкаПроекта "examples\привет
 if (Test-Path $ПриветКод) {
     Push-Location (Join-Path $ПапкаПроекта "examples")
     try {
-        & $СобранныйБинарник "привет.код"
+        Выполнить-Внешнюю { & $СобранныйБинарник "привет.код" }
         if ($LASTEXITCODE -eq 0 -and (Test-Path "привет.exe")) {
             $вывод = & ".\привет.exe"
             Написать-Успех "Тестовый запуск: $вывод"
