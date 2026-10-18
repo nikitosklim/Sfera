@@ -611,6 +611,8 @@
     б = б + "if exist \"%SRC%\\..\\lib\\sfera\\pthread_win.o\" copy /Y \"%SRC%\\..\\lib\\sfera\\pthread_win.o\" \"" + папка_lib + "\\pthread_win.o\" >nul\r\n";
     б = б + "if not exist \"" + папка_lib + "\\pthread_win.o\" if exist \"%SRC%\\..\\..\\рантайм_windows\\pthread_win.o\" copy /Y \"%SRC%\\..\\..\\рантайм_windows\\pthread_win.o\" \"" + папка_lib + "\\pthread_win.o\" >nul\r\n";
     б = б + "if not exist \"" + папка_lib + "\\pthread_win.o\" if exist \"%LOCALAPPDATA%\\Сфера\\lib\\sfera\\pthread_win.o\" copy /Y \"%LOCALAPPDATA%\\Сфера\\lib\\sfera\\pthread_win.o\" \"" + папка_lib + "\\pthread_win.o\" >nul\r\n";
+    // DLL графики из релизного архива лежат рядом с панелью.
+    б = б + "if exist \"" + э + "\\*.dll\" copy /Y \"" + э + "\\*.dll\" \"" + папка_bin + "\\\" >nul\r\n";
     б = б + "if exist \"%LOCALAPPDATA%\\Сфера\\bin\\SDL2.dll\" copy /Y \"%LOCALAPPDATA%\\Сфера\\bin\\SDL2.dll\" \"" + папка_bin + "\\SDL2.dll\" >nul\r\n";
     б = б + "if exist \"%LOCALAPPDATA%\\Сфера\\bin\\SDL2_ttf.dll\" copy /Y \"%LOCALAPPDATA%\\Сфера\\bin\\SDL2_ttf.dll\" \"" + папка_bin + "\\SDL2_ttf.dll\" >nul\r\n";
     б = б + с_проверкой("(echo " + текущая_версия() + ")> \"" + папка_share + "\\version.txt\"");
