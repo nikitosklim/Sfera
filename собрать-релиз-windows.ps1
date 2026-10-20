@@ -14,7 +14,7 @@
 # (см. метка_текущей_платформы в панель_windows.код).
 
 param(
-    [string]$Версия = "0.2.0"
+    [string]$Версия = "0.3.0"
 )
 
 $ErrorActionPreference = "Continue"

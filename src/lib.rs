@@ -27,6 +27,8 @@ pub mod token;
 pub mod lexer;
 pub mod ast;
 pub mod parser;
+pub mod indexes;
+pub mod converter;
 pub mod semantic;
 #[path = "подсказки.rs"]
 pub mod подсказки;
