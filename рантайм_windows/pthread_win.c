@@ -35,6 +35,36 @@
 #include <windows.h>
 #include <stdlib.h>
 
+/* По issue #3 (Windows 10 LTSC, MSVC 14.29): codegen.rs вызывает snprintf
+ * напрямую, а в UCRT это не отдельный символ, а inline-обёртка в
+ * <stdio.h> — без этой библиотеки линковка падает с LNK2019. В
+ * legacy_stdio_definitions.lib есть готовый символ snprintf. clang её по
+ * умолчанию не подключает, поэтому просим линковщика через директиву
+ * объектного файла. */
+#ifdef _WIN32
+#pragma comment(lib, "legacy_stdio_definitions")
+#endif
+
+/* Строки Сферы — UTF-8, printf выводит байты как есть, а консоль русской
+ * Windows по умолчанию в CP866 — получалась "псевдографика". Переключаем
+ * консоль на UTF-8 до main() и возвращаем прежние кодовые страницы при
+ * выходе, чтобы не менять настройки консоли для других программ. */
+static UINT sfera_старая_cp_вывода = 0;
+static UINT sfera_старая_cp_ввода = 0;
+
+static void sfera_вернуть_кодовые_страницы(void) {
+    if (sfera_старая_cp_вывода) SetConsoleOutputCP(sfera_старая_cp_вывода);
+    if (sfera_старая_cp_ввода) SetConsoleCP(sfera_старая_cp_ввода);
+}
+
+static void __attribute__((constructor)) sfera_консоль_utf8(void) {
+    sfera_старая_cp_вывода = GetConsoleOutputCP();
+    sfera_старая_cp_ввода = GetConsoleCP();
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
+    atexit(sfera_вернуть_кодовые_страницы);
+}
+
 typedef void *(*sfera_функция_потока)(void *);
 
 struct sfera_старт_потока {
