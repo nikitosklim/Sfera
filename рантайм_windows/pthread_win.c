@@ -31,6 +31,7 @@
  * и слинковать_исполняемый_файл.
  */
 
+#include <winsock2.h>
 #include <windows.h>
 #include <stdlib.h>
 
@@ -132,4 +133,70 @@ int pthread_cond_wait(void *c, void *m) {
 int pthread_cond_destroy(void *c) {
     (void)c;
     return 0;
+}
+
+/* ====================== Сокеты (Winsock) ======================
+ *
+ * сайт/сеть.код написан на POSIX-сокетах. На Windows те же функции живут
+ * в ws2_32, но: (1) перед первым вызовом нужен WSAStartup; (2) SOCKET там
+ * — 64-битный беззнаковый дескриптор, а закрывается он closesocket, не
+ * close; (3) send/recv принимают и возвращают int, а не ssize_t. Чтобы
+ * Сфера-код оставался одним на все платформы, сеть.код объявляет внешние
+ * функции с ДВУМЯ именами ("как "send", "sfera_win_send"") — на Windows
+ * компилятор берёт второе, то есть функции ниже. Дескрипторы в Сфере —
+ * целое32: на практике хэндлы сокетов Windows небольшие, а
+ * INVALID_SOCKET (~0) превращается в -1, как и ожидает код.
+ */
+
+static void __attribute__((constructor)) sfera_инициализация_сокетов(void) {
+    WSADATA данные;
+    WSAStartup(MAKEWORD(2, 2), &данные);
+}
+
+#define SFERA_СОКЕТ(x) ((SOCKET)(INT_PTR)(x))
+
+int sfera_win_socket(int домен, int тип, int протокол) {
+    return (int)socket(домен, тип, протокол);
+}
+
+int sfera_win_connect(int s, const char *адрес, int размер) {
+    return connect(SFERA_СОКЕТ(s), (const struct sockaddr *)адрес, размер);
+}
+
+int sfera_win_bind(int s, const char *адрес, int размер) {
+    return bind(SFERA_СОКЕТ(s), (const struct sockaddr *)адрес, размер);
+}
+
+int sfera_win_listen(int s, int очередь) {
+    return listen(SFERA_СОКЕТ(s), очередь);
+}
+
+int sfera_win_accept(int s, char *адрес_клиента, char *размер_адреса) {
+    return (int)accept(SFERA_СОКЕТ(s), (struct sockaddr *)адрес_клиента, (int *)размер_адреса);
+}
+
+long long sfera_win_send(int s, const char *буфер, long long размер, int флаги) {
+    if (размер > 0x7fffffff) размер = 0x7fffffff;
+    return send(SFERA_СОКЕТ(s), буфер, (int)размер, флаги);
+}
+
+long long sfera_win_recv(int s, char *буфер, long long размер, int флаги) {
+    if (размер > 0x7fffffff) размер = 0x7fffffff;
+    return recv(SFERA_СОКЕТ(s), буфер, (int)размер, флаги);
+}
+
+int sfera_win_close(int s) {
+    return closesocket(SFERA_СОКЕТ(s));
+}
+
+/* Константы SOL_SOCKET/SO_REUSEADDR у Windows другие, и смысл SO_REUSEADDR
+ * другой (разрешает занять порт чужого процесса). Windows и так позволяет
+ * заново занять порт после остановки сервера — поэтому это no-op. */
+int sfera_win_setsockopt(int s, int уровень, int опция, const char *значение, int размер) {
+    (void)s; (void)уровень; (void)опция; (void)значение; (void)размер;
+    return 0;
+}
+
+int sfera_win_htons(int значение) {
+    return (int)htons((u_short)значение);
 }
