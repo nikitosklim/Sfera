@@ -10,6 +10,8 @@ android-сборка/
 *.so
 *.apk
 *.ll
+*.exe
+*.db
 
 # Прочий мусор
 .DS_Store
