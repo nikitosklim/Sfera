@@ -1,0 +1,55 @@
+<meta name="robots" content="noindex">
+<h1>Загрузка файлов</h1>
+<p class="tagline">Добавить установщик на страницу «Загрузки». Нужен токен администратора из файла <code>admin-token.txt</code> на сервере.</p>
+<form id="форма" onsubmit="return false">
+  <p><label>Токен<br><input id="токен" type="password" autocomplete="off" style="width:100%"></label></p>
+  <p><label>Файл (имя — латиницей, цифры, . _ -)<br><input id="файл" type="file"></label></p>
+  <p><label>Название<br><input id="название" type="text" style="width:100%" placeholder="Сфера 0.3.2 для Windows"></label></p>
+  <p><label>Описание<br><input id="описание" type="text" style="width:100%" placeholder="Компилятор, рантайм и панель разработчика"></label></p>
+  <p><button class="button" id="кнопка">Загрузить</button> <span id="статус" class="muted"></span></p>
+</form>
+<p class="muted">Файл не должен быть больше 2 ГБ. Если имя уже есть в списке, загрузите под другим (например, с номером версии).
+SHA-256 считается в браузере и показывается рядом с файлом (на http, вне localhost, браузер не даёт посчитать сумму — тогда она пропускается).</p>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var статус = function (т) { $('статус').textContent = т; };
+  try { $('токен').value = sessionStorage.getItem('sfera-token') || ''; } catch (e) {}
+  function гекс(буфер) {
+    return Array.prototype.map.call(new Uint8Array(буфер), function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+  }
+  $('кнопка').onclick = function () {
+    var токен = $('токен').value.trim();
+    var файл = $('файл').files[0];
+    if (!токен || !файл) { статус('Укажите токен и файл'); return; }
+    if (!/^[A-Za-z0-9._-]+$/.test(файл.name)) { статус('Имя файла: только латиница, цифры, . _ -'); return; }
+    try { sessionStorage.setItem('sfera-token', токен); } catch (e) {}
+    статус('Проверяю токен…');
+    fetch('/upload-check', { headers: { Authorization: 'Bearer ' + токен } }).then(function (r) {
+      if (!r.ok) throw new Error('токен не подошёл (или загрузка выключена на сервере)');
+      if (window.crypto && crypto.subtle) {
+        статус('Считаю SHA-256…');
+        return файл.arrayBuffer().then(function (b) { return crypto.subtle.digest('SHA-256', b); }).then(гекс);
+      }
+      return '';
+    }).then(function (сумма) {
+      var x = new XMLHttpRequest();
+      x.open('PUT', '/upload/' + encodeURIComponent(файл.name));
+      x.setRequestHeader('Authorization', 'Bearer ' + токен);
+      x.setRequestHeader('X-Title', encodeURIComponent($('название').value));
+      x.setRequestHeader('X-Description', encodeURIComponent($('описание').value));
+      if (сумма) x.setRequestHeader('X-Sha256', сумма);
+      x.upload.onprogress = function (e) {
+        if (e.lengthComputable) статус('Загружено ' + Math.round(e.loaded * 100 / e.total) + '%');
+      };
+      x.onload = function () {
+        var о = {};
+        try { о = JSON.parse(x.responseText); } catch (e) {}
+        статус(x.status === 201 ? 'Готово: файл на странице «Загрузки».' : 'Ошибка: ' + (о['ошибка'] || x.status));
+      };
+      x.onerror = function () { статус('Сеть оборвалась во время загрузки'); };
+      x.send(файл);
+    }).catch(function (e) { статус('Ошибка: ' + e.message); });
+  };
+})();
+</script>

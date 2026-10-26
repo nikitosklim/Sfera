@@ -17,3 +17,5 @@ android-сборка/
 .DS_Store
 visits.log
 сайт/сервер
+admin-token.txt
+access.log

@@ -27,3 +27,22 @@ th{color:var(--muted);font-weight:500;font-size:.9em}
 .button:hover{opacity:.9}
 .muted{color:var(--muted)}
 .footer{margin-top:52px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:.9em}
+.материал{display:block}
+.toc{background:var(--code-bg);color:var(--code-fg);border-radius:8px;padding:12px 16px;margin:12px 0;font-size:.9em}
+.toc ul{list-style:none;margin:6px 0 0;padding:0}
+.toc li{margin:3px 0}
+.toc .у2{padding-left:14px}.toc .у3{padding-left:28px}
+.toc a{color:inherit}
+.текст h1{margin-top:0}
+.текст h2{margin-top:1.6em}
+.текст blockquote{margin:12px 0;padding:4px 14px;border-left:3px solid var(--line);color:var(--muted)}
+.текст :not(pre)>code{background:var(--code-bg);color:var(--code-fg);padding:1px 5px;border-radius:4px;font-size:.92em}
+.текст table{display:block;overflow-x:auto}
+.материалы{list-style:none;padding:0}
+.материалы li{padding:12px 0;border-bottom:1px solid var(--line)}
+.к-ком{color:#7f8a99;font-style:italic}
+.к-стр{color:#a5d6a7}
+.к-чис{color:#ffcc80}
+.к-сл{color:#82aaff;font-weight:600}
+.к-тип{color:#80cbc4}
+.sha{font-size:.78em;word-break:break-all;color:var(--muted)}
