@@ -8,6 +8,9 @@
   <p><label>Описание<br><input id="описание" type="text" style="width:100%" placeholder="Компилятор, рантайм и панель разработчика"></label></p>
   <p><button class="button" id="кнопка">Загрузить</button> <span id="статус" class="muted"></span></p>
 </form>
+<h2>Удалить файл</h2>
+<p><label>Имя файла из списка<br><input id="удалить-имя" type="text" style="width:100%" placeholder="sfera-0.3.2-windows.zip"></label></p>
+<p><button class="button" id="удалить-кнопка">Удалить</button> <span id="удалить-статус" class="muted"></span></p>
 <p class="muted">Файл не должен быть больше 2 ГБ. Если имя уже есть в списке, загрузите под другим (например, с номером версии).
 SHA-256 считается в браузере и показывается рядом с файлом (на http, вне localhost, браузер не даёт посчитать сумму — тогда она пропускается).</p>
 <script>
@@ -50,6 +53,16 @@ SHA-256 считается в браузере и показывается ря�
       x.onerror = function () { статус('Сеть оборвалась во время загрузки'); };
       x.send(файл);
     }).catch(function (e) { статус('Ошибка: ' + e.message); });
+  };
+  $('удалить-кнопка').onclick = function () {
+    var токен = $('токен').value.trim();
+    var имя = $('удалить-имя').value.trim();
+    var с = function (т) { $('удалить-статус').textContent = т; };
+    if (!токен || !имя) { с('Укажите токен и имя файла'); return; }
+    if (!confirm('Удалить ' + имя + ' с сервера?')) return;
+    fetch('/upload/' + encodeURIComponent(имя), { method: 'DELETE', headers: { Authorization: 'Bearer ' + токен } })
+      .then(function (r) { return r.json().then(function (о) { с(r.ok ? 'Удалено.' : 'Ошибка: ' + (о['ошибка'] || r.status)); }); })
+      .catch(function (e) { с('Ошибка: ' + e.message); });
   };
 })();
 </script>
