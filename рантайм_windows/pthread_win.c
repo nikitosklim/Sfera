@@ -34,6 +34,8 @@
 #include <winsock2.h>
 #include <windows.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <direct.h>
 
 /* По issue #3 (Windows 10 LTSC, MSVC 14.29): codegen.rs вызывает snprintf
  * напрямую, а в UCRT это не отдельный символ, а inline-обёртка в
@@ -229,4 +231,69 @@ int sfera_win_setsockopt(int s, int уровень, int опция, const char *
 
 int sfera_win_htons(int значение) {
     return (int)htons((u_short)значение);
+}
+
+
+/* ------------------------------------------------------------------------
+ * Файловые функции с путями в UTF-8 (кириллица в путях).
+ *
+ * Обычные fopen/rename/remove/mkdir в Windows принимают только ANSI-кодировку, и
+ * кириллический путь в UTF-8 они не открывают. Компилятор при нативной сборке под
+ * Windows переименовывает встроенные вызовы fopen и rename в sfera_win_fopen и
+ * sfera_win_rename (см. Кодогенератор::применить_имена_windows), а стандартная
+ * библиотека файлы.код ссылается на sfera_win_remove и sfera_win_mkdir. Путь
+ * переводится из UTF-8 в UTF-16; если он не является корректным UTF-8 — берётся
+ * обычная ANSI-функция (поведение как раньше).
+ * ---------------------------------------------------------------------- */
+
+#define SFERA_WIN_ПУТЬ 4096
+
+static int sfera_win_в_wide(const char *с, wchar_t *вых, int ёмкость) {
+    return MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, с, -1, вых, ёмкость);
+}
+
+FILE *sfera_win_fopen(const char *путь, const char *режим) {
+    wchar_t wп[SFERA_WIN_ПУТЬ];
+    wchar_t wр[16];
+    if (sfera_win_в_wide(путь, wп, SFERA_WIN_ПУТЬ) == 0 || sfera_win_в_wide(режим, wр, 16) == 0) {
+        return fopen(путь, режим);
+    }
+    return _wfopen(wп, wр);
+}
+
+/* Как rename() в POSIX: если новый файл уже существует, он заменяется. */
+int sfera_win_rename(const char *старый, const char *новый) {
+    wchar_t wс[SFERA_WIN_ПУТЬ];
+    wchar_t wн[SFERA_WIN_ПУТЬ];
+    if (sfera_win_в_wide(старый, wс, SFERA_WIN_ПУТЬ) == 0 || sfera_win_в_wide(новый, wн, SFERA_WIN_ПУТЬ) == 0) {
+        return rename(старый, новый);
+    }
+    return MoveFileExW(wс, wн, MOVEFILE_REPLACE_EXISTING) ? 0 : -1;
+}
+
+/* Как remove() в POSIX: удаляет и файл, и пустую папку (в Windows для папок нужен _wrmdir). */
+int sfera_win_remove(const char *путь) {
+    wchar_t wп[SFERA_WIN_ПУТЬ];
+    if (sfera_win_в_wide(путь, wп, SFERA_WIN_ПУТЬ) == 0) {
+        DWORD атрибуты = GetFileAttributesA(путь);
+        if (атрибуты != INVALID_FILE_ATTRIBUTES && (атрибуты & FILE_ATTRIBUTE_DIRECTORY)) {
+            return _rmdir(путь);
+        }
+        return remove(путь);
+    }
+    DWORD атрибуты_w = GetFileAttributesW(wп);
+    if (атрибуты_w != INVALID_FILE_ATTRIBUTES && (атрибуты_w & FILE_ATTRIBUTE_DIRECTORY)) {
+        return _wrmdir(wп);
+    }
+    return _wremove(wп);
+}
+
+/* Второй аргумент (права доступа) в Windows не нужен — принимается ради одинаковой сигнатуры с POSIX mkdir. */
+int sfera_win_mkdir(const char *путь, int права) {
+    wchar_t wп[SFERA_WIN_ПУТЬ];
+    (void)права;
+    if (sfera_win_в_wide(путь, wп, SFERA_WIN_ПУТЬ) == 0) {
+        return _mkdir(путь);
+    }
+    return _wmkdir(wп);
 }

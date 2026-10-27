@@ -19,3 +19,7 @@ visits.log
 сайт/сервер
 admin-token.txt
 access.log
+
+# Файлы для загрузки на сайт: в git только список
+сайт/downloads/*
+!сайт/downloads/list.txt

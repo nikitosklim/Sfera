@@ -78,6 +78,7 @@ server {
 Загружайте только по HTTPS (иначе токен виден в сети). Лимит — 2 ГБ, имя файла — латиницей.
 Из командной строки: `curl -X PUT -H "Authorization: Bearer $(cat admin-token.txt)" -T файл.zip https://домен/upload/файл.zip`.
 Файл с уже существующим именем не перезаписывается — добавляйте версию в имя.
+Удалить файл: на странице `/admin` (раздел «Удалить файл») или `curl -X DELETE -H "Authorization: Bearer $(cat admin-token.txt)" https://домен/upload/файл.zip` — убирает файл с диска и строку из `list.txt`.
 
 ## 5. Новые файлы и статьи
 
