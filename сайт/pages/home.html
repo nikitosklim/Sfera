@@ -1,16 +1,139 @@
-<h1>Сфера</h1>
-<p class="tagline">Компилируемый язык программирования, полностью на кириллице.</p>
-<p>Весь синтаксис, все ключевые слова, вся стандартная библиотека — на русском языке.
-Компилятор написан на Rust и генерирует машинный код через LLVM — та же технология,
-на которой держится Clang. Код набирается на обычной русской раскладке: без фигурных
-скобок, стрелок и угловых скобок, блоки закрываются словом <code>конец</code>.</p>
+<section class="hero">
+  <img class="hero-sphere" src="/static/hero-sphere.svg" alt="">
+  <div class="wrap">
+    <div>
+      <h1>Программируйте на русском — и получайте машинный код</h1>
+      <p class="lead">«Сфера» — строго типизированный компилируемый язык. Ключевые слова, стандартная библиотека и сообщения об ошибках написаны по-русски, а программа собирается через LLVM в быстрый исполняемый файл.</p>
+      <div class="hero-actions">
+        <a class="button big" href="/downloads">Скачать «Сферу»</a>
+        <a class="button big secondary" href="/docs/quick-start">Быстрый старт</a>
+      </div>
+      <p class="note">Windows, Linux и macOS. Бесплатно, лицензия MIT.</p>
+    </div>
+    <div class="codewin">
+      <div class="tab"><b>привет.код</b></div>
+<pre><code><span class="к-сл">функция</span> главная(): <span class="к-тип">целое</span>
+    <span class="к-тип">Список из текст</span> гости = <span class="к-тип">Список из текст</span>();
+    гости.добавить(<span class="к-стр">"Аня"</span>);
+    гости.добавить(<span class="к-стр">"Борис"</span>);
+
+    <span class="к-сл">для каждого</span> имя <span class="к-сл">в</span> гости
+        вывести(<span class="к-стр">"Привет, %имя%!"</span>);
+    <span class="к-сл">конец</span>
+    <span class="к-сл">вернуть</span> <span class="к-чис">0</span>;
+<span class="к-сл">конец</span></code></pre>
+      <div class="run"><span class="cmd">&gt; запустить привет.код</span><br><span class="out">Привет, Аня!</span><br><span class="out">Привет, Борис!</span><span class="caret"></span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Что вы получаете</h2>
+      <p>Язык для реальных программ: от консольных утилит до сетевых серверов.</p>
+    </div>
+
+    <div class="feature">
+      <div class="feature-text">
+        <h3>Ошибки — это значения, а не исключения</h3>
+        <p>Функция, которая может не получиться, возвращает <code>результат из T</code>. Компилятор не даст забыть проверку, а код читается сверху вниз без скрытых переходов.</p>
+      </div>
+      <div class="codewin">
+<pre><code><span class="к-тип">результат из целое</span> итог = текст_в_целое(<span class="к-стр">"42"</span>);
+<span class="к-сл">если</span> (итог.успешно)
+    вывести(целое_в_текст(итог.значение));
+<span class="к-сл">иначе</span>
+    вывести(<span class="к-стр">"Это не число"</span>);
+<span class="к-сл">конец</span></code></pre>
+      </div>
+    </div>
+
+    <div class="feature flip">
+      <div class="feature-text">
+        <h3>Контракты и обобщённые типы</h3>
+        <p>Описывайте поведение контрактом, а хранение данных — типами <code>Список из T</code> и <code>Словарь из К и З</code>. Память освобождается автоматически, без пауз сборщика мусора.</p>
+      </div>
+      <div class="codewin">
+<pre><code><span class="к-сл">контракт</span> Печатаемый
+    <span class="к-сл">функция</span> напечатать(): <span class="к-тип">текст</span>;
+<span class="к-сл">конец</span>
+
+<span class="к-сл">структура</span> Кот : Печатаемый
+    <span class="к-сл">функция</span> напечатать(): <span class="к-тип">текст</span>
+        <span class="к-сл">вернуть</span> <span class="к-стр">"Мяу"</span>;
+    <span class="к-сл">конец</span>
+<span class="к-сл">конец</span></code></pre>
+      </div>
+    </div>
+
+    <div class="feature">
+      <div class="feature-text">
+        <h3>Многопоточность и сеть из коробки</h3>
+        <p>Блок <code>параллельно</code>, каналы между потоками, сокеты и HTTP-сервер. Сайт, который вы читаете, отдаётся сервером на «Сфере».</p>
+      </div>
+      <div class="codewin">
+<pre><code><span class="к-сл">параллельно</span>
+    вывести(<span class="к-стр">"работает в отдельном потоке"</span>);
+<span class="к-сл">конец</span>
+дождаться_все_потоки();</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section soft">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Первая программа за три шага</h2>
+    </div>
+    <ol class="steps">
+      <li>
+        <h3>Установите</h3>
+        <p>Скачайте установщик на странице загрузок. Он ставит компилятор и всё необходимое.</p>
+        <p><a href="/downloads">Перейти к загрузкам</a></p>
+      </li>
+      <li>
+        <h3>Напишите код</h3>
+        <p>Сохраните программу в файл с расширением <code>.код</code>.</p>
 <pre><code>функция главная(): целое
     вывести("Привет, мир!");
     вернуть 0;
 конец</code></pre>
-<p><a class="button" href="/downloads">Скачать</a>
-&nbsp; <a class="button" href="/docs/quick-start">Быстрый старт</a>
-&nbsp; <a href="/docs">документация</a> · <a href="/articles">статьи</a> · <a href="/examples">примеры кода</a> · <a href="/about">о языке</a></p>
-<p class="muted">Эта страница отдаётся HTTP-сервером, написанным на самой «Сфере»:
-с маршрутизацией, параллельной обработкой подключений, отдачей файлов с докачкой,
-статьями из Markdown и загрузкой установщиков.</p>
+      </li>
+      <li>
+        <h3>Запустите</h3>
+        <p>Компилятор соберёт и сразу запустит программу.</p>
+<pre><code>запустить привет.код</code></pre>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Научитесь по урокам</h2>
+      <p>Шесть коротких уроков: от первой программы до собственного веб-сервера.</p>
+    </div>
+    <ul class="curriculum">
+      <li><a href="/docs/quick-start"><strong>Быстрый старт</strong><span>Установка и первая программа</span><span class="go">Открыть</span></a></li>
+      <li><a href="/docs/lesson-1-basics"><strong>Урок 1. Основы</strong><span>Переменные, типы, условия и циклы</span><span class="go">Открыть</span></a></li>
+      <li><a href="/docs/lesson-6-web"><strong>Урок 6. Веб-сервер</strong><span>Свой сайт на «Сфере»</span><span class="go">Открыть</span></a></li>
+      <li><a href="/docs"><strong>Все материалы</strong><span>Полная документация языка и остальные уроки</span><span class="go">Открыть</span></a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="wrap">
+    <div>
+      <h2>Попробуйте «Сферу» сегодня</h2>
+      <p>Установка занимает пару минут. Исходники компилятора открыты на GitHub.</p>
+    </div>
+    <div class="hero-actions" style="margin:0">
+      <a class="button big" href="/downloads">Скачать</a>
+      <a class="button big secondary" href="https://github.com/nikitosklim/Sfera">Исходники</a>
+    </div>
+  </div>
+</section>

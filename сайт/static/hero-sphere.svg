@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" fill="none" stroke="currentColor" stroke-width="1.5">
+  <circle cx="320" cy="320" r="300"/>
+  <ellipse cx="320" cy="320" rx="210" ry="300"/>
+  <ellipse cx="320" cy="320" rx="110" ry="300"/>
+  <ellipse cx="320" cy="320" rx="300" ry="110"/>
+  <ellipse cx="320" cy="320" rx="300" ry="210"/>
+  <path d="M20 320h600M320 20v600"/>
+</svg>
