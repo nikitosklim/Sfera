@@ -85,8 +85,9 @@ server {
 - Установщик: `./add-download.sh файл "Название" "Описание"` — скопирует в `downloads/` и допишет
   строку со SHA-256 в `downloads/list.txt`. Перезапуск не нужен.
 - Статья: положите `имя.md` в `content/articles/` и добавьте строку `имя | Название | Описание`
-  в `content/articles/list.txt`. Документация — так же, в `content/docs/`.
-- Справочник языка — копия `ДОКУМЕНТАЦИЯ_ЯЗЫКА.md`; обновить: `cp ../ДОКУМЕНТАЦИЯ_ЯЗЫКА.md content/docs/language.md`.
+  в `content/articles/list.txt`. Документация, уроки и примеры — так же, в `content/docs/`, `content/lessons/`, `content/examples/`.
+- Документация по темам получена из `ДОКУМЕНТАЦИЯ_ЯЗЫКА.md`; обновить: `python3 split-docs.py` (перезапишет файлы в `content/docs/`).
+- Способы пожертвования: впишите ссылки в `support-links.txt`, сайт перезапускать не нужно.
 
 ## 6. Безопасность
 
