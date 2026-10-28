@@ -2,18 +2,18 @@
   <img class="hero-sphere" src="/static/hero-sphere.svg" alt="">
   <div class="wrap">
     <div>
-      <h1>Программируйте на русском — и получайте машинный код</h1>
-      <p class="lead">«Сфера» — строго типизированный компилируемый язык. Ключевые слова, стандартная библиотека и сообщения об ошибках написаны по-русски, а программа собирается через LLVM в быстрый исполняемый файл.</p>
+      <h1>Программируйте на русском без границ</h1>
+      <p class="lead">«Сфера» открывает доступ к машинному коду на родном языке: ключевые слова, библиотека и сообщения об ошибках по-русски, а программа собирается через LLVM в быстрый исполняемый файл.</p>
       <div class="hero-actions">
         <a class="button big" href="/downloads">Скачать «Сферу»</a>
-        <a class="button big secondary" href="/docs/quick-start">Быстрый старт</a>
+        <a class="button big secondary" href="/lessons/quick-start">Быстрый старт</a>
       </div>
       <p class="note">Windows, Linux и macOS. Бесплатно, лицензия MIT.</p>
     </div>
     <div class="codewin">
       <div class="tab"><b>привет.код</b></div>
 <pre><code><span class="к-сл">функция</span> главная(): <span class="к-тип">целое</span>
-    <span class="к-тип">Список из текст</span> гости = <span class="к-тип">Список из текст</span>();
+    <span class="к-тип">Список из текстов</span> гости = <span class="к-тип">Список из текстов</span>();
     гости.добавить(<span class="к-стр">"Аня"</span>);
     гости.добавить(<span class="к-стр">"Борис"</span>);
 
@@ -30,8 +30,26 @@
 <section class="section">
   <div class="wrap">
     <div class="section-head">
-      <h2>Что вы получаете</h2>
-      <p>Язык для реальных программ: от консольных утилит до сетевых серверов.</p>
+      <h2>Что можно создать на «Сфере»</h2>
+      <p>Это настоящий язык общего назначения, а не учебная игрушка.</p>
+    </div>
+    <div class="плитки плитки-3">
+      <a class="плитка" href="/lessons/lesson-6-web"><b>Сайты и веб-серверы</b><span>Маршруты, шаблоны, отдача файлов, загрузка на сервер. Этот сайт сам написан на «Сфере».</span></a>
+      <a class="плитка" href="/docs/network"><b>Работа с сетью</b><span>TCP-сокеты, клиенты и серверы, параллельная обработка подключений.</span></a>
+      <a class="плитка" href="/docs/first-program"><b>Машинный код через LLVM</b><span>Нативный исполняемый файл без интерпретатора и виртуальной машины.</span></a>
+      <a class="плитка" href="/docs/cross-compile"><b>Сборка под Android</b><span>Один и тот же код для разных процессоров и платформ.</span></a>
+      <a class="плитка" href="/docs/threads"><b>Многопоточность</b><span>Блок «параллельно», каналы между потоками и повторяемый порядок выполнения.</span></a>
+      <a class="плитка" href="/docs/database"><b>Базы данных</b><span>SQLite из программы и собственное хранилище без внешних зависимостей.</span></a>
+      <a class="плитка" href="/docs/graphics"><b>Графика и интерфейсы</b><span>Окна и рисование. Панель разработчика тоже написана на «Сфере».</span></a>
+      <a class="плитка" href="/docs/debugger"><b>Инструменты разработчика</b><span>Отладчик, языковой сервер, расширение для VS Code, пакетный менеджер.</span></a>
+    </div>
+  </div>
+</section>
+
+<section class="section soft">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Чем «Сфера» удобна</h2>
     </div>
 
     <div class="feature">
@@ -40,7 +58,7 @@
         <p>Функция, которая может не получиться, возвращает <code>результат из T</code>. Компилятор не даст забыть проверку, а код читается сверху вниз без скрытых переходов.</p>
       </div>
       <div class="codewin">
-<pre><code><span class="к-тип">результат из целое</span> итог = текст_в_целое(<span class="к-стр">"42"</span>);
+<pre><code><span class="к-тип">результат из целого</span> итог = текст_в_целое(<span class="к-стр">"42"</span>);
 <span class="к-сл">если</span> (итог.успешно)
     вывести(целое_в_текст(итог.значение));
 <span class="к-сл">иначе</span>
@@ -116,12 +134,15 @@
       <h2>Научитесь по урокам</h2>
       <p>Шесть коротких уроков: от первой программы до собственного веб-сервера.</p>
     </div>
-    <ul class="curriculum">
-      <li><a href="/docs/quick-start"><strong>Быстрый старт</strong><span>Установка и первая программа</span><span class="go">Открыть</span></a></li>
-      <li><a href="/docs/lesson-1-basics"><strong>Урок 1. Основы</strong><span>Переменные, типы, условия и циклы</span><span class="go">Открыть</span></a></li>
-      <li><a href="/docs/lesson-6-web"><strong>Урок 6. Веб-сервер</strong><span>Свой сайт на «Сфере»</span><span class="go">Открыть</span></a></li>
-      <li><a href="/docs"><strong>Все материалы</strong><span>Полная документация языка и остальные уроки</span><span class="go">Открыть</span></a></li>
-    </ul>
+    <div class="плитки плитки-3">
+      <a class="плитка" href="/lessons/lesson-1-basics"><em>Урок 1</em><b>Переменные, условия и циклы</b><span>Типы, строки с подстановкой, если, пока, для каждого.</span></a>
+      <a class="плитка" href="/lessons/lesson-2-functions"><em>Урок 2</em><b>Функции и структуры</b><span>Функции, рекурсия, структуры и методы.</span></a>
+      <a class="плитка" href="/lessons/lesson-3-collections"><em>Урок 3</em><b>Список, Словарь и текст</b><span>Коллекции и работа со строками.</span></a>
+      <a class="плитка" href="/lessons/lesson-4-errors"><em>Урок 4</em><b>Ошибки без исключений</b><span>результат из T, успех и ошибка, опциональный тип.</span></a>
+      <a class="плитка" href="/lessons/lesson-5-contracts"><em>Урок 5</em><b>Контракты и полиморфизм</b><span>Разные объекты в одном списке.</span></a>
+      <a class="плитка" href="/lessons/lesson-6-web"><em>Урок 6</em><b>Свой веб-сервер</b><span>Свой сайт на «Сфере».</span></a>
+    </div>
+    <p style="margin-top:24px"><a href="/lessons">Все уроки</a> · <a href="/docs">Документация</a> · <a href="/examples">Примеры</a></p>
   </div>
 </section>
 
@@ -133,7 +154,7 @@
     </div>
     <div class="hero-actions" style="margin:0">
       <a class="button big" href="/downloads">Скачать</a>
-      <a class="button big secondary" href="https://github.com/nikitosklim/Sfera">Исходники</a>
+      <a class="button big secondary" href="/support">Поддержать проект</a>
     </div>
   </div>
 </section>

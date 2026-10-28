@@ -1,0 +1,40 @@
+<div class="wrap page page-narrow">
+<h1>Поиск</h1>
+<form class="search search-big" action="/search" role="search"><input id="запрос" type="search" name="q" placeholder="Введите слово: например, «Список» или «результат»" aria-label="Поиск" autofocus><button class="button" type="submit">Найти</button></form>
+<p id="итог" class="muted"></p>
+<div id="результаты" class="результаты"></div>
+<script>
+(function(){
+  var поле=document.getElementById('запрос'), итог=document.getElementById('итог'), блок=document.getElementById('результаты');
+  var q=new URLSearchParams(location.search).get('q')||''; поле.value=q;
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function очистить(т){return т.replace(/```[^\n]*\n?/g,' ').replace(/[#*_`>|]/g,' ').replace(/\[([^\]]*)\]\([^)]*\)/g,'$1').replace(/\s+/g,' ').trim();}
+  if(!q.trim()){итог.textContent='Введите слово или фразу.';return;}
+  итог.textContent='Ищем…';
+  fetch('/search-index').then(function(r){return r.text();}).then(function(т){
+    var слова=q.toLowerCase().split(/\s+/).filter(Boolean), найдено=[];
+    т.split('\n@@@КОНЕЦ@@@\n').forEach(function(з){
+      var п=з.split('\n@@@ПОЛЕ@@@\n'); if(п.length<4) return;
+      var url=п[0], название=п[1], раздел=п[2], текст=п[3], нижний=текст.toLowerCase(), нн=название.toLowerCase();
+      var баллы=0, первая=-1;
+      for(var i=0;i<слова.length;i++){
+        var в=нижний.indexOf(слова[i]);
+        if(в<0 && нн.indexOf(слова[i])<0){баллы=-1;break;}
+        if(нн.indexOf(слова[i])>=0) баллы+=20;
+        if(в>=0){ баллы+=Math.min(10,нижний.split(слова[i]).length-1); if(первая<0) первая=в; }
+      }
+      if(баллы<0) return;
+      var н=Math.max(0,первая-60), фрагмент=очистить(текст.substr(н,220));
+      найдено.push({url:url,название:название,раздел:раздел,баллы:баллы,фрагмент:фрагмент});
+    });
+    найдено.sort(function(a,b){return b.баллы-a.баллы;});
+    итог.textContent=найдено.length?('Найдено: '+найдено.length):'Ничего не найдено. Попробуйте другое слово.';
+    блок.innerHTML=найдено.slice(0,30).map(function(р){
+      var f=esc(р.фрагмент);
+      слова.forEach(function(с){var re=new RegExp('('+с.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'); f=f.replace(re,'<mark>$1</mark>');});
+      return '<a class="результат" href="'+р.url+'"><em>'+esc(р.раздел)+'</em><b>'+esc(р.название)+'</b><span>…'+f+'…</span></a>';
+    }).join('');
+  }).catch(function(){итог.textContent='Не удалось загрузить поиск.';});
+})();
+</script>
+</div>

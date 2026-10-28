@@ -2,6 +2,20 @@
 <h1>Загрузки</h1>
 <p class="tagline">Установочные файлы «Сферы». Исходники и подробные инструкции — на GitHub.</p>
 {{список}}
+<p id="ваша-система" class="muted" hidden></p>
+<script>
+(function(){
+  var u=navigator.userAgent, os='';
+  if(/Android/i.test(u)) os='Android'; else if(/Windows/i.test(u)) os='Windows'; else if(/Mac/i.test(u)) os='macOS'; else if(/Linux|X11/i.test(u)) os='Linux';
+  if(!os) return;
+  var подсказка=document.getElementById('ваша-система'), найдено=false;
+  document.querySelectorAll('tr').forEach(function(tr){
+    if(tr.textContent.indexOf(os)>=0){ tr.style.background='var(--accent-soft)'; найдено=true; }
+  });
+  подсказка.hidden=false;
+  подсказка.textContent=найдено?('Подходящие вам файлы ('+os+') подсвечены в таблице.'):('Для вашей системы ('+os+') готового файла пока нет: сборку для неё можно сделать из исходников на GitHub.');
+})();
+</script>
 <p class="muted">Проверьте, что файл скачан полностью: в таблице указаны размер и контрольная сумма SHA-256.
 Установщик Windows ставит компилятор, LLVM и всё необходимое; подробности — в <a href="https://github.com/nikitosklim/Sfera">README</a>.</p>
 </div>

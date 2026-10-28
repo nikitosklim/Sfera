@@ -86,11 +86,11 @@ cd Sfera
 
 Короткие уроки — по порядку:
 
-1. [Переменные, условия и циклы](/docs/lesson-1-basics)
-2. [Функции и структуры](/docs/lesson-2-functions)
-3. [Список, Словарь и текст](/docs/lesson-3-collections)
-4. [Ошибки без исключений](/docs/lesson-4-errors)
-5. [Контракты и полиморфизм](/docs/lesson-5-contracts)
-6. [Свой веб-сервер](/docs/lesson-6-web)
+1. [Переменные, условия и циклы](/lessons/lesson-1-basics)
+2. [Функции и структуры](/lessons/lesson-2-functions)
+3. [Список, Словарь и текст](/lessons/lesson-3-collections)
+4. [Ошибки без исключений](/lessons/lesson-4-errors)
+5. [Контракты и полиморфизм](/lessons/lesson-5-contracts)
+6. [Свой веб-сервер](/lessons/lesson-6-web)
 
-Полный справочник — [«Справочник языка»](/docs/language). Если что-то не получилось, напишите в [issues на GitHub](https://github.com/nikitosklim/Sfera/issues): это самый ценный отзыв.
+Полный справочник — [документация](/docs). Если что-то не получилось, напишите в [issues на GitHub](https://github.com/nikitosklim/Sfera/issues): это самый ценный отзыв.
