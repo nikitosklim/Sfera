@@ -1,0 +1,57 @@
+name: Сборка релиза
+
+# Запуск вручную: вкладка Actions → «Сборка релиза» → Run workflow.
+# Также срабатывает при публикации тега версии (например v0.3.3):
+# собранные архивы автоматически прикладываются к релизу на GitHub.
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  linux:
+    name: Linux
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Установка зависимостей
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y llvm-18-dev clang libsdl2-dev libsdl2-ttf-dev xz-utils
+      - name: Сборка компилятора и панели
+        env:
+          LLVM_SYS_180_PREFIX: /usr/lib/llvm-18
+        run: bash ./собрать-релиз-linux.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sfera-panel-linux
+          path: релиз/Sfera-Panel-Linux.tar.xz
+      - name: Приложить к релизу
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: релиз/Sfera-Panel-Linux.tar.xz
+
+  macos:
+    name: macOS (Apple Silicon)
+    # Если сборка под macOS не удалась, Linux-архив всё равно останется.
+    continue-on-error: true
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Установка зависимостей
+        run: brew install llvm@18 sdl2 sdl2_ttf
+      - name: Сборка компилятора и приложения
+        run: bash ./собрать-релиз-macos.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sfera-panel-macos-arm64
+          path: релиз/Sfera-Panel-macOS.zip
+      - name: Приложить к релизу
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: релиз/Sfera-Panel-macOS.zip
