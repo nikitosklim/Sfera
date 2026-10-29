@@ -16,15 +16,19 @@ jobs:
     name: Linux
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Установка зависимостей
         run: |
           sudo apt-get update
-          sudo apt-get install -y llvm-18-dev clang libsdl2-dev libsdl2-ttf-dev xz-utils
+          sudo apt-get install -y llvm-18-dev libpolly-18-dev libzstd-dev libffi-dev zlib1g-dev libxml2-dev clang libsdl2-dev libsdl2-ttf-dev xz-utils
       - name: Сборка компилятора и панели
         env:
           LLVM_SYS_180_PREFIX: /usr/lib/llvm-18
-        run: bash ./собрать-релиз-linux.sh
+          RUST_BACKTRACE: "1"
+        run: |
+          rustc --version
+          /usr/lib/llvm-18/bin/llvm-config --version
+          bash -x ./собрать-релиз-linux.sh
       - uses: actions/upload-artifact@v4
         with:
           name: sfera-panel-linux
@@ -41,11 +45,19 @@ jobs:
     continue-on-error: true
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Установка зависимостей
-        run: brew install llvm@18 sdl2 sdl2_ttf
+        run: |
+          brew install llvm@18 sdl2 sdl2_ttf zstd zlib libxml2 libffi
+          echo "LIBRARY_PATH=$(brew --prefix)/lib:$(brew --prefix zstd)/lib" >> "$GITHUB_ENV"
+          echo "LLVM_SYS_180_PREFIX=$(brew --prefix llvm@18)" >> "$GITHUB_ENV"
       - name: Сборка компилятора и приложения
-        run: bash ./собрать-релиз-macos.sh
+        env:
+          RUST_BACKTRACE: "1"
+        run: |
+          rustc --version
+          "$(brew --prefix llvm@18)/bin/llvm-config" --version
+          bash -x ./собрать-релиз-macos.sh
       - uses: actions/upload-artifact@v4
         with:
           name: sfera-panel-macos-arm64
