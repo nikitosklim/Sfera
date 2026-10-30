@@ -16,8 +16,10 @@
 # поверх старых. Иначе создаётся одноразовый ключ: перед установкой новой
 # сборки старую версию нужно удалить с телефона.
 #
-# ⚠️ Это приложение без встроенного компилятора: интерфейс панели, версия,
-# описание языка и пример. Запуск программ на самом телефоне — отдельный этап.
+# Если рядом есть релиз/android-bin (запустить + lld), компилятор вкладывается в
+# APK, и вкладка «Запуск» собирает и выполняет программу на самом телефоне.
+# targetSdk=28: с 29-й версии Android запрещает приложению запускать файлы из
+# своей папки данных, а собранная на телефоне программа запускается именно оттуда.
 
 set -e
 ROOT=$(cd "$(dirname "$0")" && pwd)
@@ -75,6 +77,30 @@ cp инструменты/android/панель_android.код "$W/src/"
     --линковать SDL2 --линковать SDL2_ttf)
 cp "$W/src/панель_android" "$LIBS/libmain.so"
 
+# Компилятор внутри APK: «запустить» и lld (из релиз/android-bin, собираются
+# скриптом собрать-android-компилятор.sh), замена clang и файлы NDK для линковки.
+# Android распаковывает при установке только файлы с именами lib*.so, поэтому
+# всё упаковано под такими именами; panel_android.код находит их в каталоге библиотек.
+BIN="${SFERA_ANDROID_BIN:-$ROOT/релиз/android-bin}"
+if [ -f "$BIN/запустить" ] && [ -f "$BIN/lld" ]; then
+    echo "3b/7  Добавляю компилятор в APK..."
+    cp "$BIN/запустить" "$LIBS/libsferac.so"
+    cp "$BIN/lld" "$LIBS/liblld.so"
+    "$TOOLCHAIN/bin/aarch64-linux-android23-clang" -O2 инструменты/android/apk/clang_shim.c -o "$LIBS/libsfera_clang.so"
+    SR="$SYSROOT/usr/lib/aarch64-linux-android/23"
+    cp "$SR/crtbegin_dynamic.o" "$LIBS/libsfera_crtbegin.so"
+    cp "$SR/crtend_android.o" "$LIBS/libsfera_crtend.so"
+    cp "$SR/libc.so" "$LIBS/libsfera_c.so"
+    cp "$SR/libm.so" "$LIBS/libsfera_m.so"
+    cp "$SR/libdl.so" "$LIBS/libsfera_dl.so"
+    BUILTINS=$(find "$NDK" -name "libclang_rt.builtins-aarch64-android.a" | head -1)
+    cp "$BUILTINS" "$LIBS/libsfera_builtins.so"
+    tar -cf "$LIBS/libsfera_stdlib.so" -C "$ROOT" стандартная_библиотека
+    ls -la "$LIBS"
+else
+    echo "Компилятор для Android не найден ($BIN) — собираю APK без вкладки «Запуск»."
+fi
+
 echo "4/7  Компилирую Java-обвязку SDL..."
 rm -rf "$W/classes" "$W/dex"; mkdir -p "$W/classes" "$W/dex"
 javac --release 8 -nowarn -cp "$ANDROID_JAR" -d "$W/classes" \
@@ -84,7 +110,7 @@ javac --release 8 -nowarn -cp "$ANDROID_JAR" -d "$W/classes" \
 
 echo "5/7  Собираю APK..."
 "$BT/aapt2" link -o "$W/base.apk" -I "$ANDROID_JAR" --manifest инструменты/android/apk/AndroidManifest.xml \
-    --min-sdk-version 21 --target-sdk-version 34 --version-code "$CODE" --version-name "$VERSION"
+    --min-sdk-version 21 --target-sdk-version 28 --version-code "$CODE" --version-name "$VERSION"
 python3 - "$W" "$LIBS" "$FONT" <<'PY'
 import sys, glob, os, zipfile
 w, libs, font = sys.argv[1:4]

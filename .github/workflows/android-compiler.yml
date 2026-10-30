@@ -2,7 +2,8 @@ name: Компилятор для Android
 
 # Запуск вручную: Actions → «Компилятор для Android» → Run workflow.
 # Первый запуск собирает LLVM под Android (1–2 часа) и кладёт результат в кэш;
-# следующие запуски занимают несколько минут.
+# следующие запуски занимают несколько минут. В конце собирается готовый APK
+# панели с компилятором внутри (артефакт sfera-panel-android-full).
 on:
   workflow_dispatch:
 
@@ -20,7 +21,7 @@ jobs:
       - name: Установка зависимостей
         run: |
           sudo apt-get update
-          sudo apt-get install -y llvm-18-dev libpolly-18-dev cmake ninja-build
+          sudo apt-get install -y llvm-18-dev libpolly-18-dev libzstd-dev libffi-dev zlib1g-dev libxml2-dev clang cmake ninja-build fonts-dejavu-core
       - name: Кэш LLVM под Android
         id: cache
         uses: actions/cache/restore@v4
@@ -43,3 +44,12 @@ jobs:
         with:
           name: sfera-android-bin
           path: релиз/android-bin/
+      - name: Сборка APK панели с компилятором
+        env:
+          LLVM_SYS_180_PREFIX: /usr/lib/llvm-18
+          RUST_BACKTRACE: "1"
+        run: bash -x ./собрать-apk.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sfera-panel-android-full
+          path: релиз/Sfera-Panel-Android.apk
