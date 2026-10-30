@@ -8,6 +8,7 @@
     <application
         android:label="Панель Сферы"
         android:allowBackup="true"
+        android:debuggable="true"
         android:extractNativeLibs="true"
         android:hardwareAccelerated="true"
         android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
