@@ -1,0 +1,45 @@
+name: Компилятор для Android
+
+# Запуск вручную: Actions → «Компилятор для Android» → Run workflow.
+# Первый запуск собирает LLVM под Android (1–2 часа) и кладёт результат в кэш;
+# следующие запуски занимают несколько минут.
+on:
+  workflow_dispatch:
+
+jobs:
+  android-compiler:
+    name: Компилятор и lld под ARM64
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v5
+      - name: Освобождаем место на диске
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /opt/hostedtoolcache/CodeQL
+          df -h /
+      - name: Установка зависимостей
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y llvm-18-dev libpolly-18-dev cmake ninja-build
+      - name: Кэш LLVM под Android
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: релиз/android-llvm
+          key: android-llvm-18.1.3-api23-v1-${{ hashFiles('собрать-android-компилятор.sh') }}
+      - name: Сборка LLVM, lld и libffi под Android
+        run: bash -x ./собрать-android-компилятор.sh llvm
+      - name: Сохранить кэш LLVM
+        if: always() && steps.cache.outputs.cache-hit != 'true' && hashFiles('релиз/android-llvm/install/lib/libLLVMCore.a') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: релиз/android-llvm
+          key: android-llvm-18.1.3-api23-v1-${{ hashFiles('собрать-android-компилятор.sh') }}
+      - name: Сборка компилятора Сферы под Android
+        env:
+          RUST_BACKTRACE: "1"
+        run: bash -x ./собрать-android-компилятор.sh compiler
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sfera-android-bin
+          path: релиз/android-bin/
