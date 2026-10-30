@@ -2339,10 +2339,16 @@ impl<'ctx> Кодогенератор<'ctx> {
                     Target::initialize_native(&InitializationConfig::default())
                         .map_err(|e| ошибка(format!("не удалось инициализировать целевую платформу LLVM: {}", e)))?;
                 }
-                let triple = TargetMachine::get_default_triple();
-                let cpu = TargetMachine::get_host_cpu_name().to_string();
-                let features = TargetMachine::get_host_cpu_features().to_string();
-                (triple, cpu, features)
+                // LLVM, собранный кросс-компиляцией под Android, не знает своей
+                // тройки по умолчанию (пустая строка) — задаём её явно.
+                if cfg!(target_os = "android") {
+                    (inkwell::targets::TargetTriple::create("aarch64-linux-android23"), "generic".to_string(), String::new())
+                } else {
+                    let triple = TargetMachine::get_default_triple();
+                    let cpu = TargetMachine::get_host_cpu_name().to_string();
+                    let features = TargetMachine::get_host_cpu_features().to_string();
+                    (triple, cpu, features)
+                }
             }
         };
 

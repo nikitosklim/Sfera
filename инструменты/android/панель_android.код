@@ -144,7 +144,7 @@
     б = б + "mkdir -p " + д + "W/bin " + д + "W/std\n";
     б = б + "cd " + д + "W || exit 1\n";
     б = б + "ln -sf \"" + д + "LIB/libsfera_clang.so\" bin/clang\n";
-    б = б + "if [ ! -d std/стандартная_библиотека ]; then tar -xf \"" + д + "LIB/libsfera_stdlib.so\" -C std; fi\n";
+    б = б + "if [ ! -d std/стандартная_библиотека ]; then tar -xf \"" + д + "LIB/libsfera_stdlib.so\" -C std 2>/dev/null; fi\n";
     б = б + "export PATH=\"" + д + "W/bin:" + д + "PATH\"\n";
     б = б + "export SFERA_STDLIB=\"" + д + "W/std/стандартная_библиотека\"\n";
     б = б + "export TMPDIR=" + д + "W\n";
