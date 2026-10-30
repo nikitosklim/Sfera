@@ -71,7 +71,7 @@ rm -rf "$W/src"; mkdir -p "$W/src"
 cp инструменты/android/панель_android.код "$W/src/"
 (cd "$W/src" && PATH="$TOOLCHAIN/bin:$PATH" SFERA_ANDROID_LIBDIR="$LIBS" \
     "$ROOT/target/release/запустить" панель_android.код --только-собрать \
-    --целевая-платформа aarch64-linux-android --android-sysroot "$SYSROOT" --android-so \
+    --целевая-платформа aarch64-linux-android21 --android-sysroot "$SYSROOT" --android-so \
     --линковать SDL2 --линковать SDL2_ttf)
 cp "$W/src/панель_android" "$LIBS/libmain.so"
 
