@@ -67,3 +67,32 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: релиз/Sfera-Panel-macOS.zip
+
+  android:
+    name: Android (ARM64)
+    # Как и macOS: если не вышло, остальные архивы всё равно останутся.
+    continue-on-error: true
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Установка зависимостей
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y llvm-18-dev libpolly-18-dev libzstd-dev libffi-dev zlib1g-dev libxml2-dev clang fonts-dejavu-core
+      - name: Сборка компилятора
+        env:
+          LLVM_SYS_180_PREFIX: /usr/lib/llvm-18
+        run: cargo build --release
+      - name: Сборка APK
+        env:
+          RUST_BACKTRACE: "1"
+        run: bash ./собрать-apk.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sfera-panel-android
+          path: релиз/Sfera-Panel-Android.apk
+      - name: Приложить к релизу
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: релиз/Sfera-Panel-Android.apk
