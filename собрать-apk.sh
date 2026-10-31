@@ -44,6 +44,9 @@ echo "android.jar: $ANDROID_JAR"
 FONT="${SFERA_FONT:-/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf}"
 [ -f "$FONT" ] || { echo "Нет шрифта с кириллицей: $FONT (задайте SFERA_FONT=путь/к/шрифту.ttf)"; exit 1; }
 
+MONO="${SFERA_FONT_MONO:-/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf}"
+[ -f "$MONO" ] || { echo "Нет моноширинного шрифта: $MONO (задайте SFERA_FONT_MONO=путь.ttf)"; exit 1; }
+
 W="$ROOT/релиз/apk-work"
 OUT="$ROOT/релиз"
 mkdir -p "$W" "$OUT"
@@ -101,6 +104,15 @@ else
     echo "Компилятор для Android не найден ($BIN) — собираю APK без вкладки «Запуск»."
 fi
 
+# Документация, уроки и примеры внутри приложения (читаются без интернета).
+mkdir -p "$LIBS"
+DOCS_STAGE="$W/docs-stage"
+rm -rf "$DOCS_STAGE"; mkdir -p "$DOCS_STAGE"
+cp -r "$ROOT/сайт/content/docs" "$DOCS_STAGE/docs"
+cp -r "$ROOT/сайт/content/lessons" "$DOCS_STAGE/lessons"
+cp -r "$ROOT/examples" "$DOCS_STAGE/examples"
+tar -cf "$LIBS/libsfera_docs.so" -C "$DOCS_STAGE" docs lessons examples
+
 echo "4/7  Компилирую Java-обвязку SDL..."
 rm -rf "$W/classes" "$W/dex"; mkdir -p "$W/classes" "$W/dex"
 javac --release 8 -nowarn -cp "$ANDROID_JAR" -d "$W/classes" \
@@ -111,14 +123,15 @@ javac --release 8 -nowarn -cp "$ANDROID_JAR" -d "$W/classes" \
 echo "5/7  Собираю APK..."
 "$BT/aapt2" link -o "$W/base.apk" -I "$ANDROID_JAR" --manifest инструменты/android/apk/AndroidManifest.xml \
     --min-sdk-version 21 --target-sdk-version 28 --version-code "$CODE" --version-name "$VERSION"
-python3 - "$W" "$LIBS" "$FONT" <<'PY'
+python3 - "$W" "$LIBS" "$FONT" "$MONO" <<'PY'
 import sys, glob, os, zipfile
-w, libs, font = sys.argv[1:4]
+w, libs, font, mono = sys.argv[1:5]
 with zipfile.ZipFile(os.path.join(w, "base.apk"), "a") as z:
     z.write(os.path.join(w, "dex", "classes.dex"), "classes.dex", zipfile.ZIP_DEFLATED)
     for so in sorted(glob.glob(os.path.join(libs, "*.so"))):
         z.write(so, "lib/arm64-v8a/" + os.path.basename(so), zipfile.ZIP_STORED)
     z.write(font, "assets/font.ttf", zipfile.ZIP_DEFLATED)
+    z.write(mono, "assets/mono.ttf", zipfile.ZIP_DEFLATED)
 PY
 
 echo "6/7  Выравниваю и подписываю..."
