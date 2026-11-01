@@ -196,6 +196,17 @@ mark{background:var(--accent-soft);color:var(--ink);border-radius:3px;padding:0 
 .footer-about{color:var(--muted);max-width:22rem}
 .footer-bottom{margin-top:36px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;display:flex;flex-wrap:wrap;gap:6px 24px}
 
+/* ---- раскрывающиеся блоки ---- */
+details.сумма{margin-top:6px}
+details.сумма summary{cursor:pointer;color:var(--muted);font-size:.85rem}
+details.сумма code{display:block;margin-top:4px}
+details.как summary{cursor:pointer;font-weight:650;padding:10px 0}
+details.как{border-top:1px solid var(--line)}
+details.как ol{margin:0 0 14px;padding-left:1.3rem}
+details.как li{margin:4px 0}
+.cta-поддержка{margin:20px 0 8px}
+.cta-поддержка .button{font-size:1.1rem;padding:14px 28px}
+
 /* ---- формы (загрузка файлов) ---- */
 input[type=text],input[type=password],input[type=file]{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:100%}
 label{font-weight:560}
