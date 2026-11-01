@@ -74,6 +74,7 @@ ls "$LIBS"
 echo "3/7  Компилирую панель на Сфере (libmain.so)..."
 rm -rf "$W/src"; mkdir -p "$W/src"
 cp инструменты/android/панель_android.код "$W/src/"
+sed -i "s|вернуть \"[0-9.]*\"; // @ВЕРСИЯ@|вернуть \"$VERSION\"; // @ВЕРСИЯ@|" "$W/src/панель_android.код"
 (cd "$W/src" && PATH="$TOOLCHAIN/bin:$PATH" SFERA_ANDROID_LIBDIR="$LIBS" \
     "$ROOT/target/release/запустить" панель_android.код --только-собрать \
     --целевая-платформа aarch64-linux-android21 --android-sysroot "$SYSROOT" --android-so \
@@ -121,7 +122,9 @@ javac --release 8 -nowarn -cp "$ANDROID_JAR" -d "$W/classes" \
 "$BT/d8" --lib "$ANDROID_JAR" --min-api 21 --output "$W/dex" $(find "$W/classes" -name '*.class')
 
 echo "5/7  Собираю APK..."
-"$BT/aapt2" link -o "$W/base.apk" -I "$ANDROID_JAR" --manifest инструменты/android/apk/AndroidManifest.xml \
+rm -f "$W/res.zip"
+"$BT/aapt2" compile --dir инструменты/android/apk/res -o "$W/res.zip"
+"$BT/aapt2" link -o "$W/base.apk" "$W/res.zip" -I "$ANDROID_JAR" --manifest инструменты/android/apk/AndroidManifest.xml \
     --min-sdk-version 21 --target-sdk-version 28 --version-code "$CODE" --version-name "$VERSION"
 python3 - "$W" "$LIBS" "$FONT" "$MONO" <<'PY'
 import sys, glob, os, zipfile

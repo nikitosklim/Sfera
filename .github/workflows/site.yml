@@ -1,0 +1,39 @@
+name: Сайт для сервера
+
+# Запуск вручную: Actions → «Сайт для сервера» → Run workflow.
+# Собирает сайт на Сфере под Ubuntu 22.04 (совместим с большинством VPS)
+# и кладёт готовый архив sfera-site-linux в артефакты.
+on:
+  workflow_dispatch:
+
+jobs:
+  site:
+    name: Сайт (Linux x86-64)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Установка LLVM 18
+        run: |
+          wget -qO /tmp/llvm.sh https://apt.llvm.org/llvm.sh
+          chmod +x /tmp/llvm.sh
+          sudo /tmp/llvm.sh 18
+          sudo apt-get install -y llvm-18-dev libpolly-18-dev libzstd-dev libffi-dev zlib1g-dev libxml2-dev clang-18
+      - name: Сборка компилятора
+        env:
+          LLVM_SYS_180_PREFIX: /usr/lib/llvm-18
+          RUST_BACKTRACE: "1"
+        run: cargo build --release
+      - name: Сборка сайта
+        run: |
+          cd сайт
+          ../target/release/запустить сервер.код --только-собрать
+          ls -la сервер
+      - name: Архив
+        run: |
+          mkdir -p релиз
+          tar -czf релиз/sfera-site-linux.tar.gz --exclude='сайт/downloads/*.zip' --exclude='сайт/admin-token.txt' сайт
+          ls -la релиз
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sfera-site-linux
+          path: релиз/sfera-site-linux.tar.gz
