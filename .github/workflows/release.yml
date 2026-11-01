@@ -83,6 +83,19 @@ jobs:
         env:
           LLVM_SYS_180_PREFIX: /usr/lib/llvm-18
         run: cargo build --release
+      - name: Ключ подписи Android (если задан в секретах)
+        env:
+          KS_B64: ${{ secrets.SFERA_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.SFERA_KEYSTORE_PASS }}
+        run: |
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/sfera.keystore"
+            echo "SFERA_KEYSTORE=$RUNNER_TEMP/sfera.keystore" >> "$GITHUB_ENV"
+            echo "SFERA_KEYSTORE_PASS=$KS_PASS" >> "$GITHUB_ENV"
+            echo "Подпись: постоянный ключ"
+          else
+            echo "Подпись: одноразовый отладочный ключ (секрет SFERA_KEYSTORE_B64 не задан)"
+          fi
       - name: Сборка APK
         env:
           RUST_BACKTRACE: "1"
