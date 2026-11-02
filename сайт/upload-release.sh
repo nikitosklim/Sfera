@@ -44,7 +44,7 @@ for f in "$@"; do
   code=$(curl -sS -o /tmp/upload-resp.$$ -w '%{http_code}' -X PUT -T "$f" \
     -H "Authorization: Bearer $TOKEN" \
     -H "X-Title: $(enc "$title")" -H "X-Description: $(enc "$desc")" -H "X-Sha256: $sum" \
-    "$SITE/upload/$name") || code=000
+    "$SITE/%D0%B7%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%B8%D1%82%D1%8C/$name") || code=000
   echo "  ответ $code: $(cat /tmp/upload-resp.$$ 2>/dev/null)"; rm -f /tmp/upload-resp.$$
 done
-echo "Готово. Проверьте страницу: $SITE/downloads"
+echo "Готово. Проверьте страницу: $SITE/%D0%B7%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BA%D0%B8"

@@ -29,7 +29,7 @@ SHA-256 считается в браузере и показывается ря�
     if (!/^[A-Za-z0-9._-]+$/.test(файл.name)) { статус('Имя файла: только латиница, цифры, . _ -'); return; }
     try { sessionStorage.setItem('sfera-token', токен); } catch (e) {}
     статус('Проверяю токен…');
-    fetch('/upload-check', { headers: { Authorization: 'Bearer ' + токен } }).then(function (r) {
+    fetch('/проверка-токена', { headers: { Authorization: 'Bearer ' + токен } }).then(function (r) {
       if (!r.ok) throw new Error('токен не подошёл (или загрузка выключена на сервере)');
       if (window.crypto && crypto.subtle) {
         статус('Считаю SHA-256…');
@@ -38,7 +38,7 @@ SHA-256 считается в браузере и показывается ря�
       return '';
     }).then(function (сумма) {
       var x = new XMLHttpRequest();
-      x.open('PUT', '/upload/' + encodeURIComponent(файл.name));
+      x.open('PUT', '/загрузить/' + encodeURIComponent(файл.name));
       x.setRequestHeader('Authorization', 'Bearer ' + токен);
       x.setRequestHeader('X-Title', encodeURIComponent($('название').value));
       x.setRequestHeader('X-Description', encodeURIComponent($('описание').value));
@@ -61,7 +61,7 @@ SHA-256 считается в браузере и показывается ря�
     var с = function (т) { $('удалить-статус').textContent = т; };
     if (!токен || !имя) { с('Укажите токен и имя файла'); return; }
     if (!confirm('Удалить ' + имя + ' с сервера?')) return;
-    fetch('/upload/' + encodeURIComponent(имя), { method: 'DELETE', headers: { Authorization: 'Bearer ' + токен } })
+    fetch('/загрузить/' + encodeURIComponent(имя), { method: 'DELETE', headers: { Authorization: 'Bearer ' + токен } })
       .then(function (r) { return r.json().then(function (о) { с(r.ok ? 'Удалено.' : 'Ошибка: ' + (о['ошибка'] || r.status)); }); })
       .catch(function (e) { с('Ошибка: ' + e.message); });
   };
