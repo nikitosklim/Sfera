@@ -4,3 +4,4 @@
 # Boosty | https://boosty.to/ваш-аккаунт | Регулярная поддержка проекта по подписке
 # ЮMoney | https://yoomoney.ru/to/ваш-номер | Разовое пожертвование
 # GitHub Sponsors | https://github.com/sponsors/nikitosklim | Поддержка через GitHub
+DonationAlerts | https://www.donationalerts.com/r/sferalang | Разовое пожертвование картой или через СБП
