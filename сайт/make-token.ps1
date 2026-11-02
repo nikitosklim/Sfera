@@ -1,4 +1,4 @@
-﻿# Создаёт admin-token.txt — пароль для загрузки файлов через /admin. Хранить в секрете.
+﻿# Создаёт admin-token.txt — пароль для загрузки файлов через /управление. Хранить в секрете.
 $файл = Join-Path $PSScriptRoot "admin-token.txt"
 if (Test-Path $файл) { Write-Host "admin-token.txt уже есть (удалите его, чтобы выпустить новый токен)"; exit 1 }
 $байты = New-Object byte[] 32

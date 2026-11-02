@@ -1,6 +1,6 @@
 <div class="wrap page page-narrow">
 <h1>Поиск</h1>
-<form class="search search-big" action="/search" role="search"><input id="запрос" type="search" name="q" placeholder="Введите слово: например, «Список» или «результат»" aria-label="Поиск" autofocus><button class="button" type="submit">Найти</button></form>
+<form class="search search-big" action="/поиск" role="search"><input id="запрос" type="search" name="q" placeholder="Введите слово: например, «Список» или «результат»" aria-label="Поиск" autofocus><button class="button" type="submit">Найти</button></form>
 <p id="итог" class="muted"></p>
 <div id="результаты" class="результаты"></div>
 <script>
@@ -11,7 +11,7 @@
   function очистить(т){return т.replace(/```[^\n]*\n?/g,' ').replace(/[#*_`>|]/g,' ').replace(/\[([^\]]*)\]\([^)]*\)/g,'$1').replace(/\s+/g,' ').trim();}
   if(!q.trim()){итог.textContent='Введите слово или фразу.';return;}
   итог.textContent='Ищем…';
-  fetch('/search-index').then(function(r){return r.text();}).then(function(т){
+  fetch('/поиск-данные').then(function(r){return r.text();}).then(function(т){
     var слова=q.toLowerCase().split(/\s+/).filter(Boolean), найдено=[];
     т.split('\n@@@КОНЕЦ@@@\n').forEach(function(з){
       var п=з.split('\n@@@ПОЛЕ@@@\n'); if(п.length<4) return;
