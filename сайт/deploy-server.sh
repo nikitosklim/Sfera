@@ -7,6 +7,8 @@ set -e
 ARCH="$1"; PORT="${2:-8080}"
 [ -f "$ARCH" ] || { echo "Использование: sh deploy-server.sh архив.tar.gz [порт]"; exit 1; }
 ARCH=$(cd "$(dirname "$ARCH")" && pwd)/$(basename "$ARCH")
+# curl нужен для подтягивания данных о статьях с других сайтов.
+command -v curl >/dev/null 2>&1 || { apt-get update -qq && apt-get install -y -qq curl; }
 id sfera >/dev/null 2>&1 || useradd -r -m sfera
 mkdir -p /opt/sfera
 # Сохраняем загрузки и токен при обновлении.

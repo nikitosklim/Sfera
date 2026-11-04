@@ -6,7 +6,7 @@
   <input id="токен" type="password" autocomplete="off" style="width:100%"></label>
 </form>
 <nav class="вкладки-админ" aria-label="Разделы управления">
-  <a href="#статистика">Статистика</a><a href="#загрузки">Загрузки</a>
+  <a href="#статистика">Статистика</a><a href="#статьи">Статьи</a><a href="#загрузки">Загрузки</a>
 </nav>
 
 <section id="статистика">
@@ -44,6 +44,29 @@
 </div>
   <p class="muted">Роботы (поисковики, проверки ссылок) считаются отдельно и в графики не входят. Время и глубина прокрутки приходят со страницы при закрытии вкладки, поэтому данные по ним чуть неполные, а у тех, кто отключил отслеживание в браузере, их нет.</p>
 </div>
+</section>
+
+<section id="статьи">
+<h2>Статьи с других площадок</h2>
+<p class="tagline">Вставьте адрес статьи (Хабр, блог): название, описание и картинку сайт подтянет сам. Всё можно поправить перед добавлением. Теги помогают поиску.</p>
+<form id="форма-статьи" onsubmit="return false">
+  <p><label>Адрес статьи<br><input id="ст-адрес" type="url" style="width:100%" placeholder="https://habr.com/ru/articles/…"></label></p>
+  <p><button class="button" id="ст-проверить">Подтянуть данные</button> <span id="ст-статус" class="muted"></span></p>
+  <div id="ст-поля" hidden>
+    <div class="превью-статьи">
+      <img id="ст-превью" alt="" hidden>
+      <div>
+        <p><label>Название<br><input id="ст-название" type="text" style="width:100%"></label></p>
+        <p><label>Описание<br><textarea id="ст-описание" rows="3" style="width:100%"></textarea></label></p>
+        <p><label>Адрес картинки (можно заменить)<br><input id="ст-картинка" type="url" style="width:100%"></label></p>
+        <p><label>Теги через запятую<br><input id="ст-теги" type="text" style="width:100%" placeholder="компиляторы, android, rust"></label></p>
+      </div>
+    </div>
+    <p><button class="button" id="ст-добавить">Добавить на сайт</button></p>
+  </div>
+</form>
+<h3>Добавленные статьи</h3>
+<table class="список-статей-админ" id="ст-список"></table>
 </section>
 
 <section id="загрузки">
@@ -225,6 +248,53 @@ SHA-256 считается в браузере и показывается ря�
   });
   $('токен').addEventListener('change', загрузить);
   try { if (sessionStorage.getItem('sfera-token')) { $('токен').value = sessionStorage.getItem('sfera-token'); загрузить(); } } catch (e) {}
+})();
+</script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var эск = function (с) { return String(с).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  function токен() { return $('токен').value.trim(); }
+  function статус(т) { $('ст-статус').textContent = т; }
+  function запрос(путь, поля) {
+    var тело = new URLSearchParams(); Object.keys(поля).forEach(function (к) { тело.set(к, поля[к]); });
+    return fetch(путь, { method: 'POST', headers: { Authorization: 'Bearer ' + токен(), 'Content-Type': 'application/x-www-form-urlencoded' }, body: тело.toString() })
+      .then(function (р) { return р.json().then(function (о) { if (!р.ok || !о.ok) throw new Error(о['ошибка'] || ('код ' + р.status)); return о; }); });
+  }
+  function список() {
+    if (!токен()) return;
+    fetch('/управление/ссылки', { headers: { Authorization: 'Bearer ' + токен() } }).then(function (р) { return р.ok ? р.json() : []; }).then(function (а) {
+      $('ст-список').innerHTML = а.length ? а.slice().reverse().map(function (с) {
+        return '<tr><td><a href="' + эск(с['адрес']) + '" target="_blank" rel="noopener">' + эск(с['название']) + '</a><br><span class="muted">' + эск(с['теги']) +
+          '</span></td><td style="text-align:right"><button class="button secondary" data-номер="' + эск(с['номер']) + '">Удалить</button></td></tr>';
+      }).join('') : '<tr><td class="muted">Пока ничего не добавлено</td></tr>';
+    });
+  }
+  $('ст-проверить').onclick = function () {
+    if (!токен()) { статус('Введите токен вверху страницы'); return; }
+    статус('Скачиваю страницу…');
+    запрос('/управление/ссылка/проверить', { 'адрес': $('ст-адрес').value.trim() }).then(function (о) {
+      $('ст-название').value = о['название']; $('ст-описание').value = о['описание']; $('ст-картинка').value = о['картинка'];
+      $('ст-превью').hidden = !о['картинка']; if (о['картинка']) $('ст-превью').src = о['картинка'];
+      $('ст-поля').hidden = false; статус(о['название'] ? 'Данные подтянуты, проверьте и добавьте теги.' : 'Название найти не удалось, впишите вручную.');
+    }).catch(function (е) { статус('Ошибка: ' + е.message); });
+  };
+  $('ст-картинка').addEventListener('change', function () { $('ст-превью').hidden = !this.value; $('ст-превью').src = this.value; });
+  $('ст-добавить').onclick = function () {
+    статус('Добавляю…');
+    запрос('/управление/ссылка/добавить', { 'адрес': $('ст-адрес').value.trim(), 'название': $('ст-название').value, 'описание': $('ст-описание').value,
+      'картинка': $('ст-картинка').value.trim(), 'теги': $('ст-теги').value }).then(function (о) {
+      статус(о['картинка'] ? 'Добавлено, обложка сохранена.' : 'Добавлено (без обложки).');
+      $('ст-поля').hidden = true; $('ст-адрес').value = ''; $('ст-теги').value = ''; список();
+    }).catch(function (е) { статус('Ошибка: ' + е.message); });
+  };
+  $('ст-список').addEventListener('click', function (с) {
+    var н = с.target.getAttribute && с.target.getAttribute('data-номер');
+    if (!н || !confirm('Убрать статью с сайта?')) return;
+    запрос('/управление/ссылка/удалить', { 'номер': н }).then(список).catch(function (е) { статус('Ошибка: ' + е.message); });
+  });
+  $('токен').addEventListener('change', список);
+  try { if (sessionStorage.getItem('sfera-token')) setTimeout(список, 50); } catch (е) {}
 })();
 </script>
 </div>
