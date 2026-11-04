@@ -103,6 +103,11 @@
     если (путь == "/robots.txt")
         вернуть ответ_текстом(клиент, 200, "text/plain; charset=utf-8", текст_robots());
     конец
+    если (путь == "/favicon.ico")
+        если (ответ_файлом_для(клиент, з, "static/favicon.ico", "favicon.ico", нет, "public, max-age=86400"))
+            вернуть 0;
+        конец
+    конец
     если (путь == "/sitemap.xml")
         вернуть ответ_текстом(клиент, 200, "application/xml; charset=utf-8", карта_сайта());
     конец
