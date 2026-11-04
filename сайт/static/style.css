@@ -260,3 +260,27 @@ label{font-weight:560}
 .полоса i{display:block;height:100%;background:var(--accent);border-radius:4px}
 .две-колонки{display:grid;grid-template-columns:1fr 1fr;gap:28px}
 @media (max-width:720px){.две-колонки{grid-template-columns:1fr}}
+
+/* ---- статьи с других площадок ---- */
+.фильтр-тегов{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
+.тег{display:inline-block;font:inherit;font-size:.85rem;font-weight:600;padding:3px 11px;border-radius:999px;border:1px solid var(--line);background:var(--bg-soft);color:var(--muted)}
+button.тег{cursor:pointer}
+button.тег:hover{color:var(--ink)}
+.тег.активный{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.статьи-сетка{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;margin:0 0 36px}
+.статья{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--bg);color:var(--ink);text-decoration:none}
+.статья[hidden]{display:none}
+.статья:hover{border-color:var(--accent)}
+.статья .обложка{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:var(--bg-soft)}
+.статья .обложка.пустая{background:linear-gradient(135deg,var(--accent-soft),var(--bg-soft))}
+.статья-текст{padding:14px 16px 16px;display:flex;flex-direction:column;gap:6px;flex:1}
+.статья-текст em{font-style:normal;color:var(--muted);font-size:.85rem}
+.статья-текст b{font-size:1.08rem;line-height:1.3}
+.статья-текст span{color:var(--muted);font-size:.95rem;line-height:1.5}
+.статья-текст .теги{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:6px}
+.статья-текст .теги .тег{font-size:.78rem;padding:1px 9px}
+.превью-статьи{display:grid;grid-template-columns:200px 1fr;gap:16px;align-items:start;margin:14px 0}
+.превью-статьи img{width:100%;border-radius:8px;border:1px solid var(--line)}
+@media (max-width:640px){.превью-статьи{grid-template-columns:1fr}}
+.список-статей-админ{width:100%;border-collapse:collapse;font-size:.95rem;margin-top:8px}
+.список-статей-админ td{padding:7px 10px;border-bottom:1px solid var(--line)}
