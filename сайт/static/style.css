@@ -233,3 +233,30 @@ label{font-weight:560}
   .section{padding:56px 0}
   .page{padding-top:36px;padding-bottom:56px}
 }
+
+/* ---- управление: статистика ---- */
+.карточка-токен{background:var(--bg-soft);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin:0 0 18px}
+.вкладки-админ{display:flex;gap:8px;margin:0 0 28px;border-bottom:1px solid var(--line)}
+.вкладки-админ a{padding:8px 14px;text-decoration:none;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.вкладки-админ a:hover{color:var(--ink);border-bottom-color:var(--accent)}
+.стат-шапка{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.период{display:flex;gap:6px}
+.период .button{padding:6px 12px;font-size:.92rem}
+.плитки-стат{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:12px 0 28px}
+.плитка-стат{background:var(--bg-soft);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.плитка-стат b{display:block;font-size:1.9rem;line-height:1.1;letter-spacing:-.02em}
+.плитка-стат span{color:var(--muted);font-size:.9rem}
+.график svg{width:100%;height:auto;display:block;margin:6px 0 24px}
+.график .сетка{stroke:var(--line);stroke-width:1}
+.график .подпись{fill:var(--muted);font-size:11px}
+.график .столбик{fill:var(--accent)}
+.график .столбик:hover{opacity:.7}
+.таблица-прокрутка{overflow-x:auto;margin-bottom:24px}
+.стат-таблица{width:100%;border-collapse:collapse;font-size:.95rem}
+.стат-таблица th{text-align:left;color:var(--muted);font-weight:600;padding:6px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.стат-таблица td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+.стат-таблица .чис{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.полоса{display:inline-block;width:90px;height:8px;background:var(--bg-soft);border-radius:4px;margin-right:8px;vertical-align:middle;overflow:hidden}
+.полоса i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.две-колонки{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+@media (max-width:720px){.две-колонки{grid-template-columns:1fr}}

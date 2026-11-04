@@ -13,9 +13,17 @@ mkdir -p /opt/sfera
 KEEP=/tmp/sfera-keep.$$; mkdir -p "$KEEP"
 [ -d /opt/sfera/сайт/downloads ] && cp -a /opt/sfera/сайт/downloads "$KEEP/"
 [ -f /opt/sfera/сайт/admin-token.txt ] && cp -a /opt/sfera/сайт/admin-token.txt "$KEEP/"
+# Данные сайта (журналы посещений и статистики и т. д.) лежат в данные/.
+[ -d /opt/sfera/сайт/данные ] && cp -a /opt/sfera/сайт/данные "$KEEP/"
+# Прежние версии писали журналы в корень сайта: переносим их в данные/.
+mkdir -p "$KEEP/данные"
+for f in visits.log access.log; do
+  [ -f /opt/sfera/сайт/$f ] && [ ! -f "$KEEP/данные/$f" ] && cp -a /opt/sfera/сайт/$f "$KEEP/данные/$f"
+done
 tar -xzf "$ARCH" -C /opt/sfera
 [ -d "$KEEP/downloads" ] && cp -a "$KEEP/downloads/." /opt/sfera/сайт/downloads/
 [ -f "$KEEP/admin-token.txt" ] && cp -a "$KEEP/admin-token.txt" /opt/sfera/сайт/
+mkdir -p /opt/sfera/сайт/данные && cp -a "$KEEP/данные/." /opt/sfera/сайт/данные/
 rm -rf "$KEEP"
 chmod +x /opt/sfera/сайт/сервер
 [ -f /opt/sfera/сайт/admin-token.txt ] || {
