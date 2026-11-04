@@ -1,9 +1,56 @@
 <meta name="robots" content="noindex">
-<div class="wrap page page-narrow">
-<h1>Загрузка файлов</h1>
-<p class="tagline">Добавить установщик на страницу «Загрузки». Нужен токен администратора из файла <code>admin-token.txt</code> на сервере.</p>
+<div class="wrap page">
+<h1>Управление сайтом</h1>
+<form class="карточка-токен" onsubmit="return false">
+  <label>Токен администратора (файл <code>admin-token.txt</code> на сервере)<br>
+  <input id="токен" type="password" autocomplete="off" style="width:100%"></label>
+</form>
+<nav class="вкладки-админ" aria-label="Разделы управления">
+  <a href="#статистика">Статистика</a><a href="#загрузки">Загрузки</a>
+</nav>
+
+<section id="статистика">
+<div class="стат-шапка">
+  <h2>Статистика</h2>
+  <div class="период" role="group" aria-label="Период">
+    <button class="button secondary" data-дней="7">7 дней</button>
+    <button class="button secondary" data-дней="30">30 дней</button>
+    <button class="button secondary" data-дней="90">90 дней</button>
+  
+
+</div>
+</div>
+<p id="стат-статус" class="muted">Введите токен: статистика загрузится сама.</p>
+<div id="стат" hidden>
+  <div class="плитки-стат" id="итоги">
+</div>
+  <h3>Просмотры по дням</h3>
+  <div id="график-дни" class="график">
+</div>
+  <h3>Популярные страницы</h3>
+  <div class="таблица-прокрутка"><table class="стат-таблица" id="таблица-страниц"></table>
+</div>
+  <h3>Где проводят больше всего времени</h3>
+  <p class="muted">Разделы внутри страниц: сколько секунд читатели суммарно провели на каждом заголовке.</p>
+  <div class="таблица-прокрутка"><table class="стат-таблица" id="таблица-разделов"></table>
+</div>
+  <div class="две-колонки">
+    <div><h3>Откуда приходят</h3><table class="стат-таблица" id="таблица-источников"></table>
+</div>
+    <div><h3>Что ищут на сайте</h3><table class="стат-таблица" id="таблица-запросов"></table>
+</div>
+  
+
+</div>
+  <p class="muted">Роботы (поисковики, проверки ссылок) считаются отдельно и в графики не входят. Время и глубина прокрутки приходят со страницы при закрытии вкладки, поэтому данные по ним чуть неполные, а у тех, кто отключил отслеживание в браузере, их нет.</p>
+</div>
+</section>
+
+<section id="загрузки">
+<h2>Загрузки</h2>
+<p class="tagline">Добавить установщик на страницу «Загрузки».</p>
 <form id="форма" onsubmit="return false">
-  <p><label>Токен<br><input id="токен" type="password" autocomplete="off" style="width:100%"></label></p>
+
   <p><label>Файл (имя — латиницей, цифры, . _ -)<br><input id="файл" type="file"></label></p>
   <p><label>Название<br><input id="название" type="text" style="width:100%" placeholder="Сфера 0.3.3 для Windows"></label></p>
   <p><label>Описание<br><input id="описание" type="text" style="width:100%" placeholder="Компилятор, рантайм и панель разработчика"></label></p>
@@ -14,6 +61,7 @@
 <p><button class="button" id="удалить-кнопка">Удалить</button> <span id="удалить-статус" class="muted"></span></p>
 <p class="muted">Файл не должен быть больше 2 ГБ. Если имя уже есть в списке, загрузите под другим (например, с номером версии).
 SHA-256 считается в браузере и показывается рядом с файлом (на http, вне localhost, браузер не даёт посчитать сумму — тогда она пропускается).</p>
+</section>
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
@@ -65,6 +113,118 @@ SHA-256 считается в браузере и показывается ря�
       .then(function (r) { return r.json().then(function (о) { с(r.ok ? 'Удалено.' : 'Ошибка: ' + (о['ошибка'] || r.status)); }); })
       .catch(function (e) { с('Ошибка: ' + e.message); });
   };
+})();
+</script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var журналПросмотров = null, журналВремени = null, дней = 30;
+  function эск(с) { return String(с).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function строки(текст) {
+    var р = текст.split('\n'); р.shift(); // первая строка в хвосте файла может быть обрезана
+    return р.filter(Boolean).map(function (с) { return с.split('\t'); });
+  }
+  function загрузить() {
+    var токен = $('токен').value.trim();
+    if (!токен) return;
+    try { sessionStorage.setItem('sfera-token', токен); } catch (e) {}
+    $('стат-статус').textContent = 'Загружаю…';
+    var h = { headers: { Authorization: 'Bearer ' + токен } };
+    Promise.all([fetch('/управление/статистика/просмотры', h), fetch('/управление/статистика/время', h)]).then(function (р) {
+      if (р[0].status === 401) throw new Error('токен не подошёл');
+      return Promise.all([р[0].text(), р[1].text()]);
+    }).then(function (т) {
+      журналПросмотров = строки(т[0]); журналВремени = строки(т[1]);
+      $('стат-статус').textContent = '';
+      $('стат').hidden = false;
+      показать();
+    }).catch(function (e) { $('стат-статус').textContent = 'Ошибка: ' + e.message; });
+  }
+  function группа(список, ключ) { var м = {}; список.forEach(function (з) { var к = ключ(з); (м[к] = м[к] || []).push(з); }); return м; }
+  function сумма(а) { return а.reduce(function (x, y) { return x + y; }, 0); }
+  function формат(с) { с = Math.round(с); return с >= 60 ? Math.floor(с / 60) + ' мин ' + (с % 60) + ' с' : с + ' с'; }
+  function день(t) { var д = new Date(t * 1000); return д.getFullYear() + '-' + ('0' + (д.getMonth() + 1)).slice(-2) + '-' + ('0' + д.getDate()).slice(-2); }
+  function таблица(id, шапка, строкиТ) {
+    var h = '<thead><tr>' + шапка.map(function (к, i) { return '<th' + (i ? ' class="чис"' : '') + '>' + эск(к) + '</th>'; }).join('') + '</tr></thead><tbody>';
+    if (!строкиТ.length) h += '<tr><td colspan="' + шапка.length + '" class="muted">Пока нет данных</td></tr>';
+    строкиТ.forEach(function (р) {
+      h += '<tr>' + р.map(function (я, i) { return i ? '<td class="чис">' + я + '</td>' : '<td>' + я + '</td>'; }).join('') + '</tr>';
+    });
+    $(id).innerHTML = h + '</tbody>';
+  }
+  function полоса(знач, макс, текст) {
+    var ш = макс ? Math.max(2, Math.round(знач * 100 / макс)) : 0;
+    return '<span class="полоса"><i style="width:' + ш + '%"></i></span>' + текст;
+  }
+  function показать() {
+    var от = Date.now() / 1000 - дней * 86400;
+    var пр = журналПросмотров.filter(function (з) { return +з[0] >= от; });
+    var люди = пр.filter(function (з) { return з[2] === '0'; });
+    var боты = пр.length - люди.length;
+    var вр = журналВремени.filter(function (з) { return +з[0] >= от; });
+    var сессии = {}; вр.forEach(function (з) { if (з[4]) сессии[з[4]] = 1; });
+    var среднее = вр.length ? сумма(вр.map(function (з) { return +з[2]; })) / вр.length : 0;
+    var дочитали = вр.length ? вр.filter(function (з) { return +з[3] >= 75; }).length * 100 / вр.length : 0;
+    var плитки = [
+      ['Просмотры', люди.length], ['Посетители (сессии)', Object.keys(сессии).length],
+      ['Среднее время на странице', вр.length ? формат(среднее) : '—'],
+      ['Прокрутили до конца (75%+)', вр.length ? Math.round(дочитали) + '%' : '—'], ['Роботы', боты]
+    ];
+    $('итоги').innerHTML = плитки.map(function (п) { return '<div class="плитка-стат"><b>' + п[1] + '</b><span>' + п[0] + '</span></div>'; }).join('');
+    // график по дням
+    var поДням = группа(люди, function (з) { return день(+з[0]); });
+    var ряд = [];
+    for (var i = дней - 1; i >= 0; i--) { var к = день(Date.now() / 1000 - i * 86400); ряд.push([к, (поДням[к] || []).length]); }
+    var макс = Math.max.apply(null, ряд.map(function (р) { return р[1]; }).concat([1]));
+    var W = 720, H = 200, л = 34, н = 24, ширина = (W - л) / ряд.length;
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + (H + н) + '" role="img" aria-label="Просмотры по дням">';
+    [0, 0.5, 1].forEach(function (д) {
+      var y = H - д * (H - 10);
+      svg += '<line x1="' + л + '" x2="' + W + '" y1="' + y + '" y2="' + y + '" class="сетка"/><text x="' + (л - 6) + '" y="' + (y + 4) + '" text-anchor="end" class="подпись">' + Math.round(макс * д) + '</text>';
+    });
+    ряд.forEach(function (р, i) {
+      var в = р[1] * (H - 10) / макс;
+      svg += '<rect x="' + (л + i * ширина + 1) + '" y="' + (H - в) + '" width="' + Math.max(1, ширина - 2) + '" height="' + в + '" rx="2" class="столбик"><title>' + р[0] + ': ' + р[1] + '</title></rect>';
+      if (i % Math.ceil(ряд.length / 6) === 0) svg += '<text x="' + (л + i * ширина) + '" y="' + (H + 16) + '" class="подпись">' + р[0].slice(5) + '</text>';
+    });
+    $('график-дни').innerHTML = svg + '</svg>';
+    // страницы
+    var поСтраницам = группа(люди, function (з) { return з[1]; });
+    var времяПоСтр = группа(вр, function (з) { return з[1]; });
+    var список = Object.keys(поСтраницам).map(function (п) { return [п, поСтраницам[п].length]; }).sort(function (а, б) { return б[1] - а[1]; }).slice(0, 15);
+    var м1 = список.length ? список[0][1] : 1;
+    таблица('таблица-страниц', ['Страница', 'Просмотры', 'Среднее время', 'Прокрутка'], список.map(function (р) {
+      var в = времяПоСтр[р[0]] || [];
+      var ср = в.length ? сумма(в.map(function (з) { return +з[2]; })) / в.length : 0;
+      var гл = в.length ? сумма(в.map(function (з) { return +з[3]; })) / в.length : 0;
+      return ['<a href="' + эск(encodeURI(р[0])) + '">' + эск(р[0]) + '</a>', полоса(р[1], м1, р[1]), в.length ? формат(ср) : '—', в.length ? Math.round(гл) + '%' : '—'];
+    }));
+    // разделы
+    var сумм = {};
+    вр.forEach(function (з) {
+      (з[5] || '').split(',').forEach(function (п) {
+        var к = п.lastIndexOf(':'); if (к < 1) return;
+        var ключ = з[1] + '\t' + п.slice(0, к); сумм[ключ] = (сумм[ключ] || 0) + (+п.slice(к + 1) || 0);
+      });
+    });
+    var разд = Object.keys(сумм).map(function (к) { return [к, сумм[к]]; }).sort(function (а, б) { return б[1] - а[1]; }).slice(0, 15);
+    var м2 = разд.length ? разд[0][1] : 1;
+    таблица('таблица-разделов', ['Раздел страницы', 'Время всего'], разд.map(function (р) {
+      var ч = р[0].split('\t'); return [эск(ч[1]) + ' <span class="muted">— ' + эск(ч[0]) + '</span>', полоса(р[1], м2, формат(р[1]))];
+    }));
+    // источники и запросы
+    function топ(ключ, мин) {
+      var м = {}; люди.forEach(function (з) { var к = ключ(з); if (к) м[к] = (м[к] || 0) + 1; });
+      return Object.keys(м).map(function (к) { return [к, м[к]]; }).sort(function (а, б) { return б[1] - а[1]; }).slice(0, 10);
+    }
+    таблица('таблица-источников', ['Источник', 'Переходы'], топ(function (з) { return з[3]; }).map(function (р) { return [эск(р[0]), р[1]]; }));
+    таблица('таблица-запросов', ['Запрос', 'Раз'], топ(function (з) { return з[4]; }).map(function (р) { return [эск(р[0]), р[1]]; }));
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.период button'), function (б) {
+    б.onclick = function () { дней = +б.getAttribute('data-дней'); if (журналПросмотров) показать(); };
+  });
+  $('токен').addEventListener('change', загрузить);
+  try { if (sessionStorage.getItem('sfera-token')) { $('токен').value = sessionStorage.getItem('sfera-token'); загрузить(); } } catch (e) {}
 })();
 </script>
 </div>
