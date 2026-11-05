@@ -1,0 +1,111 @@
+{
+  "name": "Сфера",
+  "scopeName": "source.sfera",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#funcdecl"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#types"
+    },
+    {
+      "include": "#constants"
+    },
+    {
+      "include": "#calls"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.sfera",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.sfera",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.sfera",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.sfera",
+          "match": "\\\\."
+        },
+        {
+          "name": "constant.character.escape.sfera",
+          "match": "%%"
+        },
+        {
+          "name": "variable.other.interpolation.sfera",
+          "match": "%[^%\"\\n]+%"
+        }
+      ]
+    },
+    "numbers": {
+      "name": "constant.numeric.sfera",
+      "match": "(?<![\\p{L}_])(?:0[xX][0-9a-fA-F_]+|0[bB][01_]+|\\d[\\d_]*(?:\\.\\d[\\d_]*)?(?:[eE][+-]?\\d+)?)"
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.sfera",
+          "match": "(?<![\\p{L}\\p{N}_])(?:если|иначе|для|каждого|пока|вернуть|прервать|продолжить|конец|параллельно|детерминировано)(?![\\p{L}\\p{N}_])"
+        },
+        {
+          "name": "keyword.operator.word.sfera",
+          "match": "(?<![\\p{L}\\p{N}_])(?:и|или|не|меньше|больше|в|из|как)(?![\\p{L}\\p{N}_])"
+        },
+        {
+          "name": "storage.type.function.sfera",
+          "match": "(?<![\\p{L}\\p{N}_])(?:функция|структура|контракт|внешняя)(?![\\p{L}\\p{N}_])"
+        },
+        {
+          "name": "keyword.other.sfera",
+          "match": "(?<![\\p{L}\\p{N}_])(?:подключить|публично|приватно|слабая|неизменно|ссылка|это|успех|ошибка|результат|канал)(?![\\p{L}\\p{N}_])"
+        }
+      ]
+    },
+    "types": {
+      "name": "storage.type.sfera",
+      "match": "(?<![\\p{L}\\p{N}_])(?:целых|целого|целому|целым|целом|целые|целое|текста|текстов|тексту|текстом|тексте|дробных|дробного|дробному|дробным|дробное|верных|верного|верному|верным|верное|верным|целых8|целых16|целых32|целых64|целое8|целое16|целое32|целое64|целое|беззнак8|беззнак16|беззнак32|беззнак64|дробное32|дробное64|дробное|текст|верно|Список|Словарь|Множество)(?![\\p{L}\\p{N}_])"
+    },
+    "constants": {
+      "name": "constant.language.sfera",
+      "match": "(?<![\\p{L}\\p{N}_])(?:да|нет|неуказано)(?![\\p{L}\\p{N}_])"
+    },
+    "funcdecl": {
+      "match": "(?<![\\p{L}\\p{N}_])(функция)\\s+([\\p{L}_][\\p{L}\\p{N}_]*)",
+      "captures": {
+        "1": {
+          "name": "storage.type.function.sfera"
+        },
+        "2": {
+          "name": "entity.name.function.sfera"
+        }
+      }
+    },
+    "calls": {
+      "name": "entity.name.function.call.sfera",
+      "match": "[\\p{L}_][\\p{L}\\p{N}_]*(?=\\s*\\()"
+    }
+  }
+}
