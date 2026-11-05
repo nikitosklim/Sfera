@@ -35,7 +35,7 @@ if ($LASTEXITCODE -ne 0) { Pop-Location; Остановить "cargo build --rel
 Pop-Location
 
 $Релиз = Join-Path $Корень "target\release"
-foreach ($имя in @("запустить.exe", "сфера_lsp.exe", "сфера_пакеты.exe")) {
+foreach ($имя in @("запустить.exe", "сфера_lsp.exe", "сфера_пакеты.exe", "сфера.exe")) {
     if (-not (Test-Path (Join-Path $Релиз $имя))) { Остановить "не найден $имя в target\release" }
 }
 
@@ -56,7 +56,7 @@ New-Item -ItemType Directory -Force -Path (Join-Path $Папка "bin") | Out-Nu
 New-Item -ItemType Directory -Force -Path (Join-Path $Папка "lib\sfera") | Out-Null
 
 Copy-Item $ПанельExe (Join-Path $Папка "Sfera-Panel.exe")
-foreach ($имя in @("запустить.exe", "сфера_lsp.exe", "сфера_пакеты.exe")) {
+foreach ($имя in @("запустить.exe", "сфера_lsp.exe", "сфера_пакеты.exe", "сфера.exe")) {
     Copy-Item (Join-Path $Релиз $имя) (Join-Path $Папка "bin\$имя")
 }
 Copy-Item (Join-Path $Корень "examples\привет.код") (Join-Path $Папка "bin\привет.код")
