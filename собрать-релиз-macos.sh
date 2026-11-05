@@ -34,7 +34,7 @@ APP="$OUT/Панель Сферы.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources/bin" "$APP/Contents/Resources/lib/sfera"
 cp инструменты/панель-разработчика/панель_unix "$APP/Contents/MacOS/Sfera-Panel"
-for NAME in запустить сфера_lsp сфера_пакеты; do cp "target/release/$NAME" "$APP/Contents/Resources/bin/$NAME"; done
+for NAME in запустить сфера_lsp сфера_пакеты сфера; do cp "target/release/$NAME" "$APP/Contents/Resources/bin/$NAME"; done
 cp examples/привет.код "$APP/Contents/Resources/bin/привет.код"
 cp README.md "$APP/Contents/Resources/README.md"
 cp -r стандартная_библиотека "$APP/Contents/Resources/lib/sfera/стандартная_библиотека"
@@ -54,7 +54,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 </dict>
 </plist>
 PLIST
-chmod +x "$APP/Contents/MacOS/Sfera-Panel" "$APP"/Contents/Resources/bin/запустить "$APP"/Contents/Resources/bin/сфера_lsp "$APP"/Contents/Resources/bin/сфера_пакеты
+chmod +x "$APP/Contents/MacOS/Sfera-Panel" "$APP"/Contents/Resources/bin/запустить "$APP"/Contents/Resources/bin/сфера_lsp "$APP"/Contents/Resources/bin/сфера_пакеты "$APP"/Contents/Resources/bin/сфера
 
 echo "4/4  Упаковываю..."
 (cd "$OUT" && rm -f Sfera-Panel-macOS.zip && ditto -c -k --keepParent "Панель Сферы.app" Sfera-Panel-macOS.zip)

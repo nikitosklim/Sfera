@@ -24,7 +24,7 @@ DIR="$OUT/Sfera-Panel-Linux"
 rm -rf "$DIR"
 mkdir -p "$DIR/bin" "$DIR/lib/sfera"
 cp инструменты/панель-разработчика/панель_unix "$DIR/Sfera-Panel"
-for NAME in запустить сфера_lsp сфера_пакеты; do cp "target/release/$NAME" "$DIR/bin/$NAME"; done
+for NAME in запустить сфера_lsp сфера_пакеты сфера; do cp "target/release/$NAME" "$DIR/bin/$NAME"; done
 cp examples/привет.код "$DIR/bin/привет.код"
 cp README.md "$DIR/README.md"
 cp -r стандартная_библиотека "$DIR/lib/sfera/стандартная_библиотека"
@@ -32,7 +32,7 @@ cat > "$DIR/Sfera-Panel.sh" <<'LAUNCH'
 #!/bin/sh
 cd "$(dirname "$0")" && exec ./Sfera-Panel
 LAUNCH
-chmod +x "$DIR/Sfera-Panel" "$DIR/Sfera-Panel.sh" "$DIR"/bin/запустить "$DIR"/bin/сфера_lsp "$DIR"/bin/сфера_пакеты
+chmod +x "$DIR/Sfera-Panel" "$DIR/Sfera-Panel.sh" "$DIR"/bin/запустить "$DIR"/bin/сфера_lsp "$DIR"/bin/сфера_пакеты "$DIR"/bin/сфера
 cat > "$DIR/ЧИТАЙ_МЕНЯ.txt" <<README
 Сфера $VERSION — панель разработчика для Linux
 
@@ -49,7 +49,7 @@ cat > "$DIR/ЧИТАЙ_МЕНЯ.txt" <<README
 README
 
 echo "4/4  Упаковываю..."
-strip "$DIR/Sfera-Panel" "$DIR"/bin/запустить "$DIR"/bin/сфера_lsp "$DIR"/bin/сфера_пакеты 2>/dev/null || true
+strip "$DIR/Sfera-Panel" "$DIR"/bin/запустить "$DIR"/bin/сфера_lsp "$DIR"/bin/сфера_пакеты "$DIR"/bin/сфера 2>/dev/null || true
 rm -f "$OUT/Sfera-Panel-Linux.tar.gz"
 tar -cJf "$OUT/Sfera-Panel-Linux.tar.xz" -C "$OUT" Sfera-Panel-Linux
 echo "Готово: $OUT/Sfera-Panel-Linux.tar.xz ($(du -h "$OUT/Sfera-Panel-Linux.tar.xz" | cut -f1))"

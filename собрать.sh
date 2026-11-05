@@ -1,6 +1,6 @@
 #!/bin/bash
 # собрать.sh — пересобирает компилятор «Сфера» и обновляет установленные
-# команды: запустить, сфера_lsp, сфера_пакеты и стандартную библиотеку.
+# команды: запустить, сфера_lsp, сфера_пакеты, сфера и стандартную библиотеку.
 # Работает на macOS и Linux. Запускать из корня репозитория:
 #
 #   ./собрать.sh                       # установка в /usr/local (спросит пароль sudo)
@@ -33,7 +33,7 @@ echo "2/3  Обновляю команды в $PREFIX/bin ..."
 SUDO=""
 if ! mkdir -p "$PREFIX/bin" "$PREFIX/lib/sfera" 2>/dev/null; then SUDO="sudo"; fi
 $SUDO mkdir -p "$PREFIX/bin" "$PREFIX/lib/sfera"
-for NAME in запустить сфера_lsp сфера_пакеты; do
+for NAME in запустить сфера_lsp сфера_пакеты сфера; do
     $SUDO cp "target/release/$NAME" "$PREFIX/bin/$NAME"
 done
 
