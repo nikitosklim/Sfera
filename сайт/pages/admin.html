@@ -6,7 +6,7 @@
   <input id="токен" type="password" autocomplete="off" style="width:100%"></label>
 </form>
 <nav class="вкладки-админ" aria-label="Разделы управления">
-  <a href="#статистика">Статистика</a><a href="#статьи">Статьи</a><a href="#загрузки">Загрузки</a>
+  <a href="#статистика">Статистика</a><a href="#статьи">Статьи</a><a href="#пакеты">Пакеты</a><a href="#загрузки">Загрузки</a>
 </nav>
 
 <section id="статистика">
@@ -67,6 +67,19 @@
 </form>
 <h3>Добавленные статьи</h3>
 <table class="список-статей-админ" id="ст-список"></table>
+</section>
+
+<section id="пакеты">
+<h2>Каталог пакетов</h2>
+<p class="tagline">Пакеты, которые находит <code>сфера_пакеты искать</code> и показывает страница «Пакеты». Адрес должен вести на git-репозиторий.</p>
+<form onsubmit="return false">
+  <p><label>Имя пакета<br><input id="пк-имя" type="text" style="width:100%" placeholder="математика"></label></p>
+  <p><label>Адрес репозитория<br><input id="пк-адрес" type="url" style="width:100%" placeholder="https://github.com/…/….git"></label></p>
+  <p><label>Описание<br><input id="пк-описание" type="text" style="width:100%" maxlength="200"></label></p>
+  <p><button class="button" id="пк-добавить">Добавить в каталог</button> <span id="пк-статус" class="muted"></span></p>
+</form>
+<h3>В каталоге</h3>
+<table class="список-статей-админ" id="пк-таблица"></table>
 </section>
 
 <section id="загрузки">
@@ -293,6 +306,27 @@ SHA-256 считается в браузере и показывается ря�
     if (!н || !confirm('Убрать статью с сайта?')) return;
     запрос('/управление/ссылка/удалить', { 'номер': н }).then(список).catch(function (е) { статус('Ошибка: ' + е.message); });
   });
+  function пакеты() {
+    fetch('/пакеты/каталог.пакеты').then(function (р) { return р.text(); }).then(function (т) {
+      var строки = т.split('\n').filter(function (с) { return с.trim() && с.trim()[0] !== '#' && с.indexOf('=') > 0; });
+      $('пк-таблица').innerHTML = строки.length ? строки.map(function (с) {
+        var имя = с.slice(0, с.indexOf('=')).trim();
+        return '<tr><td>' + эск(имя) + '<br><span class="muted">' + эск(с.slice(с.indexOf('=') + 1).trim()) + '</span></td><td style="text-align:right"><button class="button secondary" data-пакет="' + эск(имя) + '">Удалить</button></td></tr>';
+      }).join('') : '<tr><td class="muted">Каталог пуст</td></tr>';
+    });
+  }
+  $('пк-добавить').onclick = function () {
+    if (!токен()) { $('пк-статус').textContent = 'Введите токен вверху страницы'; return; }
+    запрос('/управление/пакет/добавить', { 'имя': $('пк-имя').value.trim(), 'адрес': $('пк-адрес').value.trim(), 'описание': $('пк-описание').value })
+      .then(function () { $('пк-статус').textContent = 'Добавлено.'; $('пк-имя').value = ''; $('пк-адрес').value = ''; $('пк-описание').value = ''; пакеты(); })
+      .catch(function (е) { $('пк-статус').textContent = 'Ошибка: ' + е.message; });
+  };
+  $('пк-таблица').addEventListener('click', function (с) {
+    var п = с.target.getAttribute && с.target.getAttribute('data-пакет');
+    if (!п || !confirm('Убрать пакет «' + п + '» из каталога?')) return;
+    запрос('/управление/пакет/удалить', { 'имя': п }).then(пакеты).catch(function (е) { $('пк-статус').textContent = 'Ошибка: ' + е.message; });
+  });
+  пакеты();
   $('токен').addEventListener('change', список);
   try { if (sessionStorage.getItem('sfera-token')) setTimeout(список, 50); } catch (е) {}
 })();

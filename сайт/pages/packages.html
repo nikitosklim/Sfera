@@ -1,0 +1,51 @@
+<div class="wrap page page-narrow">
+<h1>Пакеты</h1>
+<p class="tagline">Готовые библиотеки для «Сферы». Пакет — это обычный git-репозиторий с файлами <code>.код</code>, отдельного хранилища нет.</p>
+
+<h2>Как поставить пакет</h2>
+<p>В папке проекта (нужны <code>сфера_пакеты</code> и <code>git</code>):</p>
+<pre><code>сфера_пакеты искать математика
+сфера_пакеты добавить математика
+сфера_пакеты установить</code></pre>
+<p>Каталог берётся с этого сайта, ничего настраивать не нужно. Подробности про версии, блокировку и зависимости пакетов: <a href="/документация/packages">документация</a>.</p>
+
+<h2>Каталог</h2>
+<form class="search search-big" onsubmit="return false" role="search"><input id="пк-поиск" type="search" placeholder="Поиск по названию и описанию" aria-label="Поиск по пакетам"></form>
+<p id="пк-итог" class="muted"></p>
+<div id="пк-список" class="результаты"></div>
+
+<h2>Как добавить свой пакет</h2>
+<p>Выложите репозиторий на GitHub или в любой открытый git (в корне лежат файлы <code>.код</code>, при желании теги версий вида <code>1.0.0</code>) и напишите в <a href="https://github.com/nikitosklim/Sfera/issues">issues</a> проекта: имя, адрес и короткое описание. Каждый пакет я просматриваю перед добавлением в каталог.</p>
+<script>
+(function () {
+  var поле = document.getElementById('пк-поиск'), итог = document.getElementById('пк-итог'), блок = document.getElementById('пк-список');
+  var все = [];
+  function esc(с) { return String(с).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function разобрать(т) {
+    var а = [];
+    т.split('\n').forEach(function (с) {
+      с = с.trim(); if (!с || с[0] === '#') return;
+      var р = с.indexOf('='); if (р < 0) return;
+      var имя = с.slice(0, р).trim(), ост = с.slice(р + 1).trim(), оп = '';
+      var м = ост.match(/описание="([^"]*)"/); if (м) { оп = м[1]; ост = ост.replace(м[0], ''); }
+      var ч = ост.trim().split(/\s+/);
+      if (ч[0] !== 'git' || !ч[1]) return;
+      а.push({ имя: имя, адрес: ч[1], описание: оп });
+    });
+    return а;
+  }
+  function показать() {
+    var q = поле.value.trim().toLowerCase();
+    var список = все.filter(function (п) { return !q || (п.имя + ' ' + п.описание).toLowerCase().indexOf(q) >= 0; });
+    итог.textContent = все.length ? ('Найдено: ' + список.length + ' из ' + все.length) : 'В каталоге пока пусто. Первые пакеты скоро появятся.';
+    блок.innerHTML = список.map(function (п) {
+      return '<div class="результат"><b>' + esc(п.имя) + '</b><span>' + esc(п.описание) + '</span><span class="muted"><a href="' + esc(п.адрес) + '" target="_blank" rel="noopener">' + esc(п.адрес) + '</a></span>' +
+        '<code>сфера_пакеты добавить ' + esc(п.имя) + '</code></div>';
+    }).join('');
+  }
+  fetch('/пакеты/каталог.пакеты').then(function (р) { return р.text(); }).then(function (т) { все = разобрать(т); показать(); })
+    .catch(function () { итог.textContent = 'Не удалось загрузить каталог.'; });
+  поле.addEventListener('input', показать);
+})();
+</script>
+</div>
