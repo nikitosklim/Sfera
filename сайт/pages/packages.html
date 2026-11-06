@@ -1,6 +1,6 @@
 <div class="wrap page page-narrow">
 <h1>Пакеты</h1>
-<p class="tagline">Готовые библиотеки для «Сферы». Пакет — это обычный git-репозиторий с файлами <code>.код</code>, отдельного хранилища нет.</p>
+<p class="tagline">Готовые библиотеки для «Сферы». Пакеты хранятся в нашем реестре, с версиями и проверкой контрольной суммы, либо лежат в обычных git-репозиториях.</p>
 
 <h2>Как поставить пакет</h2>
 <p>В папке проекта (нужны команда <code>сфера</code> из набора инструментов и <code>git</code>):</p>
@@ -13,14 +13,29 @@
 <p id="пк-итог" class="muted"></p>
 <div id="пк-список" class="результаты"></div>
 
-<h2>Как добавить свой пакет</h2>
-<p>Выложите репозиторий на GitHub или в любой открытый git (в корне лежат файлы <code>.код</code>, при желании теги версий вида <code>1.0.0</code>) и напишите в <a href="https://github.com/nikitosklim/Sfera/issues">issues</a> проекта: имя, адрес и короткое описание. Каждый пакет я просматриваю перед добавлением в каталог.</p>
+<h2>Как опубликовать свой пакет</h2>
+<p>Чтобы публиковать пакеты, нужен токен автора. Напишите в <a href="https://github.com/nikitosklim/Sfera/issues">issues</a> проекта, какое имя хотите занять, и я отправлю токен лично, не публикуйте его нигде. Дальше в папке с пакетом (в ней лежат файлы <code>.код</code> и <code>пакет.сфера</code> с именем, версией и описанием):</p>
+<pre><code>сфера войти
+сфера опубликовать</code></pre>
+<p>Версия публикуется один раз и больше не меняется. Подробности и формат пакета: <a href="/документация/packages">документация</a>.</p>
 <script>
 (function () {
   var поле = document.getElementById('пк-поиск'), итог = document.getElementById('пк-итог'), блок = document.getElementById('пк-список');
-  var все = [];
+  var реестр = [], каталог = [];
   function esc(с) { return String(с).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  function разобрать(т) {
+  function сравнить(а, б) { a = а.split('.').map(Number); b = б.split('.').map(Number); for (var i = 0; i < 3; i++) { if (a[i] !== b[i]) return a[i] - b[i]; } return 0; }
+  function разобрать_реестр(т) {
+    var по_имени = {};
+    т.split('\n').forEach(function (с) {
+      if (!с.trim() || с[0] === '#') return;
+      var п = с.split('|').map(function (x) { return x.trim(); });
+      if (п.length < 8 || п[7] === '1') return;
+      var текущий = по_имени[п[0]];
+      if (!текущий || сравнить(п[1], текущий.версия) > 0) по_имени[п[0]] = { имя: п[0], версия: п[1], автор: п[5], описание: п[6] };
+    });
+    return Object.keys(по_имени).sort().map(function (к) { return по_имени[к]; });
+  }
+  function разобрать_каталог(т) {
     var а = [];
     т.split('\n').forEach(function (с) {
       с = с.trim(); if (!с || с[0] === '#') return;
@@ -33,17 +48,24 @@
     });
     return а;
   }
+  function подходит(п, q) { return !q || (п.имя + ' ' + п.описание).toLowerCase().indexOf(q) >= 0; }
   function показать() {
     var q = поле.value.trim().toLowerCase();
-    var список = все.filter(function (п) { return !q || (п.имя + ' ' + п.описание).toLowerCase().indexOf(q) >= 0; });
-    итог.textContent = все.length ? ('Найдено: ' + список.length + ' из ' + все.length) : 'В каталоге пока пусто. Первые пакеты скоро появятся.';
-    блок.innerHTML = список.map(function (п) {
-      return '<div class="результат"><b>' + esc(п.имя) + '</b><span>' + esc(п.описание) + '</span><span class="muted"><a href="' + esc(п.адрес) + '" target="_blank" rel="noopener">' + esc(п.адрес) + '</a></span>' +
+    var р = реестр.filter(function (п) { return подходит(п, q); });
+    var к = каталог.filter(function (п) { return подходит(п, q); });
+    итог.textContent = (реестр.length + каталог.length) ? ('Найдено: ' + (р.length + к.length) + ' из ' + (реестр.length + каталог.length)) : 'В каталоге пока пусто. Первые пакеты скоро появятся.';
+    блок.innerHTML = р.map(function (п) {
+      return '<div class="результат"><b><a href="/пакеты/' + encodeURIComponent(п.имя) + '">' + esc(п.имя) + '</a></b> <span class="muted">' + esc(п.версия) + ' · ' + esc(п.автор) + '</span><span>' + esc(п.описание) + '</span>' +
+        '<code>сфера установить ' + esc(п.имя) + '</code></div>';
+    }).join('') + к.map(function (п) {
+      return '<div class="результат"><b>' + esc(п.имя) + '</b> <span class="muted">git-репозиторий</span><span>' + esc(п.описание) + '</span><span class="muted"><a href="' + esc(п.адрес) + '" target="_blank" rel="noopener">' + esc(п.адрес) + '</a></span>' +
         '<code>сфера установить ' + esc(п.имя) + '</code></div>';
     }).join('');
   }
-  fetch('/пакеты/каталог.пакеты').then(function (р) { return р.text(); }).then(function (т) { все = разобрать(т); показать(); })
-    .catch(function () { итог.textContent = 'Не удалось загрузить каталог.'; });
+  var ждём = 2;
+  function готово() { if (--ждём === 0) показать(); }
+  fetch('/пакеты/реестр.txt').then(function (р) { return р.text(); }).then(function (т) { реестр = разобрать_реестр(т); }).catch(function () {}).then(готово);
+  fetch('/пакеты/каталог.пакеты').then(function (р) { return р.text(); }).then(function (т) { каталог = разобрать_каталог(т); }).catch(function () {}).then(готово);
   поле.addEventListener('input', показать);
 })();
 </script>

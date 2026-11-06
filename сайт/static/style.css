@@ -36,7 +36,7 @@ code,pre{font-family:var(--mono)}
 .brand{display:flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none;font-weight:780;font-size:1.25rem;letter-spacing:-.01em}
 .brand img{width:30px;height:30px;display:block}
 .site-nav{display:flex;gap:4px;flex:1}
-.site-nav a{color:var(--muted);text-decoration:none;font-weight:560;font-size:.98rem;padding:8px 12px;border-radius:8px}
+.site-nav a{white-space:nowrap;color:var(--muted);text-decoration:none;font-weight:560;font-size:.98rem;padding:8px 12px;border-radius:8px}
 .site-nav a:hover{color:var(--ink);background:var(--bg-soft)}
 .header-actions{display:flex;align-items:center;gap:10px}
 .gh-link{color:var(--muted);text-decoration:none;font-weight:560;font-size:.98rem;padding:8px 10px}
