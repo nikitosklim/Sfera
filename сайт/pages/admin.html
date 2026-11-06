@@ -70,8 +70,20 @@
 </section>
 
 <section id="пакеты">
-<h2>Каталог пакетов</h2>
-<p class="tagline">Пакеты, которые находит <code>сфера_пакеты искать</code> и показывает страница «Пакеты». Адрес должен вести на git-репозиторий.</p>
+<h2>Пакеты</h2>
+<h3>Авторы</h3>
+<p class="tagline">Автор публикует пакеты в реестр своим токеном (<code>сфера войти</code>). Токен показывается один раз: отправьте его автору лично.</p>
+<form onsubmit="return false">
+  <p><label>Имя автора (латиница, цифры, «_», «-»)<br><input id="ав-имя" type="text" style="width:100%"></label></p>
+  <p><button class="button" id="ав-создать">Выдать токен</button> <span id="ав-статус" class="muted"></span></p>
+  <p id="ав-токен" style="word-break:break-all"></p>
+</form>
+<table class="список-статей-админ" id="ав-таблица"></table>
+<h3>Версии в реестре</h3>
+<p class="tagline">Отозванную версию не выбирают новые установки, но уже зафиксированные в блокировке продолжают скачиваться.</p>
+<table class="список-статей-админ" id="рс-таблица"></table>
+<h3>Git-каталог</h3>
+<p class="tagline">Пакеты, которые лежат в чужих git-репозиториях: их находит <code>сфера искать</code> наравне с реестром. Адрес должен вести на git-репозиторий.</p>
 <form onsubmit="return false">
   <p><label>Имя пакета<br><input id="пк-имя" type="text" style="width:100%" placeholder="математика"></label></p>
   <p><label>Адрес репозитория<br><input id="пк-адрес" type="url" style="width:100%" placeholder="https://github.com/…/….git"></label></p>
@@ -326,8 +338,53 @@ SHA-256 считается в браузере и показывается ря�
     if (!п || !confirm('Убрать пакет «' + п + '» из каталога?')) return;
     запрос('/управление/пакет/удалить', { 'имя': п }).then(пакеты).catch(function (е) { $('пк-статус').textContent = 'Ошибка: ' + е.message; });
   });
+  function авторы() {
+    if (!токен()) return;
+    fetch('/управление/автор/список', { method: 'POST', headers: { Authorization: 'Bearer ' + токен() } }).then(function (р) { return р.ok ? р.json() : []; }).then(function (а) {
+      $('ав-таблица').innerHTML = а.length ? а.map(function (и) {
+        return '<tr><td>' + эск(и) + '</td><td style="text-align:right"><button class="button secondary" data-автор="' + эск(и) + '">Удалить</button></td></tr>';
+      }).join('') : '<tr><td class="muted">Авторов пока нет</td></tr>';
+    });
+  }
+  function реестр_версий() {
+    fetch('/пакеты/реестр.txt').then(function (р) { return р.text(); }).then(function (т) {
+      var строки = т.split('\n').filter(function (с) { return с.trim() && с[0] !== '#'; });
+      $('рс-таблица').innerHTML = строки.length ? строки.map(function (с) {
+        var п = с.split('|').map(function (x) { return x.trim(); });
+        var откл = п[7] === '1';
+        return '<tr><td><b>' + эск(п[0]) + '</b> ' + эск(п[1]) + (откл ? ' <span class="muted">(отозвана)</span>' : '') + '<br><span class="muted">' + эск(п[5]) + ' · ' + эск(п[6]) + '</span></td><td style="text-align:right">' +
+          '<button class="button secondary" data-имя="' + эск(п[0]) + '" data-версия="' + эск(п[1]) + '" data-откл="' + (откл ? 0 : 1) + '">' + (откл ? 'Вернуть' : 'Отозвать') + '</button> ' +
+          '<button class="button secondary" data-убрать="' + эск(п[0]) + '">Удалить пакет</button></td></tr>';
+      }).join('') : '<tr><td class="muted">В реестре пока пусто</td></tr>';
+    });
+  }
+  $('ав-создать').onclick = function () {
+    if (!токен()) { $('ав-статус').textContent = 'Введите токен вверху страницы'; return; }
+    запрос('/управление/автор/создать', { 'имя': $('ав-имя').value.trim() }).then(function (о) {
+      $('ав-статус').textContent = 'Готово. Сохраните токен сейчас: больше он не покажется.';
+      $('ав-токен').textContent = о['токен']; $('ав-имя').value = ''; авторы();
+    }).catch(function (е) { $('ав-статус').textContent = 'Ошибка: ' + е.message; });
+  };
+  $('ав-таблица').addEventListener('click', function (с) {
+    var а = с.target.getAttribute && с.target.getAttribute('data-автор');
+    if (!а || !confirm('Удалить автора «' + а + '»? Его токен перестанет работать, пакеты останутся.')) return;
+    запрос('/управление/автор/удалить', { 'имя': а }).then(авторы).catch(function (е) { $('ав-статус').textContent = 'Ошибка: ' + е.message; });
+  });
+  $('рс-таблица').addEventListener('click', function (с) {
+    var к = с.target, у = к.getAttribute && к.getAttribute('data-убрать');
+    if (у) {
+      if (!confirm('Удалить пакет «' + у + '» со всеми версиями? Проекты, которые на него опираются, перестанут устанавливаться.')) return;
+      запрос('/управление/реестр/удалить', { 'имя': у }).then(реестр_версий).catch(function (е) { $('ав-статус').textContent = 'Ошибка: ' + е.message; });
+      return;
+    }
+    var и = к.getAttribute && к.getAttribute('data-имя');
+    if (!и) return;
+    запрос('/управление/реестр/отозвать', { 'имя': и, 'версия': к.getAttribute('data-версия'), 'значение': к.getAttribute('data-откл') }).then(реестр_версий).catch(function (е) { $('ав-статус').textContent = 'Ошибка: ' + е.message; });
+  });
   пакеты();
-  $('токен').addEventListener('change', список);
+  авторы();
+  реестр_версий();
+  $('токен').addEventListener('change', function () { список(); авторы(); });
   try { if (sessionStorage.getItem('sfera-token')) setTimeout(список, 50); } catch (е) {}
 })();
 </script>
