@@ -1,0 +1,19 @@
+<div class="wrap page">
+<h1>Уроки</h1>
+<p class="tagline">Бесплатный курс для тех, кто начинает с нуля, и уроки по самому языку. Проходите по порядку: каждый урок строится на предыдущем.</p>
+<form class="search search-big" action="/поиск" role="search"><input type="search" name="q" placeholder="Найти по документации, урокам и примерам" aria-label="Поиск"><button class="button" type="submit">Найти</button></form>
+<div class="уроки-две-области">
+  <div class="уроки-плитки">
+    <h2>Уроки по языку</h2>
+    {{уроки}}
+    <h2>Что дальше</h2>
+    <div class="плитки">
+      <a class="плитка" href="/документация"><b>Документация</b><span>Справочник по языку с примерами кода.</span></a>
+      <a class="плитка" href="/примеры"><b>Примеры</b><span>Готовые программы: запускайте и меняйте.</span></a>
+    </div>
+  </div>
+  <aside class="уроки-плейлист" aria-label="Курс">
+    {{курс}}
+  </aside>
+</div>
+</div>
