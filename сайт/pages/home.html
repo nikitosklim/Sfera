@@ -33,21 +33,22 @@
       <h2>Что можно создать на «Сфере»</h2>
       <p>Это настоящий язык общего назначения, а не учебная игрушка. Выберите направление слева, и мы расскажем, что для него есть.</p>
     </div>
-    <div class="вкладки-бок" data-вкладки>
-      <div class="вкладки-список" role="tablist" aria-label="Области применения">
-        <button type="button" role="tab" data-вкладка="windows" aria-selected="true"><span class="ик" aria-hidden="true">🪟</span>Windows</button>
-        <button type="button" role="tab" data-вкладка="macos" aria-selected="false"><span class="ик" aria-hidden="true">🍎</span>macOS</button>
-        <button type="button" role="tab" data-вкладка="linux" aria-selected="false"><span class="ик" aria-hidden="true">🐧</span>Linux</button>
-        <button type="button" role="tab" data-вкладка="android" aria-selected="false"><span class="ик" aria-hidden="true">🤖</span>Android</button>
-        <button type="button" role="tab" data-вкладка="sites" aria-selected="false"><span class="ик" aria-hidden="true">🌐</span>Сайты</button>
-        <button type="button" role="tab" data-вкладка="servers" aria-selected="false"><span class="ик" aria-hidden="true">🖥</span>Серверы и сеть</button>
-        <button type="button" role="tab" data-вкладка="graphics" aria-selected="false"><span class="ик" aria-hidden="true">🎨</span>Графика и окна</button>
-        <button type="button" role="tab" data-вкладка="db" aria-selected="false"><span class="ик" aria-hidden="true">🗄</span>Базы данных</button>
-        <button type="button" role="tab" data-вкладка="hardware" aria-selected="false"><span class="ик" aria-hidden="true">🔌</span>Железо и чипы</button>
-        <button type="button" role="tab" data-вкладка="tools" aria-selected="false"><span class="ик" aria-hidden="true">🛠</span>Инструменты</button>
+    <input type="radio" name="платформа" id="пл-windows" class="пл-радио" checked><input type="radio" name="платформа" id="пл-macos" class="пл-радио"><input type="radio" name="платформа" id="пл-linux" class="пл-радио"><input type="radio" name="платформа" id="пл-android" class="пл-радио"><input type="radio" name="платформа" id="пл-sites" class="пл-радио"><input type="radio" name="платформа" id="пл-servers" class="пл-радио"><input type="radio" name="платформа" id="пл-graphics" class="пл-радио"><input type="radio" name="платформа" id="пл-db" class="пл-радио"><input type="radio" name="платформа" id="пл-hardware" class="пл-радио"><input type="radio" name="платформа" id="пл-tools" class="пл-радио">
+    <div class="вкладки-бок">
+      <div class="вкладки-список" aria-label="Области применения">
+        <label for="пл-windows" class="пл-метка"><span class="ик" aria-hidden="true">🪟</span>Windows</label>
+        <label for="пл-macos" class="пл-метка"><span class="ик" aria-hidden="true">🍎</span>macOS</label>
+        <label for="пл-linux" class="пл-метка"><span class="ик" aria-hidden="true">🐧</span>Linux</label>
+        <label for="пл-android" class="пл-метка"><span class="ик" aria-hidden="true">🤖</span>Android</label>
+        <label for="пл-sites" class="пл-метка"><span class="ик" aria-hidden="true">🌐</span>Сайты</label>
+        <label for="пл-servers" class="пл-метка"><span class="ик" aria-hidden="true">🖥</span>Серверы и сеть</label>
+        <label for="пл-graphics" class="пл-метка"><span class="ик" aria-hidden="true">🎨</span>Графика и окна</label>
+        <label for="пл-db" class="пл-метка"><span class="ик" aria-hidden="true">🗄</span>Базы данных</label>
+        <label for="пл-hardware" class="пл-метка"><span class="ик" aria-hidden="true">🔌</span>Железо и чипы</label>
+        <label for="пл-tools" class="пл-метка"><span class="ик" aria-hidden="true">🛠</span>Инструменты</label>
       </div>
       <div>
-      <article class="вкладка-панель" role="tabpanel" data-панель="windows">
+      <article class="вкладка-панель" data-панель="windows">
         <img class="баннер" src="/статика/platforms/windows.svg" alt="" loading="lazy">
         <div class="внутри">
           <div>
@@ -60,7 +61,7 @@
 собрано: привет.exe (нативный)</code></pre></div>
         </div>
       </article>
-      <article class="вкладка-панель" role="tabpanel" data-панель="macos" hidden>
+      <article class="вкладка-панель" data-панель="macos">
         <img class="баннер" src="/статика/platforms/macos.svg" alt="" loading="lazy">
         <div class="внутри">
           <div>
@@ -73,7 +74,7 @@
 сфера запустить привет.код</code></pre></div>
         </div>
       </article>
-      <article class="вкладка-панель" role="tabpanel" data-панель="linux" hidden>
+      <article class="вкладка-панель" data-панель="linux">
         <img class="баннер" src="/статика/platforms/linux.svg" alt="" loading="lazy">
         <div class="внутри">
           <div>
@@ -86,7 +87,7 @@
 сфера запустить программа.код</code></pre></div>
         </div>
       </article>
-      <article class="вкладка-панель" role="tabpanel" data-панель="android" hidden>
+      <article class="вкладка-панель" data-панель="android">
         <img class="баннер" src="/статика/platforms/android.svg" alt="" loading="lazy">
         <div class="внутри">
           <div>
@@ -98,7 +99,7 @@
           <div class="codewin"><div class="tab"><b>Android</b></div><pre><code>сфера запустить игра.код --цель android</code></pre></div>
         </div>
       </article>
-      <article class="вкладка-панель" role="tabpanel" data-панель="sites" hidden>
+      <article class="вкладка-панель" data-панель="sites">
         <img class="баннер" src="/статика/platforms/sites.svg" alt="" loading="lazy">
         <div class="внутри">
           <div>
@@ -113,7 +114,7 @@
 конец</code></pre></div>
         </div>
       </article>
-      <article class="вкладка-панель" role="tabpanel" data-панель="servers" hidden>
+      <article class="вкладка-панель" data-панель="servers">
         <img class="баннер" src="/статика/platforms/servers.svg" alt="" loading="lazy">
         <div class="внутри">
           <div>
@@ -127,7 +128,7 @@
 конец</code></pre></div>
         </div>
       </article>
-      <article class="вкладка-панель" role="tabpanel" data-панель="graphics" hidden>
+      <article class="вкладка-панель" data-панель="graphics">
         <img class="баннер" src="/статика/platforms/graphics.svg" alt="" loading="lazy">
         <div class="внутри">
           <div>
@@ -139,7 +140,7 @@
           <div class="codewin"><div class="tab"><b>Графика и окна</b></div><pre><code>окно = создать_окно("Игра", 800, 600);</code></pre></div>
         </div>
       </article>
-      <article class="вкладка-панель" role="tabpanel" data-панель="db" hidden>
+      <article class="вкладка-панель" data-панель="db">
         <img class="баннер" src="/статика/platforms/db.svg" alt="" loading="lazy">
         <div class="внутри">
           <div>
@@ -151,7 +152,7 @@
           <div class="codewin"><div class="tab"><b>Базы данных</b></div><pre><code>результат из целого р = открыть_базу("данные.db");</code></pre></div>
         </div>
       </article>
-      <article class="вкладка-панель" role="tabpanel" data-панель="hardware" hidden>
+      <article class="вкладка-панель" data-панель="hardware">
         <img class="баннер" src="/статика/platforms/hardware.svg" alt="" loading="lazy">
         <div class="внутри">
           <div>
@@ -163,7 +164,7 @@
           <div class="codewin"><div class="tab"><b>Железо и чипы</b></div><pre><code>арена = создать_арену(4096);</code></pre></div>
         </div>
       </article>
-      <article class="вкладка-панель" role="tabpanel" data-панель="tools" hidden>
+      <article class="вкладка-панель" data-панель="tools">
         <img class="баннер" src="/статика/platforms/tools.svg" alt="" loading="lazy">
         <div class="внутри">
           <div>

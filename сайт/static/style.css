@@ -285,15 +285,44 @@ button.тег:hover{color:var(--ink)}
 .список-статей-админ{width:100%;border-collapse:collapse;font-size:.95rem;margin-top:8px}
 .список-статей-админ td{padding:7px 10px;border-bottom:1px solid var(--line)}
 
-/* ---- вкладки с боковым списком (главная, загрузки) ---- */
+/* ---- вкладки с боковым списком: чистый CSS, без скриптов (радио-переключатели) ---- */
+.пл-радио{position:absolute;opacity:0;pointer-events:none}
 .вкладки-бок{display:grid;grid-template-columns:260px minmax(0,1fr);gap:20px;align-items:start}
 .вкладки-список{display:flex;flex-direction:column;gap:6px;position:sticky;top:88px}
-.вкладки-список button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;font:inherit;font-weight:620;color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 16px;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
-.вкладки-список button:hover{color:var(--ink);border-color:var(--accent)}
-.вкладки-список button[aria-selected=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.пл-метка{display:flex;align-items:center;gap:10px;width:100%;font-weight:620;color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 16px;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
+.пл-метка:hover{color:var(--ink);border-color:var(--accent)}
 .вкладки-список .ик{width:22px;text-align:center;flex:none}
-.вкладка-панель{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--bg)}
-.вкладка-панель[hidden]{display:none}
+.вкладка-панель{display:none;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--bg)}
+#пл-windows:checked ~ .вкладки-бок .вкладка-панель[data-панель="windows"]{display:block}
+#пл-windows:checked ~ .вкладки-бок label[for="пл-windows"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+#пл-windows:focus-visible ~ .вкладки-бок label[for="пл-windows"]{outline:3px solid var(--accent);outline-offset:2px}
+#пл-macos:checked ~ .вкладки-бок .вкладка-панель[data-панель="macos"]{display:block}
+#пл-macos:checked ~ .вкладки-бок label[for="пл-macos"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+#пл-macos:focus-visible ~ .вкладки-бок label[for="пл-macos"]{outline:3px solid var(--accent);outline-offset:2px}
+#пл-linux:checked ~ .вкладки-бок .вкладка-панель[data-панель="linux"]{display:block}
+#пл-linux:checked ~ .вкладки-бок label[for="пл-linux"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+#пл-linux:focus-visible ~ .вкладки-бок label[for="пл-linux"]{outline:3px solid var(--accent);outline-offset:2px}
+#пл-android:checked ~ .вкладки-бок .вкладка-панель[data-панель="android"]{display:block}
+#пл-android:checked ~ .вкладки-бок label[for="пл-android"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+#пл-android:focus-visible ~ .вкладки-бок label[for="пл-android"]{outline:3px solid var(--accent);outline-offset:2px}
+#пл-sites:checked ~ .вкладки-бок .вкладка-панель[data-панель="sites"]{display:block}
+#пл-sites:checked ~ .вкладки-бок label[for="пл-sites"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+#пл-sites:focus-visible ~ .вкладки-бок label[for="пл-sites"]{outline:3px solid var(--accent);outline-offset:2px}
+#пл-servers:checked ~ .вкладки-бок .вкладка-панель[data-панель="servers"]{display:block}
+#пл-servers:checked ~ .вкладки-бок label[for="пл-servers"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+#пл-servers:focus-visible ~ .вкладки-бок label[for="пл-servers"]{outline:3px solid var(--accent);outline-offset:2px}
+#пл-graphics:checked ~ .вкладки-бок .вкладка-панель[data-панель="graphics"]{display:block}
+#пл-graphics:checked ~ .вкладки-бок label[for="пл-graphics"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+#пл-graphics:focus-visible ~ .вкладки-бок label[for="пл-graphics"]{outline:3px solid var(--accent);outline-offset:2px}
+#пл-db:checked ~ .вкладки-бок .вкладка-панель[data-панель="db"]{display:block}
+#пл-db:checked ~ .вкладки-бок label[for="пл-db"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+#пл-db:focus-visible ~ .вкладки-бок label[for="пл-db"]{outline:3px solid var(--accent);outline-offset:2px}
+#пл-hardware:checked ~ .вкладки-бок .вкладка-панель[data-панель="hardware"]{display:block}
+#пл-hardware:checked ~ .вкладки-бок label[for="пл-hardware"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+#пл-hardware:focus-visible ~ .вкладки-бок label[for="пл-hardware"]{outline:3px solid var(--accent);outline-offset:2px}
+#пл-tools:checked ~ .вкладки-бок .вкладка-панель[data-панель="tools"]{display:block}
+#пл-tools:checked ~ .вкладки-бок label[for="пл-tools"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+#пл-tools:focus-visible ~ .вкладки-бок label[for="пл-tools"]{outline:3px solid var(--accent);outline-offset:2px}
 .вкладка-панель .баннер{display:block;width:100%;aspect-ratio:800/290;object-fit:cover;background:var(--bg-soft)}
 .вкладка-панель .внутри{padding:24px 28px 28px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:28px;align-items:start}
 .вкладка-панель h3{font-size:1.5rem;margin:0 0 .35em}
@@ -306,17 +335,18 @@ button.тег:hover{color:var(--ink)}
 @media (max-width:860px){
   .вкладки-бок{grid-template-columns:minmax(0,1fr)}
   .вкладки-список{position:static;flex-direction:row;overflow-x:auto;padding-bottom:6px;gap:8px}
-  .вкладки-список button{width:auto;white-space:nowrap;padding:9px 14px}
+  .пл-метка{width:auto;white-space:nowrap;padding:9px 14px}
   .вкладка-панель .внутри{grid-template-columns:minmax(0,1fr);padding:18px}
 }
 
-/* ---- всплывающие облачка ---- */
-body.облако-открыто{overflow:hidden}
-.облако-фон{position:fixed;inset:0;z-index:100;background:rgba(6,10,24,.55);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:20px;animation:облако-фон .16s ease-out}
-.облако{width:min(680px,100%);max-height:min(86vh,100%);display:flex;flex-direction:column;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:18px;box-shadow:0 30px 80px -20px rgba(0,0,0,.5);animation:облако-вход .2s ease-out}
+/* ---- всплывающие облачка: чистый CSS, открываются по якорю (:target), закрываются ссылкой «×» или щелчком по фону ---- */
+.облако-фон{display:none;position:fixed;inset:0;z-index:100;background:rgba(6,10,24,.55);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:20px}
+.облако-фон:target{display:flex;animation:облако-фон .16s ease-out}
+.облако-фон>.облако-закрыть-фон{position:absolute;inset:0;cursor:default}
+.облако{position:relative;width:min(680px,100%);max-height:min(86vh,100%);display:flex;flex-direction:column;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:18px;box-shadow:0 30px 80px -20px rgba(0,0,0,.5);animation:облако-вход .2s ease-out}
 .облако-шапка{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:20px 22px 12px;border-bottom:1px solid var(--line)}
 .облако-шапка h2{margin:0;font-size:1.3rem;border:0;padding:0}
-.облако-закрыть{flex:none;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--bg-soft);color:var(--ink);font-size:1.4rem;line-height:1;cursor:pointer}
+.облако-закрыть{flex:none;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--bg-soft);color:var(--ink);font-size:1.4rem;line-height:1;text-decoration:none}
 .облако-закрыть:hover{border-color:var(--accent)}
 .облако-тело{padding:16px 22px 24px;overflow:auto;overscroll-behavior:contain}
 .облако-тело h3{font-size:1.05rem;margin:1.1em 0 .3em}
@@ -331,6 +361,9 @@ body.облако-открыто{overflow:hidden}
   .облако-тело{padding:12px 16px 28px}
 }
 @keyframes облако-снизу{from{transform:translateY(40px);opacity:0}}
+/* Использование: <a href="#облако-имя">Открыть</a>
+   <div class="облако-фон" id="облако-имя"><a class="облако-закрыть-фон" href="#закрыто" aria-label="Закрыть"></a>
+     <div class="облако" role="dialog" aria-labelledby="…"><div class="облако-шапка"><h2>Заголовок</h2><a class="облако-закрыть" href="#закрыто">×</a></div><div class="облако-тело">…</div></div></div> */
 
 /* ---- статьи на главной ---- */
 .статьи-главная{margin-bottom:12px}
