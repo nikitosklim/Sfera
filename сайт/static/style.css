@@ -371,3 +371,50 @@ button.тег:hover{color:var(--ink)}
 @media (max-width:980px){.статьи-главная .статьи-сетка{grid-template-columns:repeat(2,minmax(0,1fr))}.статьи-главная .статья:nth-child(3){display:none}}
 @media (max-width:640px){.статьи-главная .статьи-сетка{grid-template-columns:minmax(0,1fr)}.статьи-главная .статья:nth-child(3){display:flex}}
 .ссылка-все{font-weight:620}
+
+/* ---- курс «Для обучения программированию»: плейлист на фоне с лёгким размытием ---- */
+.курс{position:relative;overflow:hidden;border-radius:20px;color:#fff;isolation:isolate;border:1px solid var(--line)}
+.курс-фон{position:absolute;inset:-12px;z-index:-2;background:#0f1d4d url(/статика/course.svg) center/cover;filter:blur(3px)}
+.курс::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(7,14,40,.12),rgba(7,14,40,.62))}
+.курс-внутри{padding:28px 28px 30px}
+.курс-метка{display:inline-block;margin:0 0 12px;padding:3px 12px;border-radius:999px;background:rgba(255,255,255,.16);font-size:.88rem;font-weight:620}
+.курс h3{color:#fff;font-size:clamp(1.5rem,3vw,2rem);margin:0 0 .35em}
+.курс-описание{color:#dbe4ff;max-width:44rem;margin-bottom:1.2em}
+.плейлист{list-style:none;margin:0 0 22px;padding:0;display:grid;gap:8px;counter-reset:нет}
+.плейлист a{display:flex;align-items:center;gap:14px;padding:11px 14px;border-radius:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);color:#fff;text-decoration:none;backdrop-filter:blur(4px);transition:background .15s,border-color .15s}
+.плейлист a:hover{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.5)}
+.плейлист i{flex:none;display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:#fff;color:#0f1d4d;font-style:normal;font-weight:720}
+.плейлист b{display:block;font-weight:660;line-height:1.3}
+.плейлист small{display:block;color:#c7d4ff;font-size:.88rem;line-height:1.4;margin-top:2px}
+.курс .button.big{background:#fff;border-color:#fff;color:#0f1d4d}
+.курс-главная .плейлист{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:760px){.курс-главная .плейлист{grid-template-columns:minmax(0,1fr)}.курс-внутри{padding:20px 16px 22px}}
+.уроки-две-области{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:32px;align-items:start}
+.уроки-плейлист{position:sticky;top:88px}
+.уроки-плейлист .курс-внутри{padding:22px}
+.уроки-плейлист .плейлист small{display:none}
+.уроки-плитки h2:first-child{margin-top:0}
+.уроки-две-области .плитки{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+@media (max-width:980px){.уроки-две-области{grid-template-columns:minmax(0,1fr)}.уроки-плейлист{position:static;order:-1}}
+
+/* ---- страница «О языке» ---- */
+.about{max-width:1000px}
+.о-шапка{padding:8px 0 12px}
+.о-текст{max-width:46rem;color:var(--ink)}
+.about h3{margin-top:1.8em}
+.цели{max-width:48rem;padding-left:1.2em}
+.цели li{margin:.7em 0}
+.достижения{list-style:none;margin:14px 0 20px;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+.достижения li{display:flex;flex-direction:column;gap:4px;padding:16px 18px;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg-soft)}
+.достижения li b{font-size:1.02rem}
+.достижения li span{color:var(--muted);font-size:.95rem;line-height:1.5}
+.кому-сетка{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:14px 0}
+.кому{padding:20px;border:1px solid var(--line);border-radius:var(--radius);display:flex;flex-direction:column;gap:6px}
+.кому h3{margin:0;font-size:1.1rem}
+.кому p{color:var(--muted);font-size:.96rem;flex:1;margin:0 0 8px}
+.сравнение{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:12px 0 24px;align-items:start}
+.сравнение.три{grid-template-columns:repeat(2,minmax(0,1fr))}
+.сравнение .codewin pre{font-size:.86rem;padding:14px 16px}
+.сравн-таблица th,.сравн-таблица td{padding:10px 12px;font-size:.95rem}
+.сравн-таблица tr.наш td{background:var(--accent-soft);font-weight:560}
+@media (max-width:760px){.сравнение,.сравнение.три{grid-template-columns:minmax(0,1fr)}}
