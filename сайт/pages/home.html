@@ -27,21 +27,156 @@
   </div>
 </section>
 
-<section class="section">
+<section class="section" id="что-создать">
   <div class="wrap">
     <div class="section-head">
       <h2>Что можно создать на «Сфере»</h2>
-      <p>Это настоящий язык общего назначения, а не учебная игрушка.</p>
+      <p>Это настоящий язык общего назначения, а не учебная игрушка. Выберите направление слева, и мы расскажем, что для него есть.</p>
     </div>
-    <div class="плитки плитки-3">
-      <a class="плитка" href="/уроки/свой-веб-сервер"><b>Сайты и веб-серверы</b><span>Маршруты, шаблоны, отдача файлов, загрузка на сервер. Этот сайт сам написан на «Сфере».</span></a>
-      <a class="плитка" href="/документация/работа-с-сетью"><b>Работа с сетью</b><span>TCP-сокеты, клиенты и серверы, параллельная обработка подключений.</span></a>
-      <a class="плитка" href="/документация/первая-программа"><b>Машинный код через LLVM</b><span>Нативный исполняемый файл без интерпретатора и виртуальной машины.</span></a>
-      <a class="плитка" href="/документация/кросс-компиляция"><b>Сборка под Android</b><span>Один и тот же код для разных процессоров и платформ.</span></a>
-      <a class="плитка" href="/документация/многопоточность"><b>Многопоточность</b><span>Блок «параллельно», каналы между потоками и повторяемый порядок выполнения.</span></a>
-      <a class="плитка" href="/документация/работа-с-базой-данных"><b>Базы данных</b><span>SQLite из программы и собственное хранилище без внешних зависимостей.</span></a>
-      <a class="плитка" href="/документация/графика-и-ui"><b>Графика и интерфейсы</b><span>Окна и рисование. Панель разработчика тоже написана на «Сфере».</span></a>
-      <a class="плитка" href="/документация/отладчик"><b>Инструменты разработчика</b><span>Отладчик, языковой сервер, расширение для VS Code, пакетный менеджер.</span></a>
+    <div class="вкладки-бок" data-вкладки>
+      <div class="вкладки-список" role="tablist" aria-label="Области применения">
+        <button type="button" role="tab" data-вкладка="windows" aria-selected="true"><span class="ик" aria-hidden="true">🪟</span>Windows</button>
+        <button type="button" role="tab" data-вкладка="macos" aria-selected="false"><span class="ик" aria-hidden="true">🍎</span>macOS</button>
+        <button type="button" role="tab" data-вкладка="linux" aria-selected="false"><span class="ик" aria-hidden="true">🐧</span>Linux</button>
+        <button type="button" role="tab" data-вкладка="android" aria-selected="false"><span class="ик" aria-hidden="true">🤖</span>Android</button>
+        <button type="button" role="tab" data-вкладка="sites" aria-selected="false"><span class="ик" aria-hidden="true">🌐</span>Сайты</button>
+        <button type="button" role="tab" data-вкладка="servers" aria-selected="false"><span class="ик" aria-hidden="true">🖥</span>Серверы и сеть</button>
+        <button type="button" role="tab" data-вкладка="graphics" aria-selected="false"><span class="ик" aria-hidden="true">🎨</span>Графика и окна</button>
+        <button type="button" role="tab" data-вкладка="db" aria-selected="false"><span class="ик" aria-hidden="true">🗄</span>Базы данных</button>
+        <button type="button" role="tab" data-вкладка="hardware" aria-selected="false"><span class="ик" aria-hidden="true">🔌</span>Железо и чипы</button>
+        <button type="button" role="tab" data-вкладка="tools" aria-selected="false"><span class="ик" aria-hidden="true">🛠</span>Инструменты</button>
+      </div>
+      <div>
+      <article class="вкладка-панель" role="tabpanel" data-панель="windows">
+        <img class="баннер" src="/статика/platforms/windows.svg" alt="" loading="lazy">
+        <div class="внутри">
+          <div>
+            <h3>Программы и приложения для Windows</h3>
+            <p>Пишите на «Сфере» и получайте обычный .exe: без интерпретатора, без виртуальной машины и без установки среды выполнения на компьютере пользователя.</p>
+            <ul><li>Панель разработчика с редактором и запуском в один щелчок</li><li>Установщик одним PowerShell-скриптом</li><li>Окна, рисование, сеть и файлы из стандартной библиотеки</li></ul>
+            <div class="ссылки"><a class="button small" href="/загрузки">Скачать для Windows</a><a class="button small secondary" href="/документация/первая-программа">Первая программа</a></div>
+          </div>
+          <div class="codewin"><div class="tab"><b>Windows</b></div><pre><code>запустить привет.код
+собрано: привет.exe (нативный)</code></pre></div>
+        </div>
+      </article>
+      <article class="вкладка-панель" role="tabpanel" data-панель="macos" hidden>
+        <img class="баннер" src="/статика/platforms/macos.svg" alt="" loading="lazy">
+        <div class="внутри">
+          <div>
+            <h3>Приложения для Mac на Intel и Apple Silicon</h3>
+            <p>Компилятор работает и на процессорах Intel, и на M1 и новее. Для каждого есть своя сборка панели разработчика.</p>
+            <ul><li>Приложение «Панель Сферы» для Программ</li><li>Сборка LLVM 18 через Homebrew</li><li>Кросс-компиляция под другие платформы</li></ul>
+            <div class="ссылки"><a class="button small" href="/загрузки">Скачать для macOS</a><a class="button small secondary" href="/документация/кросс-компиляция">Кросс-компиляция</a></div>
+          </div>
+          <div class="codewin"><div class="tab"><b>macOS</b></div><pre><code>brew install llvm@18
+сфера запустить привет.код</code></pre></div>
+        </div>
+      </article>
+      <article class="вкладка-панель" role="tabpanel" data-панель="linux" hidden>
+        <img class="баннер" src="/статика/platforms/linux.svg" alt="" loading="lazy">
+        <div class="внутри">
+          <div>
+            <h3>Утилиты, службы и приложения для Linux</h3>
+            <p>Самая родная платформа «Сферы»: компилятор, сервер этого сайта и все инструменты работают на Linux, в том числе на недорогом VPS.</p>
+            <ul><li>Нативные исполняемые файлы под x86-64</li><li>Многопоточность и сокеты без внешних библиотек</li><li>Работа в systemd-службах и контейнерах</li></ul>
+            <div class="ссылки"><a class="button small" href="/загрузки">Скачать для Linux</a><a class="button small secondary" href="/документация/многопоточность">Многопоточность</a></div>
+          </div>
+          <div class="codewin"><div class="tab"><b>Linux</b></div><pre><code>sudo apt install llvm-18 clang
+сфера запустить программа.код</code></pre></div>
+        </div>
+      </article>
+      <article class="вкладка-панель" role="tabpanel" data-панель="android" hidden>
+        <img class="баннер" src="/статика/platforms/android.svg" alt="" loading="lazy">
+        <div class="внутри">
+          <div>
+            <h3>Программы на телефоне и под Android</h3>
+            <p>Есть приложение «Сфера» для Android: в нём редактор, запуск программ прямо на телефоне, документация и уроки без интернета. А код можно собирать под Android со своего компьютера.</p>
+            <ul><li>Приложение .apk с редактором и запуском</li><li>Документация и уроки доступны без сети</li><li>Сборка под Android из того же исходного кода</li></ul>
+            <div class="ссылки"><a class="button small" href="/загрузки">Скачать .apk</a><a class="button small secondary" href="/документация/кросс-компиляция">Сборка под Android</a></div>
+          </div>
+          <div class="codewin"><div class="tab"><b>Android</b></div><pre><code>сфера запустить игра.код --цель android</code></pre></div>
+        </div>
+      </article>
+      <article class="вкладка-панель" role="tabpanel" data-панель="sites" hidden>
+        <img class="баннер" src="/статика/platforms/sites.svg" alt="" loading="lazy">
+        <div class="внутри">
+          <div>
+            <h3>Сайты и веб-приложения целиком на «Сфере»</h3>
+            <p>Мы написали этот сайт и его сервер на самой «Сфере»: маршруты, шаблоны, статистика, загрузка файлов и админка. Внешних веб-библиотек нет.</p>
+            <ul><li>Библиотека «веб»: запросы, ответы, маршруты, статические файлы</li><li>Markdown в HTML из коробки</li><li>Пошаговый урок «Свой веб-сервер»</li></ul>
+            <div class="ссылки"><a class="button small" href="/уроки/свой-веб-сервер">Урок: свой веб-сервер</a><a class="button small secondary" href="/документация/веб-сервер">Веб-сервер</a></div>
+          </div>
+          <div class="codewin"><div class="tab"><b>Сайты</b></div><pre><code>функция главная(): целое
+    открыть_порт(8080);
+    ...
+конец</code></pre></div>
+        </div>
+      </article>
+      <article class="вкладка-панель" role="tabpanel" data-панель="servers" hidden>
+        <img class="баннер" src="/статика/platforms/servers.svg" alt="" loading="lazy">
+        <div class="внутри">
+          <div>
+            <h3>Серверы, службы и сетевые программы</h3>
+            <p>TCP-сокеты, клиенты и серверы, пул рабочих потоков и каналы между ними. Программа работает неограниченно долго и не тянет за собой виртуальную машину.</p>
+            <ul><li>Сокеты на Linux, macOS и Windows</li><li>Блок «параллельно» и каналы</li><li>Журналы и наблюдаемость в стандартной библиотеке</li></ul>
+            <div class="ссылки"><a class="button small" href="/документация/работа-с-сетью">Работа с сетью</a><a class="button small secondary" href="/примеры/http-сервер-на-сокетах">Пример: HTTP-сервер</a></div>
+          </div>
+          <div class="codewin"><div class="tab"><b>Серверы и сеть</b></div><pre><code>параллельно
+    обработать_подключение(клиент);
+конец</code></pre></div>
+        </div>
+      </article>
+      <article class="вкладка-панель" role="tabpanel" data-панель="graphics" hidden>
+        <img class="баннер" src="/статика/platforms/graphics.svg" alt="" loading="lazy">
+        <div class="внутри">
+          <div>
+            <h3>Окна, рисование и небольшие игры</h3>
+            <p>Окна, рисование и ввод мышью и клавиатурой. Панель разработчика «Сферы» и пример игры-кликера с сохранением написаны именно так.</p>
+            <ul><li>Графика и интерфейсы на SDL</li><li>Пример: кликер с сохранением прогресса</li><li>Одна и та же программа на Windows, macOS и Linux</li></ul>
+            <div class="ссылки"><a class="button small" href="/документация/графика-и-ui">Графика и UI</a><a class="button small secondary" href="/примеры/кликер-игра-с-сохранением">Пример: кликер</a></div>
+          </div>
+          <div class="codewin"><div class="tab"><b>Графика и окна</b></div><pre><code>окно = создать_окно("Игра", 800, 600);</code></pre></div>
+        </div>
+      </article>
+      <article class="вкладка-панель" role="tabpanel" data-панель="db" hidden>
+        <img class="баннер" src="/статика/platforms/db.svg" alt="" loading="lazy">
+        <div class="внутри">
+          <div>
+            <h3>Данные: SQLite и собственное хранилище</h3>
+            <p>Работайте с SQLite из программы или храните данные во встроенном хранилище без внешних зависимостей. Статистика этого сайта хранится именно так.</p>
+            <ul><li>SQLite: запросы и результаты как значения</li><li>Своё хранилище данных с индексом</li><li>Файлы, папки, атомарная запись</li></ul>
+            <div class="ссылки"><a class="button small" href="/документация/работа-с-базой-данных">Базы данных</a><a class="button small secondary" href="/документация/собственное-хранилище-данных">Своё хранилище</a></div>
+          </div>
+          <div class="codewin"><div class="tab"><b>Базы данных</b></div><pre><code>результат из целого р = открыть_базу("данные.db");</code></pre></div>
+        </div>
+      </article>
+      <article class="вкладка-панель" role="tabpanel" data-панель="hardware" hidden>
+        <img class="баннер" src="/статика/platforms/hardware.svg" alt="" loading="lazy">
+        <div class="внутри">
+          <div>
+            <h3>Программы без операционной системы (экспериментально)</h3>
+            <p>«Сфера» умеет собирать автономные программы: свой минимальный рантайм, арена-распределитель памяти и скрипты компоновки ядра. Это пока эксперимент: готовых плат и микроконтроллеров в списке нет.</p>
+            <ul><li>Минимальный рантайм на ассемблере</li><li>Арена вместо кучи для систем без ОС</li><li>Примеры в папке «голое-железо» на GitHub</li></ul>
+            <div class="ссылки"><a class="button small" href="https://github.com/nikitosklim/Sfera/tree/main/examples/голое-железо">Примеры на GitHub</a><a class="button small secondary" href="/документация/управление-памятью">Управление памятью</a></div>
+          </div>
+          <div class="codewin"><div class="tab"><b>Железо и чипы</b></div><pre><code>арена = создать_арену(4096);</code></pre></div>
+        </div>
+      </article>
+      <article class="вкладка-панель" role="tabpanel" data-панель="tools" hidden>
+        <img class="баннер" src="/статика/platforms/tools.svg" alt="" loading="lazy">
+        <div class="внутри">
+          <div>
+            <h3>Инструменты разработчика</h3>
+            <p>Мы делаем не только язык, но и всё вокруг него: отладчик, языковой сервер, расширение для VS Code и пакетный менеджер с собственным реестром.</p>
+            <ul><li>Расширение «Сфера» для VS Code: подсветка и подсказки</li><li>Отладчик на lldb/gdb с точками останова</li><li>Пакеты: сфера установить имя</li></ul>
+            <div class="ссылки"><a class="button small" href="/пакеты">Пакеты</a><a class="button small secondary" href="/документация/отладчик">Отладчик</a></div>
+          </div>
+          <div class="codewin"><div class="tab"><b>Инструменты</b></div><pre><code>сфера установить математика
+сфера опубликовать</code></pre></div>
+        </div>
+      </article>
+      </div>
     </div>
   </div>
 </section>
@@ -143,6 +278,17 @@
       <a class="плитка" href="/уроки/свой-веб-сервер"><em>Урок 6</em><b>Свой веб-сервер</b><span>Свой сайт на «Сфере».</span></a>
     </div>
     <p style="margin-top:24px"><a href="/уроки">Все уроки</a> · <a href="/документация">Документация</a> · <a href="/примеры">Примеры</a></p>
+  </div>
+</section>
+
+<section class="section ">
+  <div class="wrap статьи-главная">
+    <div class="section-head">
+      <h2>Свежие статьи</h2>
+      <p>Рассказываем, как устроена «Сфера», что нового и чему мы научились по дороге.</p>
+    </div>
+    {{статьи}}
+    <p style="margin-top:20px"><a class="ссылка-все" href="/статьи">Все статьи</a></p>
   </div>
 </section>
 
