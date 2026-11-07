@@ -284,3 +284,57 @@ button.тег:hover{color:var(--ink)}
 @media (max-width:640px){.превью-статьи{grid-template-columns:1fr}}
 .список-статей-админ{width:100%;border-collapse:collapse;font-size:.95rem;margin-top:8px}
 .список-статей-админ td{padding:7px 10px;border-bottom:1px solid var(--line)}
+
+/* ---- вкладки с боковым списком (главная, загрузки) ---- */
+.вкладки-бок{display:grid;grid-template-columns:260px minmax(0,1fr);gap:20px;align-items:start}
+.вкладки-список{display:flex;flex-direction:column;gap:6px;position:sticky;top:88px}
+.вкладки-список button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;font:inherit;font-weight:620;color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 16px;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
+.вкладки-список button:hover{color:var(--ink);border-color:var(--accent)}
+.вкладки-список button[aria-selected=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.вкладки-список .ик{width:22px;text-align:center;flex:none}
+.вкладка-панель{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--bg)}
+.вкладка-панель[hidden]{display:none}
+.вкладка-панель .баннер{display:block;width:100%;aspect-ratio:800/290;object-fit:cover;background:var(--bg-soft)}
+.вкладка-панель .внутри{padding:24px 28px 28px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:28px;align-items:start}
+.вкладка-панель h3{font-size:1.5rem;margin:0 0 .35em}
+.вкладка-панель .внутри p{color:var(--muted)}
+.вкладка-панель ul{margin:0 0 14px;padding-left:1.2em}
+.вкладка-панель li{margin:.3em 0}
+.вкладка-панель .ссылки{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.вкладка-панель .codewin pre{font-size:.85rem;padding:14px 16px}
+.button.small{padding:7px 14px;font-size:.93rem;border-radius:9px}
+@media (max-width:860px){
+  .вкладки-бок{grid-template-columns:minmax(0,1fr)}
+  .вкладки-список{position:static;flex-direction:row;overflow-x:auto;padding-bottom:6px;gap:8px}
+  .вкладки-список button{width:auto;white-space:nowrap;padding:9px 14px}
+  .вкладка-панель .внутри{grid-template-columns:minmax(0,1fr);padding:18px}
+}
+
+/* ---- всплывающие облачка ---- */
+body.облако-открыто{overflow:hidden}
+.облако-фон{position:fixed;inset:0;z-index:100;background:rgba(6,10,24,.55);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:20px;animation:облако-фон .16s ease-out}
+.облако{width:min(680px,100%);max-height:min(86vh,100%);display:flex;flex-direction:column;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:18px;box-shadow:0 30px 80px -20px rgba(0,0,0,.5);animation:облако-вход .2s ease-out}
+.облако-шапка{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:20px 22px 12px;border-bottom:1px solid var(--line)}
+.облако-шапка h2{margin:0;font-size:1.3rem;border:0;padding:0}
+.облако-закрыть{flex:none;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--bg-soft);color:var(--ink);font-size:1.4rem;line-height:1;cursor:pointer}
+.облако-закрыть:hover{border-color:var(--accent)}
+.облако-тело{padding:16px 22px 24px;overflow:auto;overscroll-behavior:contain}
+.облако-тело h3{font-size:1.05rem;margin:1.1em 0 .3em}
+.облако-тело pre{font-size:.86rem;white-space:pre-wrap;word-break:break-word}
+.облако-тело table{font-size:.95rem}
+@keyframes облако-фон{from{opacity:0}}
+@keyframes облако-вход{from{opacity:0;transform:translateY(10px) scale(.98)}}
+@media (max-width:640px){
+  .облако-фон{align-items:flex-end;padding:0}
+  .облако{width:100%;max-height:90vh;border-radius:18px 18px 0 0;animation:облако-снизу .22s ease-out}
+  .облако-шапка{padding:16px 16px 10px}
+  .облако-тело{padding:12px 16px 28px}
+}
+@keyframes облако-снизу{from{transform:translateY(40px);opacity:0}}
+
+/* ---- статьи на главной ---- */
+.статьи-главная{margin-bottom:12px}
+.статьи-главная .статьи-сетка{grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:8px}
+@media (max-width:980px){.статьи-главная .статьи-сетка{grid-template-columns:repeat(2,minmax(0,1fr))}.статьи-главная .статья:nth-child(3){display:none}}
+@media (max-width:640px){.статьи-главная .статьи-сетка{grid-template-columns:minmax(0,1fr)}.статьи-главная .статья:nth-child(3){display:flex}}
+.ссылка-все{font-weight:620}
