@@ -71,20 +71,41 @@ jobs:
           files: релиз/Sfera-Panel-macOS.zip
 
   android:
-    name: Android (ARM64)
+    name: Android (ARM64, с компилятором)
     # Как и macOS: если не вышло, остальные архивы всё равно останутся.
     continue-on-error: true
     runs-on: ubuntu-24.04
+    # Первый запуск собирает LLVM под Android (1–2 часа) и кладёт его в кэш,
+    # дальше этот этап занимает несколько минут. Кэш общий с «Компилятор для Android».
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v5
+      - name: Освобождаем место на диске
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /opt/hostedtoolcache/CodeQL
+          df -h /
       - name: Установка зависимостей
         run: |
           sudo apt-get update
-          sudo apt-get install -y llvm-18-dev libpolly-18-dev libzstd-dev libffi-dev zlib1g-dev libxml2-dev clang fonts-dejavu-core
-      - name: Сборка компилятора
+          sudo apt-get install -y llvm-18-dev libpolly-18-dev libzstd-dev libffi-dev zlib1g-dev libxml2-dev clang cmake ninja-build fonts-dejavu-core
+      - name: Кэш LLVM под Android
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: релиз/android-llvm
+          key: android-llvm-18.1.3-api23-v1-${{ hashFiles('собрать-android-компилятор.sh') }}
+      - name: Сборка LLVM, lld и libffi под Android
+        run: bash -x ./собрать-android-компилятор.sh llvm
+      - name: Сохранить кэш LLVM
+        if: always() && steps.cache.outputs.cache-hit != 'true' && hashFiles('релиз/android-llvm/install/lib/libLLVMCore.a') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: релиз/android-llvm
+          key: android-llvm-18.1.3-api23-v1-${{ hashFiles('собрать-android-компилятор.sh') }}
+      - name: Сборка компилятора Сферы под Android
         env:
-          LLVM_SYS_180_PREFIX: /usr/lib/llvm-18
-        run: cargo build --release
+          RUST_BACKTRACE: "1"
+        run: bash -x ./собрать-android-компилятор.sh compiler
       - name: Ключ подписи Android (если задан в секретах)
         env:
           KS_B64: ${{ secrets.SFERA_KEYSTORE_B64 }}
@@ -98,10 +119,11 @@ jobs:
           else
             echo "Подпись: одноразовый отладочный ключ (секрет SFERA_KEYSTORE_B64 не задан)"
           fi
-      - name: Сборка APK
+      - name: Сборка APK панели с компилятором
         env:
+          LLVM_SYS_180_PREFIX: /usr/lib/llvm-18
           RUST_BACKTRACE: "1"
-        run: bash ./собрать-apk.sh
+        run: bash -x ./собрать-apk.sh
       - uses: actions/upload-artifact@v4
         with:
           name: sfera-panel-android

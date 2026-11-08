@@ -96,8 +96,13 @@ if (Test-Path $Архив) { Remove-Item -Force $Архив }
 # tar.exe (встроен в Windows 10+) пишет имена файлов в UTF-8 — русские имена
 # запустить.exe / сфера_пакеты.exe не превратятся в кракозябры. Compress-
 # Archive из PowerShell 5.1 так не умеет.
-& tar.exe -a -c -f $Архив -C $Выход "Sfera-Panel-Windows"
-if ($LASTEXITCODE -ne 0) { Остановить "tar.exe завершился с кодом $LASTEXITCODE" }
+# Аргументы родной программе уходят в кодовой странице консоли: путь с русской папкой
+# («релиз») портится в «?????». Поэтому заходим в папку и передаём tar.exe только ASCII-имена.
+Push-Location $Выход
+& tar.exe -a -c -f "Sfera-Panel-Windows.zip" "Sfera-Panel-Windows"
+$кодTar = $LASTEXITCODE
+Pop-Location
+if ($кодTar -ne 0) { Остановить "tar.exe завершился с кодом $кодTar" }
 
 $Размер = [math]::Round((Get-Item $Архив).Length / 1MB, 1)
 Write-Host "5/5  Готово: $Архив ($Размер МБ)" -ForegroundColor Green
