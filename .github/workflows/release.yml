@@ -160,6 +160,13 @@ jobs:
         run: |
           powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\установить-windows.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          # Установщик записал переменные (LLVM_SYS_180_PREFIX, SFERA_LIB_PATHS, Path) на уровне пользователя,
+          # а новый процесс их не видит: подхватываем вручную перед сборкой архива.
+          foreach ($имя in 'LLVM_SYS_180_PREFIX', 'SFERA_LIB_PATHS', 'SFERA_PTHREAD_WIN_O') {
+            $значение = [Environment]::GetEnvironmentVariable($имя, 'User')
+            if ($значение) { Set-Item -Path "env:$имя" -Value $значение }
+          }
+          $env:Path = [Environment]::GetEnvironmentVariable('Path', 'User') + ';' + $env:Path
           powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\собрать-релиз-windows.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - uses: actions/upload-artifact@v4
