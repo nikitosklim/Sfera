@@ -1,46 +1,4 @@
 <div class="wrap page page-narrow">
 <p class="muted"><a href="/пакеты">← Все пакеты</a></p>
-<h1 id="п-имя">Пакет</h1>
-<p class="tagline" id="п-описание"></p>
-<p id="п-мета" class="muted"></p>
-
-<h2>Установка</h2>
-<pre><code id="п-команда"></code></pre>
-
-<h2>Версии</h2>
-<table class="список-статей-админ" id="п-версии"></table>
-
-<h2>Описание</h2>
-<pre id="п-readme" style="white-space:pre-wrap"></pre>
-<script>
-(function () {
-  var имя = decodeURIComponent(location.pathname.split('/').filter(Boolean).pop() || '');
-  function esc(с) { return String(с).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  function дата(с) { var д = new Date(parseInt(с, 10) * 1000); return isNaN(д) ? '' : д.toLocaleDateString('ru-RU'); }
-  function размер(б) { б = parseInt(б, 10) || 0; return б > 1048576 ? (б / 1048576).toFixed(1) + ' МБ' : Math.max(1, Math.round(б / 1024)) + ' КБ'; }
-  function сравнить(а, б) { a = а.split('.').map(Number); b = б.split('.').map(Number); for (var i = 0; i < 3; i++) { if (a[i] !== b[i]) return a[i] - b[i]; } return 0; }
-  document.getElementById('п-имя').textContent = имя;
-  fetch('/пакеты/реестр.txt').then(function (р) { return р.text(); }).then(function (т) {
-    var в = [];
-    т.split('\n').forEach(function (с) {
-      if (!с.trim() || с[0] === '#') return;
-      var п = с.split('|').map(function (x) { return x.trim(); });
-      if (п[0] === имя) в.push({ версия: п[1], сумма: п[2], размер: п[3], время: п[4], автор: п[5], описание: п[6], отозвана: п[7] === '1' });
-    });
-    в.sort(function (а, б) { return сравнить(б.версия, а.версия); });
-    if (!в.length) { document.getElementById('п-описание').textContent = 'Такого пакета нет.'; return; }
-    var последняя = в.filter(function (x) { return !x.отозвана; })[0] || в[0];
-    document.title = имя + ' ' + последняя.версия + ' — пакет Сферы';
-    document.getElementById('п-описание').textContent = последняя.описание;
-    document.getElementById('п-мета').textContent = 'Автор: ' + последняя.автор + ' · версия ' + последняя.версия;
-    document.getElementById('п-команда').textContent = 'сфера установить ' + имя;
-    document.getElementById('п-версии').innerHTML = в.map(function (x) {
-      return '<tr><td><b>' + esc(x.версия) + '</b>' + (x.отозвана ? ' <span class="muted">(отозвана)</span>' : '') + '<br><span class="muted">sha256 ' + esc(x.сумма.slice(0, 16)) + '…</span></td><td class="muted">' + дата(x.время) + ' · ' + размер(x.размер) + '</td><td style="text-align:right"><a href="/пакеты/архив/' + encodeURIComponent(имя) + '/' + esc(x.версия) + '.tar.gz">Скачать</a></td></tr>';
-    }).join('');
-    fetch('/пакеты/описание/' + encodeURIComponent(имя)).then(function (р) { return р.text(); }).then(function (т) {
-      document.getElementById('п-readme').textContent = т || 'Автор не добавил README.md.';
-    });
-  });
-})();
-</script>
+{{пакет}}
 </div>

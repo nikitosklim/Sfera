@@ -1,49 +1,15 @@
-<div class="wrap page">
-<h1>Загрузки</h1>
-<p class="tagline">Установочные файлы «Сферы». Исходники и подробные инструкции — на GitHub.</p>
-{{список}}
-<p id="ваша-система" class="muted" hidden></p>
-<script>
-(function(){
-  var u=navigator.userAgent, os='';
-  if(/Android/i.test(u)) os='Android'; else if(/Windows/i.test(u)) os='Windows'; else if(/Mac/i.test(u)) os='macOS'; else if(/Linux|X11/i.test(u)) os='Linux';
-  if(!os) return;
-  var подсказка=document.getElementById('ваша-система'), найдено=false;
-  document.querySelectorAll('tr').forEach(function(tr){
-    if(tr.textContent.indexOf(os)>=0){ tr.style.background='var(--accent-soft)'; найдено=true; }
-  });
-  подсказка.hidden=false;
-  подсказка.textContent=найдено?('Подходящие вам файлы ('+os+') подсвечены в таблице.'):('Для вашей системы ('+os+') готового файла пока нет: сборку для неё можно сделать из исходников на GitHub.');
-})();
-</script>
-<h2>Как установить</h2>
-<details class="как"><summary>Windows</summary>
-<ol>
-<li>Скачайте архив для Windows и распакуйте его в любую папку, например в <code>C:\Sfera</code>.</li>
-<li>Запустите <code>Sfera-Panel.exe</code>. Если Windows покажет окно «Windows защитила ваш компьютер», нажмите «Подробнее» и затем «Выполнить в любом случае»: приложение пока не подписано сертификатом разработчика.</li>
-<li>В панели нажмите «Установить Сферу». Она поставит компилятор и всё необходимое (понадобится интернет).</li>
-<li>Откройте новое окно PowerShell и проверьте: <code>запустить --версия</code>.</li>
-</ol></details>
-<details class="как"><summary>macOS (Intel и Apple Silicon)</summary>
-<ol>
-<li>Выберите архив под ваш Mac: «Intel» для процессоров Intel, «Apple Silicon / ARM» для M1 и новее. Узнать можно в меню  → «Об этом Mac».</li>
-<li>Распакуйте архив и перенесите «Панель Сферы» в папку «Программы» (именно туда: оттуда панель берёт компилятор).</li>
-<li>При первом запуске нажмите на приложении правой кнопкой и выберите «Открыть», затем подтвердите. Если macOS пишет, что приложение повреждено, выполните в Терминале: <code>xattr -dr com.apple.quarantine "/Applications/Панель Сферы.app"</code></li>
-<li>В панели нажмите «Установить язык». Для сборки нужен Homebrew: <code>brew install llvm@18 sdl2 sdl2_ttf</code>.</li>
-</ol></details>
-<details class="как"><summary>Linux</summary>
-<ol>
-<li>Распакуйте архив: <code>tar -xf Sfera-Panel-Linux-*.tar.xz</code>.</li>
-<li>Установите зависимости: <code>sudo apt install llvm-18 clang libsdl2-2.0-0 libsdl2-ttf-2.0-0</code> (для других дистрибутивов найдите аналогичные пакеты).</li>
-<li>Запустите панель из распакованной папки. Подробности — в <a href="https://github.com/nikitosklim/Sfera">README</a>.</li>
-</ol></details>
-<details class="как"><summary>Android</summary>
-<ol>
-<li>Скачайте файл <code>.apk</code> прямо на телефон.</li>
-<li>Откройте его. Если Android спросит, разрешите установку из этого источника (браузера или файлового менеджера).</li>
-<li>Запустите «Сфера»: внутри редактор, запуск программ на самом телефоне, документация и уроки без интернета.</li>
-<li>Обновления ставятся поверх без удаления.</li>
-</ol></details>
-
-<p class="muted">Файл можно проверить: под каждой строкой в таблице есть контрольная сумма SHA-256. Исходный код и подробные инструкции — в <a href="https://github.com/nikitosklim/Sfera">README</a>.</p>
+<section class="герой-фикс" style="--картинка:url(/статика/scenes/taiga.svg)">
+  <div class="герой-фикс-текст">
+    <h1>Скачать «Сферу»</h1>
+    <p>Язык программирования на русском для Windows, macOS, Linux и Android. Бесплатно и с открытым кодом.</p>
+    <a class="button big" href="#загрузки">Загрузить</a>
+  </div>
+</section>
+<div class="герой-основа">
+  <div class="wrap page" id="загрузки">
+    <h2>Выберите систему</h2>
+    <p class="tagline">Выберите систему, и рядом появятся файлы по версиям. У каждого файла есть контрольная сумма и инструкция по установке.</p>
+    {{список}}
+    <p class="muted" style="margin-top:28px">Нужен исходный код или сборка для другой системы? Всё лежит на <a href="https://github.com/nikitosklim/Sfera">GitHub</a>.</p>
+  </div>
 </div>

@@ -109,6 +109,9 @@
 <p><button class="button" id="удалить-кнопка">Удалить</button> <span id="удалить-статус" class="muted"></span></p>
 <p class="muted">Файл не должен быть больше 2 ГБ. Если имя уже есть в списке, загрузите под другим (например, с номером версии).
 SHA-256 считается в браузере и показывается рядом с файлом (на http, вне localhost, браузер не даёт посчитать сумму — тогда она пропускается).</p>
+<h2>Донатеры на странице «Поддержать»</h2>
+<p><button class="button secondary" id="донаты-кнопка">Обновить список донатеров</button> <span id="донаты-статус" class="muted"></span></p>
+<p class="muted">Список сам обновляется раз в час. Кнопка нужна, если хотите увидеть новый донат сразу.</p>
 </section>
 <script>
 (function () {
@@ -150,6 +153,14 @@ SHA-256 считается в браузере и показывается ря�
       x.onerror = function () { статус('Сеть оборвалась во время загрузки'); };
       x.send(файл);
     }).catch(function (e) { статус('Ошибка: ' + e.message); });
+  };
+  $('донаты-кнопка').onclick = function () {
+    var токен = $('токен').value.trim();
+    var с = function (т) { $('донаты-статус').textContent = т; };
+    if (!токен) { с('Укажите токен'); return; }
+    fetch('/управление/донаты/обновить', { method: 'POST', headers: { Authorization: 'Bearer ' + токен } })
+      .then(function (r) { return r.json().then(function (о) { с(r.ok ? 'Список обновлён.' : 'Ошибка: ' + (о['ошибка'] || r.status)); }); })
+      .catch(function (e) { с('Ошибка: ' + e.message); });
   };
   $('удалить-кнопка').onclick = function () {
     var токен = $('токен').value.trim();
