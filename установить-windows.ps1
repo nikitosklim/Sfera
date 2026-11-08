@@ -136,6 +136,27 @@ if ($rustcУстановлен) {
     Написать-Успех "Rust установлен."
 }
 
+# Пакеты LLVM и Clang иногда распаковываются с лишней вложенной папкой (папка-архив внутри нужной).
+# Если нужного файла нет на ожидаемом месте, ищем его на 1–3 уровня глубже и поднимаем содержимое вверх.
+function Поднять-Вложенную {
+    param([string]$Папка, [string]$ОтносительныйПуть)
+    $ожидаемый = Join-Path $Папка $ОтносительныйПуть
+    if (Test-Path $ожидаемый) { return }
+    $имяФайла = Split-Path $ОтносительныйПуть -Leaf
+    $найден = Get-ChildItem -Path $Папка -Recurse -Depth 3 -Filter $имяФайла -File -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -like "*\$ОтносительныйПуть" } | Select-Object -First 1
+    if (-not $найден) {
+        Write-Host "Содержимое $Папка :"
+        Get-ChildItem -Path $Папка -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "  $($_.Name)" }
+        return
+    }
+    $корень = $найден.FullName.Substring(0, $найден.FullName.Length - $ОтносительныйПуть.Length - 1)
+    Write-Host "Поднимаю содержимое $корень на уровень $Папка"
+    Get-ChildItem -Path $корень -Force | ForEach-Object {
+        Move-Item -Path $_.FullName -Destination $Папка -Force
+    }
+}
+
 # ---------------------------------------------------------------------------
 # Шаг 3: LLVM 18 — готовый, предварительно собранный пакет специально под
 # inkwell/llvm-sys для Windows (не сборка LLVM с нуля — это заняло бы
@@ -196,6 +217,7 @@ if (Test-Path $llvmConfigПуть) {
         exit 1
     }
 
+    Поднять-Вложенную $ПапкаLLVM "bin\llvm-config.exe"
     if (-not (Test-Path $llvmConfigПуть)) {
         Написать-Ошибку @"
 После распаковки не найден llvm-config.exe по ожидаемому пути:
@@ -274,6 +296,7 @@ if (Test-Path $clangПуть) {
         exit 1
     }
 
+    Поднять-Вложенную $ПапкаClang "bin\clang.exe"
     if (-not (Test-Path $clangПуть)) {
         Написать-Ошибку @"
 После распаковки не найден clang.exe по ожидаемому пути:
