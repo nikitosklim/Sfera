@@ -528,3 +528,12 @@ html{scroll-behavior:smooth}
 .аватар-ряд img{border-radius:50%;border:1px solid var(--line);background:var(--bg-soft)}
 .вкладки-админ{flex-wrap:wrap}
 @media(max-width:640px){.действия-админ{text-align:left}}
+
+/* Частые вопросы */
+.faq .вопрос{border:1px solid var(--line);border-radius:var(--radius);margin:0 0 10px;background:var(--bg)}
+.faq .вопрос summary{cursor:pointer;padding:14px 18px;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.faq .вопрос summary::-webkit-details-marker{display:none}
+.faq .вопрос summary::after{content:"+";font-size:1.3rem;line-height:1;color:var(--muted);flex:none}
+.faq .вопрос[open] summary::after{content:"−"}
+.faq .вопрос[open]{background:var(--bg-soft)}
+.faq .вопрос p{margin:0;padding:0 18px 16px}
