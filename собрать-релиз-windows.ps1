@@ -93,16 +93,16 @@ $Читай = @"
 Write-Host "4/5  Упаковываю в zip..." -ForegroundColor Cyan
 $Архив = Join-Path $Выход "Sfera-Panel-Windows.zip"
 if (Test-Path $Архив) { Remove-Item -Force $Архив }
-# tar.exe (встроен в Windows 10+) пишет имена файлов в UTF-8 — русские имена
-# запустить.exe / сфера_пакеты.exe не превратятся в кракозябры. Compress-
-# Archive из PowerShell 5.1 так не умеет.
-# Аргументы родной программе уходят в кодовой странице консоли: путь с русской папкой
-# («релиз») портится в «?????». Поэтому заходим в папку и передаём tar.exe только ASCII-имена.
-Push-Location $Выход
-& tar.exe -a -c -f "Sfera-Panel-Windows.zip" "Sfera-Panel-Windows"
-$кодTar = $LASTEXITCODE
-Pop-Location
-if ($кодTar -ne 0) { Остановить "tar.exe завершился с кодом $кодTar" }
+# Упаковка средствами .NET: имена файлов пишутся в UTF-8 (запустить.exe, сфера_пакеты.exe
+# не превращаются в кракозябры). Compress-Archive из PowerShell 5.1 так не умеет, а tar.exe
+# на части машин падает на русских именах.
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+try {
+    [System.IO.Compression.ZipFile]::CreateFromDirectory(
+        $Папка, $Архив, [System.IO.Compression.CompressionLevel]::Optimal, $true, [System.Text.Encoding]::UTF8)
+} catch {
+    Остановить "не удалось создать zip: $($_.Exception.Message)"
+}
 
 $Размер = [math]::Round((Get-Item $Архив).Length / 1MB, 1)
 Write-Host "5/5  Готово: $Архив ($Размер МБ)" -ForegroundColor Green
