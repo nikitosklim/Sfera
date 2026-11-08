@@ -152,14 +152,15 @@ jobs:
       # Тот же установщик, которым пользуются люди: он ставит LLVM 18, SDL2 и рантайм потоков,
       # затем собирает компилятор. Скачивание LLVM (около 500 МБ) занимает несколько минут.
       - name: Установка окружения и сборка архива
-        shell: powershell
+        # Внешняя оболочка pwsh (PowerShell 7) читает файл шага как UTF-8: русские имена не портятся.
+        # Сами скрипты запускаются тем же Windows PowerShell, на котором их проверяли вручную.
+        shell: pwsh
         env:
           RUST_BACKTRACE: "1"
         run: |
-          Set-ExecutionPolicy -Scope Process Bypass -Force
-          .\установить-windows.ps1
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\установить-windows.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          .\собрать-релиз-windows.ps1
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\собрать-релиз-windows.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - uses: actions/upload-artifact@v4
         with:
