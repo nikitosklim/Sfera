@@ -3,6 +3,8 @@ name: Сборка релиза
 # Запуск вручную: вкладка Actions → «Сборка релиза» → Run workflow.
 # Также срабатывает при публикации тега версии (например v0.3.3):
 # собранные архивы автоматически прикладываются к релизу на GitHub.
+# Собираются: Linux, Windows, macOS (Apple Silicon и Intel), Android.
+# Каждая платформа независима: если одна не собралась, остальные архивы всё равно останутся.
 on:
   workflow_dispatch:
   push:
@@ -109,3 +111,62 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: релиз/Sfera-Panel-Android.apk
+
+  macos-intel:
+    name: macOS (Intel)
+    continue-on-error: true
+    # Отдельный раннер на процессоре Intel; macos-latest даёт только Apple Silicon.
+    runs-on: macos-15-intel
+    steps:
+      - uses: actions/checkout@v5
+      - name: Установка зависимостей
+        run: |
+          brew install llvm@18 sdl2 sdl2_ttf zstd zlib libxml2 libffi
+          echo "LIBRARY_PATH=$(brew --prefix)/lib:$(brew --prefix zstd)/lib" >> "$GITHUB_ENV"
+          echo "LLVM_SYS_180_PREFIX=$(brew --prefix llvm@18)" >> "$GITHUB_ENV"
+      - name: Сборка компилятора и приложения
+        env:
+          RUST_BACKTRACE: "1"
+        run: |
+          rustc --version
+          "$(brew --prefix llvm@18)/bin/llvm-config" --version
+          bash -x ./собрать-релиз-macos.sh
+          # Имя с пометкой Intel, чтобы не совпало с архивом для Apple Silicon.
+          mv релиз/Sfera-Panel-macOS.zip релиз/Sfera-Panel-macOS-Intel.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sfera-panel-macos-intel
+          path: релиз/Sfera-Panel-macOS-Intel.zip
+      - name: Приложить к релизу
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: релиз/Sfera-Panel-macOS-Intel.zip
+
+  windows:
+    name: Windows (x86-64)
+    continue-on-error: true
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      # Тот же установщик, которым пользуются люди: он ставит LLVM 18, SDL2 и рантайм потоков,
+      # затем собирает компилятор. Скачивание LLVM (около 500 МБ) занимает несколько минут.
+      - name: Установка окружения и сборка архива
+        shell: powershell
+        env:
+          RUST_BACKTRACE: "1"
+        run: |
+          Set-ExecutionPolicy -Scope Process Bypass -Force
+          .\установить-windows.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          .\собрать-релиз-windows.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sfera-panel-windows
+          path: релиз/Sfera-Panel-Windows.zip
+      - name: Приложить к релизу
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: релиз/Sfera-Panel-Windows.zip
