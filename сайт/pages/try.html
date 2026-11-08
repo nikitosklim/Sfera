@@ -1,0 +1,48 @@
+<div class="wrap page">
+<h1>Попробовать Сферу</h1>
+<p class="tagline">Напишите программу на русском языке и запустите её прямо здесь. Установка компилятора не нужна: код собирается на нашем сервере, а выполняется у вас в браузере.</p>
+<div class="площадка">
+  <div class="площадка-код">
+    <div class="площадка-панель">
+      <label>Пример <select id="пл-пример"><option value="0">Привет, мир</option><option value="1">Сумма чисел</option><option value="2">Ввод и приветствие</option><option value="3">Список и функция</option><option value="4">Структура</option></select></label>
+      <span class="площадка-кнопки"><button class="button" id="пл-запуск" type="button">Запустить</button> <button class="button secondary" id="пл-стоп" type="button" hidden>Остановить</button></span>
+    </div>
+    <textarea id="пл-код" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Код программы" rows="16"></textarea>
+    <label class="площадка-ввод">Ввод для программы (если она просит ввести данные), каждая строка — отдельный ответ
+      <textarea id="пл-ввод" spellcheck="false" rows="3" aria-label="Ввод"></textarea></label>
+  </div>
+  <div class="площадка-вывод">
+    <h2>Результат</h2>
+    <pre id="пл-результат" aria-live="polite">Нажмите «Запустить».</pre>
+    <p id="пл-статус" class="muted"></p>
+  </div>
+</div>
+<p class="muted">В площадке нет файлов, сети и потоков: это упрощённая песочница. Полные возможности языка есть в компиляторе, его можно <a href="/загрузки">скачать</a>. Если захотите разобраться по шагам, откройте <a href="/уроки">уроки</a>.</p>
+</div>
+<script src="/статика/sfera-wasm.js"></script>
+<script>
+(function () {
+  var примеры = ["функция главная(): целое\n    вывести(\"Привет, мир!\");\n    вернуть 0;\nконец\n", "функция главная(): целое\n    целое сумма = 0;\n    целое число = 1;\n    пока (число не больше 10)\n        сумма = сумма + число;\n        число = число + 1;\n    конец\n    вывести(\"Сумма от 1 до 10 равна %сумма%\");\n    вернуть 0;\nконец\n", "функция главная(): целое\n    вывести(\"Как вас зовут?\");\n    результат из текста имя = прочитать_строку();\n    если (имя.успешно)\n        вывести(\"Привет, %(имя.значение)%!\");\n    конец\n    вернуть 0;\nконец\n", "функция сумма(Список из целых числа): целое\n    целое итог = 0;\n    целое k = 0;\n    пока (k меньше числа.размер())\n        итог = итог + числа.получить(k);\n        k = k + 1;\n    конец\n    вернуть итог;\nконец\n\nфункция главная(): целое\n    Список из целых числа = Список из целых();\n    числа.добавить(3);\n    числа.добавить(4);\n    числа.добавить(5);\n    вывести(\"Сумма списка: %(сумма(числа))%\");\n    вернуть 0;\nконец\n", "структура Точка\n    целое х;\n    целое у;\nконец\n\nфункция главная(): целое\n    Точка т = Точка(3, 4);\n    вывести(\"х + у = %(т.х + т.у)%\");\n    вернуть 0;\nконец\n"];
+  var $ = function (id) { return document.getElementById(id); };
+  var код = $('пл-код'), рез = $('пл-результат'), статус = $('пл-статус'), запуск = $('пл-запуск'), стоп = $('пл-стоп');
+  try { var сохранён = sessionStorage.getItem('сфера-площадка'); if (сохранён) код.value = сохранён; else код.value = примеры[0]; } catch (e) { код.value = примеры[0]; }
+  $('пл-пример').onchange = function () { код.value = примеры[this.value]; };
+  код.addEventListener('input', function () { try { sessionStorage.setItem('сфера-площадка', код.value); } catch (e) {} });
+  код.addEventListener('keydown', function (e) {
+    if (e.key === 'Tab') { e.preventDefault(); var с = код.selectionStart; код.setRangeText('    ', с, код.selectionEnd, 'end'); }
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); старт(); }
+  });
+  function готово() { запуск.disabled = false; стоп.hidden = true; }
+  function старт() {
+    рез.textContent = ''; рез.className = ''; запуск.disabled = true; стоп.hidden = false;
+    window.запуститьСферу(код.value, $('пл-ввод').value.replace(/\r?\n?$/, '\n'), {
+      статус: function (т) { статус.textContent = т; },
+      вывод: function (т, поток) { рез.textContent += т; },
+      ошибка: function (т) { рез.className = 'ошибка'; рез.textContent += (рез.textContent ? '\n' : '') + т; статус.textContent = 'Не получилось'; готово(); },
+      конец: function (к) { статус.textContent = к === 0 ? 'Готово' : 'Программа завершилась с кодом ' + к; if (!рез.textContent) рез.textContent = '(программа ничего не вывела)'; готово(); }
+    });
+  }
+  запуск.onclick = старт;
+  стоп.onclick = function () { window.остановитьСферу(); статус.textContent = 'Остановлено'; готово(); };
+})();
+</script>

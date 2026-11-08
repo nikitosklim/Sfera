@@ -408,6 +408,17 @@ fn слинковать_исполняемый_файл(путь_o: &str, имя
     //                     обходится)
     //   -lc -lm -ldl     — базовые системные библиотеки вместо тех, что
     //                     убрал -nodefaultlibs
+    // WebAssembly (браузер): объект собирается как обычно, а линковка идёт через
+    // wasm-ld с wasi-libc (в Debian/Ubuntu: apt install lld wasi-libc clang).
+    // Однопоточные заглушки pthread и переходник main лежат в src/wasm_заглушки.c
+    // и собираются прямо здесь. Путь к wasi-libc можно задать переменной SFERA_WASI_SYSROOT
+    // (по умолчанию /usr/lib/wasm32-wasi, папка с crt1.o и libc.a).
+    if let Some(тройка) = целевая_платформа {
+        if тройка.starts_with("wasm32") {
+            слинковать_wasm(путь_o, имя_программы, дополнительные_библиотеки);
+            return;
+        }
+    }
     if let Some(тройка) = целевая_платформа {
         if тройка.contains("android") {
             let sysroot = match android_sysroot {
@@ -1199,5 +1210,77 @@ fn запустить_конвертер(аргументы: &[String]) {
     }
     if ошибок > 0 {
         std::process::exit(1);
+    }
+}
+
+
+// Линковка под WebAssembly (WASI): получается файл .wasm, который запускается в браузере
+// через небольшой загрузчик (сайт: static/sfera-wasm.js) или в wasmtime/Node.
+fn слинковать_wasm(путь_o: &str, имя_программы: &str, дополнительные_библиотеки: &[String]) {
+    use std::process::Command;
+    let системная = std::env::var("SFERA_WASI_SYSROOT").unwrap_or_else(|_| "/usr/lib/wasm32-wasi".to_string());
+    if !std::path::Path::new(&format!("{}/libc.a", системная)).exists() {
+        eprintln!(
+            "Для сборки под WebAssembly нужен wasi-libc: не найден {}/libc.a.\n\
+             Установите его (Debian/Ubuntu: apt install wasi-libc lld clang) или укажите папку переменной SFERA_WASI_SYSROOT.",
+            системная
+        );
+        std::process::exit(1);
+    }
+    let заглушки_c = format!("{}.wasm-заглушки.c", путь_o);
+    let заглушки_o = format!("{}.wasm-заглушки.o", путь_o);
+    if let Err(e) = std::fs::write(&заглушки_c, include_str!("wasm_заглушки.c")) {
+        eprintln!("Не удалось записать временный файл: {}", e);
+        std::process::exit(1);
+    }
+    let сборка = Command::new("clang").args(["--target=wasm32-wasi", "-O1", "-c", &заглушки_c, "-o", &заглушки_o]).output();
+    let _ = std::fs::remove_file(&заглушки_c);
+    match сборка {
+        Ok(в) if в.status.success() => {}
+        Ok(в) => {
+            eprintln!("Не удалось собрать заглушки для WebAssembly:\n{}", String::from_utf8_lossy(&в.stderr));
+            std::process::exit(1);
+        }
+        Err(e) => {
+            eprintln!("Не удалось запустить clang: {}", e);
+            std::process::exit(1);
+        }
+    }
+    let mut команда = Command::new("wasm-ld");
+    команда
+        .arg("-o").arg(имя_программы)
+        .arg(format!("{}/crt1.o", системная))
+        .arg(путь_o)
+        .arg(&заглушки_o)
+        .arg(format!("-L{}", системная))
+        .arg("-lc");
+    // Библиотека compiler-rt для wasm32 (нужна для 128-битной арифметики и т.п.):
+    // Debian/Ubuntu: apt install libclang-rt-18-dev-wasm32. Папку можно задать SFERA_WASI_BUILTINS.
+    let папка_builtins = std::env::var("SFERA_WASI_BUILTINS").ok().or_else(|| {
+        let в = Command::new("clang").arg("--print-resource-dir").output().ok()?;
+        let корень = String::from_utf8_lossy(&в.stdout).trim().to_string();
+        let папка = format!("{}/lib/wasi", корень);
+        if std::path::Path::new(&format!("{}/libclang_rt.builtins-wasm32.a", папка)).exists() { Some(папка) } else { None }
+    });
+    if let Some(папка) = папка_builtins {
+        команда.arg(format!("-L{}", папка)).arg("-lclang_rt.builtins-wasm32");
+    }
+    for библиотека in дополнительные_библиотеки {
+        if библиотека == "m" {
+            команда.arg("-lm");
+        }
+    }
+    let итог = команда.output();
+    let _ = std::fs::remove_file(&заглушки_o);
+    match итог {
+        Ok(в) if в.status.success() => {}
+        Ok(в) => {
+            eprintln!("Ошибка при линковке под WebAssembly:\n{}", String::from_utf8_lossy(&в.stderr));
+            std::process::exit(1);
+        }
+        Err(e) => {
+            eprintln!("Не удалось запустить wasm-ld (apt install lld): {}", e);
+            std::process::exit(1);
+        }
     }
 }

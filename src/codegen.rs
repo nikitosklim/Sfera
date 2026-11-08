@@ -2281,8 +2281,22 @@ impl<'ctx> Кодогенератор<'ctx> {
         }
     }
 
+    /// Сборка под WebAssembly (wasm32): в libc там size_t и long по 32 бита, а компилятор объявляет
+    /// такие функции с 64-битными числами. Чтобы подписи совпали, вызовы идут в обёртки
+    /// sfera_wasm_* (они лежат в src/wasm_заглушки.c и зовут настоящие функции).
+    pub fn применить_имена_wasm(&self) {
+        for имя in ["malloc", "memcpy", "memmove", "strlen", "strtol", "snprintf", "fseek", "ftell", "fread", "fwrite"] {
+            if let Some(ф) = self.модуль.get_function(имя) {
+                ф.as_global_value().set_name(&format!("sfera_wasm_{}", имя));
+            }
+        }
+    }
+
     pub fn записать_объектный_файл(&self, путь: &std::path::Path, целевая_платформа: Option<&str>) -> Result<(), ОшибкаКодогенерации> {
         use inkwell::targets::{CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetMachine};
+        if целевая_платформа.map_or(false, |т| т.starts_with("wasm32")) {
+            self.применить_имена_wasm();
+        }
 
         // ⚠️ НАЙДЕНО РЕАЛЬНОЙ ПРОВЕРКОЙ, ГЛУБОКИЙ БАГ САМОГО LLVM (не
         // нашего компилятора): при кросс-компиляции под ARM64 (Android)
