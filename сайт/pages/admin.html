@@ -5,8 +5,9 @@
   <label>Токен администратора (файл <code>admin-token.txt</code> на сервере)<br>
   <input id="токен" type="password" autocomplete="off" style="width:100%"></label>
 </form>
+<p class="tagline">Здесь всё, чем мы управляем без правки кода: статьи и их обложки, файлы для скачивания, аватар языка, список донатеров. Введите токен, и все списки загрузятся сами. Каждое действие подтверждается, удалённое вернуть нельзя.</p>
 <nav class="вкладки-админ" aria-label="Разделы управления">
-  <a href="#статистика">Статистика</a><a href="#статьи">Статьи</a><a href="#пакеты">Пакеты</a><a href="#загрузки">Загрузки</a>
+  <a href="#статистика">Статистика</a><a href="#статьи">Статьи и обложки</a><a href="#пакеты">Пакеты</a><a href="#загрузки">Файлы</a><a href="#аватар">Аватар языка</a><a href="#донаты">Донатеры</a>
 </nav>
 
 <section id="статистика">
@@ -104,11 +105,19 @@
   <p><label>Описание<br><input id="описание" type="text" style="width:100%" placeholder="Компилятор, рантайм и панель разработчика"></label></p>
   <p><button class="button" id="кнопка">Загрузить</button> <span id="статус" class="muted"></span></p>
 </form>
-<h2>Удалить файл</h2>
-<p><label>Имя файла из списка<br><input id="удалить-имя" type="text" style="width:100%" placeholder="sfera-0.3.3-windows.zip"></label></p>
-<p><button class="button" id="удалить-кнопка">Удалить</button> <span id="удалить-статус" class="muted"></span></p>
+<h3>Что сейчас лежит на сайте</h3>
+<div class="таблица-прокрутка"><table class="список-статей-админ" id="фл-список"></table></div>
+<p id="фл-статус" class="muted"></p>
 <p class="muted">Файл не должен быть больше 2 ГБ. Если имя уже есть в списке, загрузите под другим (например, с номером версии).
 SHA-256 считается в браузере и показывается рядом с файлом (на http, вне localhost, браузер не даёт посчитать сумму — тогда она пропускается).</p>
+</section>
+<section id="аватар">
+<h2>Аватар языка</h2>
+<p class="tagline">Это логотип в шапке сайта, иконка вкладки и значок на телефоне. Загрузите квадратный PNG от 512×512, и он заменит прежний на всём сайте.</p>
+<div class="аватар-ряд"><img id="ав-превью" src="/статика/logo.png" alt="Текущий аватар" width="96" height="96">
+<div><label class="button secondary файл-кнопка">Выбрать PNG<input type="file" id="ав-файл" accept="image/png" hidden></label> <button class="button secondary" id="ав-убрать">Вернуть прежний</button><p id="ав-статус" class="muted"></p></div></div>
+</section>
+<section id="донаты">
 <h2>Донатеры на странице «Поддержать»</h2>
 <p><button class="button secondary" id="донаты-кнопка">Обновить список донатеров</button> <span id="донаты-статус" class="muted"></span></p>
 <p class="muted">Список сам обновляется раз в час. Кнопка нужна, если хотите увидеть новый донат сразу.</p>
@@ -160,16 +169,6 @@ SHA-256 считается в браузере и показывается ря�
     if (!токен) { с('Укажите токен'); return; }
     fetch('/управление/донаты/обновить', { method: 'POST', headers: { Authorization: 'Bearer ' + токен } })
       .then(function (r) { return r.json().then(function (о) { с(r.ok ? 'Список обновлён.' : 'Ошибка: ' + (о['ошибка'] || r.status)); }); })
-      .catch(function (e) { с('Ошибка: ' + e.message); });
-  };
-  $('удалить-кнопка').onclick = function () {
-    var токен = $('токен').value.trim();
-    var имя = $('удалить-имя').value.trim();
-    var с = function (т) { $('удалить-статус').textContent = т; };
-    if (!токен || !имя) { с('Укажите токен и имя файла'); return; }
-    if (!confirm('Удалить ' + имя + ' с сервера?')) return;
-    fetch('/загрузить/' + encodeURIComponent(имя), { method: 'DELETE', headers: { Authorization: 'Bearer ' + токен } })
-      .then(function (r) { return r.json().then(function (о) { с(r.ok ? 'Удалено.' : 'Ошибка: ' + (о['ошибка'] || r.status)); }); })
       .catch(function (e) { с('Ошибка: ' + e.message); });
   };
 })();
@@ -301,8 +300,14 @@ SHA-256 считается в браузере и показывается ря�
     if (!токен()) return;
     fetch('/управление/ссылки', { headers: { Authorization: 'Bearer ' + токен() } }).then(function (р) { return р.ok ? р.json() : []; }).then(function (а) {
       $('ст-список').innerHTML = а.length ? а.slice().reverse().map(function (с) {
-        return '<tr><td><a href="' + эск(с['адрес']) + '" target="_blank" rel="noopener">' + эск(с['название']) + '</a><br><span class="muted">' + эск(с['теги']) +
-          '</span></td><td style="text-align:right"><button class="button secondary" data-номер="' + эск(с['номер']) + '">Удалить</button></td></tr>';
+        var обл = с['картинка'] ? '<img class="обл-мини" src="/обложки/' + эск(с['картинка']) + '?' + Date.now() + '" alt="">' : '<span class="обл-мини пусто">нет</span>';
+        return '<tr data-номер="' + эск(с['номер']) + '"><td class="обл-ячейка">' + обл + '</td><td><a href="' + эск(с['адрес']) + '" target="_blank" rel="noopener">' + эск(с['название']) + '</a><br><span class="muted">' + эск(с['теги']) +
+          '</span></td><td class="действия-админ"><button class="button small secondary" data-д="правка">Изменить</button> <label class="button small secondary файл-кнопка">Обложка<input type="file" accept="image/png,image/jpeg,image/gif,image/webp" data-д="обложка" hidden></label> ' +
+          (с['картинка'] ? '<button class="button small secondary" data-д="без-обложки">Убрать обложку</button> ' : '') + '<button class="button small secondary" data-д="удалить">Удалить</button></td></tr>' +
+          '<tr class="правка-строка" hidden data-правка="' + эск(с['номер']) + '"><td colspan="3"><p><label>Название<br><input type="text" style="width:100%" data-п="название" value="' + эск(с['название']) + '"></label></p>' +
+          '<p><label>Описание<br><textarea rows="3" style="width:100%" data-п="описание">' + эск(с['описание'] || '') + '</textarea></label></p>' +
+          '<p><label>Теги через запятую<br><input type="text" style="width:100%" data-п="теги" value="' + эск(с['теги']) + '"></label></p>' +
+          '<p><button class="button small" data-д="сохранить">Сохранить</button> <button class="button small secondary" data-д="отмена">Отмена</button></p></td></tr>';
       }).join('') : '<tr><td class="muted">Пока ничего не добавлено</td></tr>';
     });
   }
@@ -325,9 +330,28 @@ SHA-256 считается в браузере и показывается ря�
     }).catch(function (е) { статус('Ошибка: ' + е.message); });
   };
   $('ст-список').addEventListener('click', function (с) {
-    var н = с.target.getAttribute && с.target.getAttribute('data-номер');
-    if (!н || !confirm('Убрать статью с сайта?')) return;
-    запрос('/управление/ссылка/удалить', { 'номер': н }).then(список).catch(function (е) { статус('Ошибка: ' + е.message); });
+    var д = с.target.getAttribute && с.target.getAttribute('data-д');
+    var стр = с.target.closest && с.target.closest('tr'); if (!д || !стр) return;
+    var н = стр.getAttribute('data-номер') || стр.getAttribute('data-правка');
+    var форма = $('ст-список').querySelector('[data-правка="' + н + '"]');
+    if (д === 'правка') { форма.hidden = !форма.hidden; return; }
+    if (д === 'отмена') { форма.hidden = true; return; }
+    if (д === 'сохранить') {
+      var п = function (к) { return форма.querySelector('[data-п="' + к + '"]').value; };
+      запрос('/управление/ссылка/изменить', { 'номер': н, 'название': п('название'), 'описание': п('описание'), 'теги': п('теги') }).then(function () { статус('Сохранено.'); список(); }).catch(function (е) { статус('Ошибка: ' + е.message); });
+      return;
+    }
+    if (д === 'без-обложки') { if (!confirm('Убрать обложку у статьи?')) return; запрос('/управление/картинка/убрать', { 'номер': н }).then(список).catch(function (е) { статус('Ошибка: ' + е.message); }); return; }
+    if (д === 'удалить') { if (!confirm('Убрать статью с сайта?')) return; запрос('/управление/ссылка/удалить', { 'номер': н }).then(список).catch(function (е) { статус('Ошибка: ' + е.message); }); }
+  });
+  $('ст-список').addEventListener('change', function (с) {
+    var поле = с.target; if (поле.getAttribute('data-д') !== 'обложка' || !поле.files.length) return;
+    var н = поле.closest('tr').getAttribute('data-номер'), ф = поле.files[0];
+    if (ф.size > 3000000) { статус('Картинка больше 3 МБ'); return; }
+    статус('Загружаю обложку…');
+    fetch('/управление/картинка/' + encodeURIComponent(н), { method: 'PUT', headers: { Authorization: 'Bearer ' + токен() }, body: ф })
+      .then(function (р) { return р.json().then(function (о) { if (!р.ok) throw new Error(о['ошибка'] || р.status); статус('Обложка заменена.'); список(); }); })
+      .catch(function (е) { статус('Ошибка: ' + е.message); });
   });
   function пакеты() {
     fetch('/пакеты/каталог.пакеты').then(function (р) { return р.text(); }).then(function (т) {
@@ -400,3 +424,42 @@ SHA-256 считается в браузере и показывается ря�
 })();
 </script>
 </div>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var эск = function (с) { return String(с).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  function токен() { return $('токен').value.trim(); }
+  function файлы() {
+    if (!токен()) return;
+    fetch('/управление/файлы', { headers: { Authorization: 'Bearer ' + токен() } }).then(function (р) { return р.ok ? р.json() : []; }).then(function (а) {
+      $('фл-список').innerHTML = а.length ? а.map(function (ф) {
+        return '<tr><td><a href="/файлы/' + encodeURIComponent(ф['имя']) + '">' + эск(ф['имя']) + '</a><br><span class="muted">' + эск(ф['название']) + '</span></td><td>' + (ф['есть'] ? эск(ф['размер']) : '<span class="muted">файла нет на диске</span>') +
+          '</td><td style="text-align:right"><button class="button small secondary" data-имя="' + эск(ф['имя']) + '">Удалить</button></td></tr>';
+      }).join('') : '<tr><td class="muted">Файлов пока нет</td></tr>';
+    });
+  }
+  $('фл-список').addEventListener('click', function (с) {
+    var н = с.target.getAttribute && с.target.getAttribute('data-имя'); if (!н || !confirm('Удалить ' + н + ' с сервера?')) return;
+    fetch('/загрузить/' + encodeURIComponent(н), { method: 'DELETE', headers: { Authorization: 'Bearer ' + токен() } })
+      .then(function (р) { return р.json().then(function (о) { $('фл-статус').textContent = р.ok ? 'Удалено.' : 'Ошибка: ' + (о['ошибка'] || р.status); файлы(); }); })
+      .catch(function (е) { $('фл-статус').textContent = 'Ошибка: ' + е.message; });
+  });
+  var ас = function (т) { $('ав-статус').textContent = т; };
+  $('ав-файл').addEventListener('change', function () {
+    var ф = this.files[0]; if (!ф) return;
+    if (!токен()) { ас('Укажите токен'); return; }
+    ас('Загружаю…');
+    fetch('/управление/аватар', { method: 'PUT', headers: { Authorization: 'Bearer ' + токен() }, body: ф })
+      .then(function (р) { return р.json().then(function (о) { if (!р.ok) throw new Error(о['ошибка'] || р.status); ас('Готово. Иконка вкладки обновится через несколько минут.'); $('ав-превью').src = '/статика/logo.png?' + Date.now(); }); })
+      .catch(function (е) { ас('Ошибка: ' + е.message); });
+  });
+  $('ав-убрать').onclick = function () {
+    if (!токен()) { ас('Укажите токен'); return; }
+    if (!confirm('Вернуть прежний аватар?')) return;
+    fetch('/управление/аватар/убрать', { method: 'POST', headers: { Authorization: 'Bearer ' + токен() } })
+      .then(function () { ас('Прежний аватар возвращён.'); $('ав-превью').src = '/статика/logo.png?' + Date.now(); });
+  };
+  $('токен').addEventListener('change', файлы); $('токен').addEventListener('input', function () { var т = this; clearTimeout(т._т); т._т = setTimeout(function () { т.dispatchEvent(new Event('change')); }, 600); });
+  файлы();
+})();
+</script>

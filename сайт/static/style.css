@@ -515,3 +515,16 @@ html{scroll-behavior:smooth}
 .малый{font-size:.85rem}
 .облако-тело pre{overflow-x:auto}
 @media(max-width:640px){.поиск-пакетов{flex-direction:column}.герой-пакеты{padding:44px 16px 40px}}
+
+/* Управление: обложки, аватар, кнопки действий */
+.обл-мини{width:72px;height:48px;object-fit:cover;border-radius:6px;display:block;background:var(--bg-soft)}
+.обл-мини.пусто{display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--muted);border:1px dashed var(--line)}
+.обл-ячейка{width:84px}
+.действия-админ{text-align:right;white-space:normal}
+.действия-админ .button{margin:2px 0}
+.файл-кнопка{cursor:pointer}
+.правка-строка td{background:var(--bg-soft)}
+.аватар-ряд{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.аватар-ряд img{border-radius:50%;border:1px solid var(--line);background:var(--bg-soft)}
+.вкладки-админ{flex-wrap:wrap}
+@media(max-width:640px){.действия-админ{text-align:left}}
