@@ -1233,7 +1233,17 @@ fn слинковать_wasm(путь_o: &str, имя_программы: &str, 
         eprintln!("Не удалось записать временный файл: {}", e);
         std::process::exit(1);
     }
-    let сборка = Command::new("clang").args(["--target=wasm32-wasi", "-O1", "-c", &заглушки_c, "-o", &заглушки_o]).output();
+    // Заголовки wasi-libc: в Debian/Ubuntu лежат в /usr/include/wasm32-wasi, а clang 14 сам их не находит.
+    let заголовки = std::env::var("SFERA_WASI_INCLUDE").ok().or_else(|| {
+        let п = системная.replace("/lib/wasm32-wasi", "/include/wasm32-wasi");
+        if п != системная && std::path::Path::new(&п).exists() { Some(п) } else { None }
+    });
+    let mut кланг = Command::new("clang");
+    кланг.args(["--target=wasm32-wasi", "-O1"]);
+    if let Some(п) = &заголовки {
+        кланг.arg("-isystem").arg(п);
+    }
+    let сборка = кланг.args(["-c", &заглушки_c, "-o", &заглушки_o]).output();
     let _ = std::fs::remove_file(&заглушки_c);
     match сборка {
         Ok(в) if в.status.success() => {}
