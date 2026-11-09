@@ -1,0 +1,38 @@
+name: Компилятор для сервера (Ubuntu 22.04)
+
+# Запуск вручную: вкладка Actions → «Компилятор для сервера» → Run workflow.
+# Собирает только компилятор и стандартную библиотеку (без панели) на Ubuntu 22.04,
+# чтобы он запускался на серверах со старой glibc (VPS на Ubuntu 22.04).
+on:
+  workflow_dispatch:
+
+jobs:
+  server:
+    name: Компилятор (Ubuntu 22.04)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Установка LLVM 18
+        run: |
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc >/dev/null
+          echo "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main" | sudo tee /etc/apt/sources.list.d/llvm18.list
+          sudo apt-get update
+          sudo apt-get install -y llvm-18-dev libpolly-18-dev libzstd-dev libffi-dev zlib1g-dev libxml2-dev clang-18 xz-utils
+      - name: Сборка компилятора
+        env:
+          LLVM_SYS_180_PREFIX: /usr/lib/llvm-18
+        run: cargo build --release
+      - name: Упаковка
+        run: |
+          D=релиз/Sfera-Compiler-Linux
+          mkdir -p "$D/bin" "$D/lib/sfera"
+          for N in запустить сфера_lsp сфера_пакеты сфера; do cp "target/release/$N" "$D/bin/$N"; done
+          cp -r стандартная_библиотека "$D/lib/sfera/стандартная_библиотека"
+          strip "$D"/bin/* || true
+          ldd "$D/bin/запустить" || true
+          objdump -T "$D/bin/запустить" | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -1
+          tar -cJf релиз/Sfera-Compiler-Linux-ubuntu22.tar.xz -C релиз Sfera-Compiler-Linux
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sfera-compiler-ubuntu22
+          path: релиз/Sfera-Compiler-Linux-ubuntu22.tar.xz
