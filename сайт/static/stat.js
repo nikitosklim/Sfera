@@ -3,6 +3,7 @@
 // Уважает «Не отслеживать» (Do Not Track).
 (function () {
   if (navigator.doNotTrack === '1' || window.doNotTrack === '1') return;
+  if (document.cookie.indexOf('sfera_own=1') >= 0) return;
   var путь = location.pathname;
   try { путь = decodeURIComponent(путь); } catch (e) {}
   if (путь.indexOf('/управление') === 0 || путь.indexOf('/admin') === 0) return;

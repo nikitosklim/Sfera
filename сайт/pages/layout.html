@@ -78,10 +78,27 @@
     </div>
     <div class="footer-bottom">
       <span>{{счётчик}}</span>
-      <span>Мы написали этот сайт и его сервер на самой «Сфере», без внешних веб-библиотек. Просмотры и время на страницах считаются без cookie и без IP-адресов.</span>
+      <span>Мы написали этот сайт и его сервер на самой «Сфере», без внешних веб-библиотек. Собственная статистика просмотров и времени на страницах ведётся без cookie и без IP-адресов; кроме неё, на сайте работает Яндекс Метрика (счётчик отключается настройкой «Не отслеживать» в браузере).</span>
     </div>
   </div>
 </footer>
+<script>
+/* Яндекс Метрика: не грузим в админке, при «Не отслеживать» и для владельца сайта (cookie sfera_own). */
+(function () {
+  try {
+    if (navigator.doNotTrack === '1' || window.doNotTrack === '1') return;
+    if (document.cookie.indexOf('sfera_own=1') >= 0) return;
+    var п = decodeURIComponent(location.pathname);
+    if (п.indexOf('/управление') === 0 || п.indexOf('/admin') === 0) return;
+  } catch (e) {}
+  (function (m, e, t, r, i, k, a) {
+    m[i] = m[i] || function () { (m[i].a = m[i].a || []).push(arguments); };
+    m[i].l = 1 * new Date();
+    k = e.createElement(t); a = e.getElementsByTagName(t)[0]; k.async = 1; k.src = r; a.parentNode.insertBefore(k, a);
+  })(window, document, 'script', 'https://mc.yandex.ru/metrika/tag.js?id=114069274', 'ym');
+  ym(114069274, 'init', { ssr: true, clickmap: true, trackLinks: true, accurateTrackBounce: true, referrer: document.referrer, url: location.href });
+})();
+</script>
 <script src="/статика/stat.js" defer></script>
 </body>
 </html>

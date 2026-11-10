@@ -6,6 +6,7 @@
   <input id="токен" type="password" autocomplete="off" style="width:100%"></label>
 </form>
 <p class="tagline">Здесь всё, чем мы управляем без правки кода: статьи и их обложки, файлы для скачивания, аватар языка, список донатеров. Введите токен, и все списки загрузятся сами. Каждое действие подтверждается, удалённое вернуть нельзя.</p>
+<p class="tagline" id="свой-блок"><button class="button secondary" id="свой-кнопка" type="button">Не считать мои визиты в этом браузере</button> <span id="свой-статус" class="muted"></span><br><span class="muted">Ставит в браузере cookie «sfera_own»: такие заходы не попадают ни в нашу статистику, ни в Яндекс Метрику. Нужно нажать один раз в каждом браузере, где вы работаете над сайтом.</span></p>
 <nav class="вкладки-админ" aria-label="Разделы управления">
   <a href="#статистика">Статистика</a><a href="#статьи">Статьи и обложки</a><a href="#пакеты">Пакеты</a><a href="#загрузки">Файлы</a><a href="#аватар">Аватар языка</a><a href="#донаты">Донатеры</a>
 </nav>
@@ -462,4 +463,16 @@ SHA-256 считается в браузере и показывается ря�
   $('токен').addEventListener('change', файлы); $('токен').addEventListener('input', function () { var т = this; clearTimeout(т._т); т._т = setTimeout(function () { т.dispatchEvent(new Event('change')); }, 600); });
   файлы();
 })();
+  (function () {
+    function свой() { return document.cookie.indexOf('sfera_own=1') >= 0; }
+    function показать() {
+      document.getElementById('свой-статус').textContent = свой() ? 'Сейчас ваши визиты не считаются.' : 'Сейчас визиты из этого браузера считаются.';
+      document.getElementById('свой-кнопка').textContent = свой() ? 'Снова считать мои визиты' : 'Не считать мои визиты в этом браузере';
+    }
+    document.getElementById('свой-кнопка').addEventListener('click', function () {
+      document.cookie = свой() ? 'sfera_own=; path=/; max-age=0; SameSite=Lax' : 'sfera_own=1; path=/; max-age=31536000; SameSite=Lax';
+      показать();
+    });
+    показать();
+  })();
 </script>
