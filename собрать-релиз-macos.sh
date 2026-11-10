@@ -13,6 +13,9 @@
 # компилятор при нажатии «Установить Сферу».
 
 set -e
+# Минимальная версия macOS: без этого бинарники берут версию раннера (macOS 15), и на более
+# старых системах значок приложения перечёркнут.
+export MACOSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-11.0}"
 ROOT=$(cd "$(dirname "$0")" && pwd)
 cd "$ROOT"
 VERSION=$(grep -m1 '^version' Cargo.toml | sed 's/.*"\(.*\)".*/\1/')
@@ -50,11 +53,15 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleVersion</key><string>$VERSION</string>
   <key>CFBundleShortVersionString</key><string>$VERSION</string>
   <key>CFBundlePackageType</key><string>APPL</string>
+  <key>LSMinimumSystemVersion</key><string>11.0</string>
   <key>NSHighResolutionCapable</key><true/>
 </dict>
 </plist>
 PLIST
 chmod +x "$APP/Contents/MacOS/Sfera-Panel" "$APP"/Contents/Resources/bin/запустить "$APP"/Contents/Resources/bin/сфера_lsp "$APP"/Contents/Resources/bin/сфера_пакеты "$APP"/Contents/Resources/bin/сфера
+
+# Подпись «ad hoc»: не заменяет подпись разработчика, но без неё на Apple Silicon приложение не запускается совсем.
+codesign --force --deep -s - "$APP" || echo "Предупреждение: codesign не сработал"
 
 echo "4/4  Упаковываю..."
 (cd "$OUT" && rm -f Sfera-Panel-macOS.zip && ditto -c -k --keepParent "Панель Сферы.app" Sfera-Panel-macOS.zip)
