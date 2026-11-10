@@ -1,128 +1,207 @@
 <meta name="robots" content="noindex">
-<div class="wrap page">
-<h1>Управление сайтом</h1>
-<form class="карточка-токен" onsubmit="return false">
-  <label>Токен администратора (файл <code>admin-token.txt</code> на сервере)<br>
-  <input id="токен" type="password" autocomplete="off" style="width:100%"></label>
-</form>
-<p class="tagline">Здесь всё, чем мы управляем без правки кода: статьи и их обложки, файлы для скачивания, аватар языка, список донатеров. Введите токен, и все списки загрузятся сами. Каждое действие подтверждается, удалённое вернуть нельзя.</p>
-<p class="tagline" id="свой-блок"><button class="button secondary" id="свой-кнопка" type="button">Не считать мои визиты в этом браузере</button> <span id="свой-статус" class="muted"></span><br><span class="muted">Ставит в браузере cookie «sfera_own»: такие заходы не попадают ни в нашу статистику, ни в Яндекс Метрику. Нужно нажать один раз в каждом браузере, где вы работаете над сайтом.</span></p>
-<nav class="вкладки-админ" aria-label="Разделы управления">
-  <a href="#статистика">Статистика</a><a href="#статьи">Статьи и обложки</a><a href="#пакеты">Пакеты</a><a href="#загрузки">Файлы</a><a href="#аватар">Аватар языка</a><a href="#донаты">Донатеры</a>
+<div class="wrap page админ">
+
+<header class="админ-шапка">
+  <div>
+    <h1>Управление сайтом</h1>
+    <p class="tagline">Всё, чем мы управляем без правки кода. Введите токен: списки загрузятся сами. Каждое опасное действие подтверждается, удалённое вернуть нельзя.</p>
+  </div>
+  <form class="карточка-токен" onsubmit="return false">
+    <label for="токен">Токен администратора</label>
+    <input id="токен" type="password" autocomplete="off" placeholder="файл admin-token.txt на сервере">
+    <span class="muted">Хранится только в этой вкладке браузера.</span>
+  </form>
+</header>
+
+<div class="админ-сетка">
+<nav class="админ-меню" aria-label="Разделы управления">
+  <a href="#статистика"><span class="ик">📊</span>Статистика</a>
+  <a href="#загрузки"><span class="ик">⬇️</span>Файлы для скачивания</a>
+  <a href="#статьи"><span class="ик">📰</span>Статьи и обложки</a>
+  <a href="#пакеты"><span class="ик">📦</span>Пакеты</a>
+  <a href="#аватар"><span class="ик">🖼️</span>Аватар языка</a>
+  <a href="#донаты"><span class="ик">❤️</span>Донатеры</a>
+  <div class="админ-меню-низ" id="свой-блок">
+    <b>Мои визиты</b>
+    <button class="button secondary" id="свой-кнопка" type="button">Не считать мои визиты в этом браузере</button>
+    <span id="свой-статус" class="muted"></span>
+    <span class="muted">Ставит cookie «sfera_own»: такие заходы не попадают ни в нашу статистику, ни в Яндекс Метрику. Нажмите один раз в каждом браузере, где вы работаете над сайтом.</span>
+  </div>
 </nav>
 
-<section id="статистика">
-<div class="стат-шапка">
-  <h2>Статистика</h2>
-  <div class="период" role="group" aria-label="Период">
-    <button class="button secondary" data-дней="7">7 дней</button>
-    <button class="button secondary" data-дней="30">30 дней</button>
-    <button class="button secondary" data-дней="90">90 дней</button>
-  
+<main class="админ-главная">
 
-</div>
-</div>
-<p id="стат-статус" class="muted">Введите токен: статистика загрузится сама.</p>
-<div id="стат" hidden>
-  <div class="плитки-стат" id="итоги">
-</div>
-  <h3>Просмотры по дням</h3>
-  <div id="график-дни" class="график">
-</div>
-  <h3>Популярные страницы</h3>
-  <div class="таблица-прокрутка"><table class="стат-таблица" id="таблица-страниц"></table>
-</div>
-  <h3>Где проводят больше всего времени</h3>
-  <p class="muted">Разделы внутри страниц: сколько секунд читатели суммарно провели на каждом заголовке.</p>
-  <div class="таблица-прокрутка"><table class="стат-таблица" id="таблица-разделов"></table>
-</div>
-  <div class="две-колонки">
-    <div><h3>Откуда приходят</h3><table class="стат-таблица" id="таблица-источников"></table>
-</div>
-    <div><h3>Что ищут на сайте</h3><table class="стат-таблица" id="таблица-запросов"></table>
-</div>
-  
-
-</div>
-  <p class="muted">Роботы (поисковики, проверки ссылок) считаются отдельно и в графики не входят. Время и глубина прокрутки приходят со страницы при закрытии вкладки, поэтому данные по ним чуть неполные, а у тех, кто отключил отслеживание в браузере, их нет.</p>
-</div>
-</section>
-
-<section id="статьи">
-<h2>Статьи с других площадок</h2>
-<p class="tagline">Вставьте адрес статьи (Хабр, блог): название, описание и картинку сайт подтянет сам. Всё можно поправить перед добавлением. Теги помогают поиску.</p>
-<form id="форма-статьи" onsubmit="return false">
-  <p><label>Адрес статьи<br><input id="ст-адрес" type="url" style="width:100%" placeholder="https://habr.com/ru/articles/…"></label></p>
-  <p><button class="button" id="ст-проверить">Подтянуть данные</button> <span id="ст-статус" class="muted"></span></p>
-  <div id="ст-поля" hidden>
-    <div class="превью-статьи">
-      <img id="ст-превью" alt="" hidden>
-      <div>
-        <p><label>Название<br><input id="ст-название" type="text" style="width:100%"></label></p>
-        <p><label>Описание<br><textarea id="ст-описание" rows="3" style="width:100%"></textarea></label></p>
-        <p><label>Адрес картинки (можно заменить)<br><input id="ст-картинка" type="url" style="width:100%"></label></p>
-        <p><label>Теги через запятую<br><input id="ст-теги" type="text" style="width:100%" placeholder="компиляторы, android, rust"></label></p>
-      </div>
+<section class="блок-админ" id="статистика">
+  <div class="блок-шапка">
+    <div><h2>Статистика</h2><p class="muted">Просмотры, время на страницах, откуда приходят и что ищут.</p></div>
+    <div class="период" role="group" aria-label="Период">
+      <button class="button secondary" data-дней="7">7 дней</button>
+      <button class="button secondary" data-дней="30">30 дней</button>
+      <button class="button secondary" data-дней="90">90 дней</button>
     </div>
-    <p><button class="button" id="ст-добавить">Добавить на сайт</button></p>
   </div>
-</form>
-<h3>Добавленные статьи</h3>
-<table class="список-статей-админ" id="ст-список"></table>
+  <div class="блок-тело">
+    <p id="стат-статус" class="muted">Введите токен: статистика загрузится сама.</p>
+    <div id="стат" hidden>
+      <div class="плитки-стат" id="итоги"></div>
+      <h3>Просмотры по дням</h3>
+      <div id="график-дни" class="график"></div>
+      <h3>Популярные страницы</h3>
+      <div class="таблица-прокрутка"><table class="стат-таблица" id="таблица-страниц"></table></div>
+      <h3>Где проводят больше всего времени</h3>
+      <p class="muted">Разделы внутри страниц: сколько секунд читатели суммарно провели на каждом заголовке.</p>
+      <div class="таблица-прокрутка"><table class="стат-таблица" id="таблица-разделов"></table></div>
+      <div class="две-колонки">
+        <div><h3>Откуда приходят</h3><table class="стат-таблица" id="таблица-источников"></table></div>
+        <div><h3>Что ищут на сайте</h3><table class="стат-таблица" id="таблица-запросов"></table></div>
+      </div>
+      <p class="muted">Роботы (поисковики, проверки ссылок) считаются отдельно и в графики не входят. Время и глубина прокрутки приходят со страницы при закрытии вкладки, поэтому данные по ним чуть неполные, а у тех, кто отключил отслеживание в браузере, их нет. Подробная аналитика есть в Яндекс Метрике.</p>
+    </div>
+  </div>
 </section>
 
-<section id="пакеты">
-<h2>Пакеты</h2>
-<h3>Авторы</h3>
-<p class="tagline">Автор публикует пакеты в реестр своим токеном (<code>сфера войти</code>). Токен показывается один раз: отправьте его автору лично.</p>
-<form onsubmit="return false">
-  <p><label>Имя автора (латиница, цифры, «_», «-»)<br><input id="ав-имя" type="text" style="width:100%"></label></p>
-  <p><button class="button" id="ав-создать">Выдать токен</button> <span id="ав-статус" class="muted"></span></p>
-  <p id="ав-токен" style="word-break:break-all"></p>
-</form>
-<table class="список-статей-админ" id="ав-таблица"></table>
-<h3>Версии в реестре</h3>
-<p class="tagline">Отозванную версию не выбирают новые установки, но уже зафиксированные в блокировке продолжают скачиваться.</p>
-<table class="список-статей-админ" id="рс-таблица"></table>
-<h3>Git-каталог</h3>
-<p class="tagline">Пакеты, которые лежат в чужих git-репозиториях: их находит <code>сфера искать</code> наравне с реестром. Адрес должен вести на git-репозиторий.</p>
-<form onsubmit="return false">
-  <p><label>Имя пакета<br><input id="пк-имя" type="text" style="width:100%" placeholder="математика"></label></p>
-  <p><label>Адрес репозитория<br><input id="пк-адрес" type="url" style="width:100%" placeholder="https://github.com/…/….git"></label></p>
-  <p><label>Описание<br><input id="пк-описание" type="text" style="width:100%" maxlength="200"></label></p>
-  <p><button class="button" id="пк-добавить">Добавить в каталог</button> <span id="пк-статус" class="muted"></span></p>
-</form>
-<h3>В каталоге</h3>
-<table class="список-статей-админ" id="пк-таблица"></table>
+<section class="блок-админ" id="загрузки">
+  <div class="блок-шапка">
+    <div><h2>Файлы для скачивания</h2><p class="muted">Установщики на странице «Загрузки»: Windows, macOS, Linux, Android.</p></div>
+    <a class="button" href="#окно-файл">Загрузить файл</a>
+  </div>
+  <div class="блок-тело">
+    <div class="таблица-прокрутка"><table class="список-статей-админ" id="фл-список"></table></div>
+    <p id="фл-статус" class="muted"></p>
+  </div>
 </section>
 
-<section id="загрузки">
-<h2>Загрузки</h2>
-<p class="tagline">Добавить установщик на страницу «Загрузки».</p>
-<form id="форма" onsubmit="return false">
+<section class="блок-админ" id="статьи">
+  <div class="блок-шапка">
+    <div><h2>Статьи с других площадок</h2><p class="muted">Хабр, блоги: название, описание и картинку сайт подтянет сам.</p></div>
+    <a class="button" href="#окно-статья">Добавить статью</a>
+  </div>
+  <div class="блок-тело">
+    <table class="список-статей-админ" id="ст-список"></table>
+  </div>
+</section>
 
-  <p><label>Файл (имя — латиницей, цифры, . _ -)<br><input id="файл" type="file"></label></p>
-  <p><label>Название<br><input id="название" type="text" style="width:100%" placeholder="Сфера 0.3.3 для Windows"></label></p>
-  <p><label>Описание<br><input id="описание" type="text" style="width:100%" placeholder="Компилятор, рантайм и панель разработчика"></label></p>
-  <p><button class="button" id="кнопка">Загрузить</button> <span id="статус" class="muted"></span></p>
-</form>
-<h3>Что сейчас лежит на сайте</h3>
-<div class="таблица-прокрутка"><table class="список-статей-админ" id="фл-список"></table></div>
-<p id="фл-статус" class="muted"></p>
-<p class="muted">Файл не должен быть больше 2 ГБ. Если имя уже есть в списке, загрузите под другим (например, с номером версии).
-SHA-256 считается в браузере и показывается рядом с файлом (на http, вне localhost, браузер не даёт посчитать сумму — тогда она пропускается).</p>
+<section class="блок-админ" id="пакеты">
+  <div class="блок-шапка">
+    <div><h2>Пакеты</h2><p class="muted">Реестр пакетов: авторы, версии и git-каталог.</p></div>
+  </div>
+  <div class="блок-тело">
+    <div class="подблок">
+      <div class="подблок-шапка">
+        <div><h3>Авторы</h3><p class="muted">Автор публикует пакеты своим токеном (<code>сфера войти</code>). Токен показывается один раз: отправьте его автору лично.</p></div>
+        <a class="button" href="#окно-автор">Выдать токен автору</a>
+      </div>
+      <table class="список-статей-админ" id="ав-таблица"></table>
+    </div>
+    <div class="подблок">
+      <div class="подблок-шапка"><div><h3>Версии в реестре</h3><p class="muted">Отозванную версию не выбирают новые установки, но уже зафиксированные в блокировке продолжают скачиваться.</p></div></div>
+      <table class="список-статей-админ" id="рс-таблица"></table>
+    </div>
+    <div class="подблок">
+      <div class="подблок-шапка">
+        <div><h3>Git-каталог</h3><p class="muted">Пакеты из чужих git-репозиториев: их находит <code>сфера искать</code> наравне с реестром.</p></div>
+        <a class="button secondary" href="#окно-каталог">Добавить в каталог</a>
+      </div>
+      <table class="список-статей-админ" id="пк-таблица"></table>
+    </div>
+  </div>
 </section>
-<section id="аватар">
-<h2>Аватар языка</h2>
-<p class="tagline">Это логотип в шапке сайта, иконка вкладки и значок на телефоне. Загрузите квадратный PNG от 512×512, и он заменит прежний на всём сайте.</p>
-<div class="аватар-ряд"><img id="ав-превью" src="/статика/logo.png" alt="Текущий аватар" width="96" height="96">
-<div><label class="button secondary файл-кнопка">Выбрать PNG<input type="file" id="ав-файл" accept="image/png" hidden></label> <button class="button secondary" id="ав-убрать">Вернуть прежний</button><p id="ав-статус" class="muted"></p></div></div>
+
+<section class="блок-админ" id="аватар">
+  <div class="блок-шапка">
+    <div><h2>Аватар языка</h2><p class="muted">Логотип в шапке сайта, иконка вкладки и значок на телефоне. Квадратный PNG от 512×512 заменит прежний на всём сайте.</p></div>
+  </div>
+  <div class="блок-тело">
+    <div class="аватар-ряд"><img id="ав-превью" src="/статика/logo.png" alt="Текущий аватар" width="96" height="96">
+    <div><label class="button файл-кнопка">Выбрать PNG<input type="file" id="ав-файл" accept="image/png" hidden></label> <button class="button secondary" id="ав-убрать">Вернуть прежний</button></div></div>
+  </div>
 </section>
-<section id="донаты">
-<h2>Донатеры на странице «Поддержать»</h2>
-<p><button class="button secondary" id="донаты-кнопка">Обновить список донатеров</button> <span id="донаты-статус" class="muted"></span></p>
-<p class="muted">Список сам обновляется раз в час. Кнопка нужна, если хотите увидеть новый донат сразу.</p>
+
+<section class="блок-админ" id="донаты">
+  <div class="блок-шапка">
+    <div><h2>Донатеры на странице «Поддержать»</h2><p class="muted">Список сам обновляется раз в час. Кнопка нужна, если хотите увидеть новый донат сразу.</p></div>
+    <button class="button secondary" id="донаты-кнопка">Обновить список</button>
+  </div>
 </section>
+
+</main>
+</div>
+
+<!-- Всплывающие окна (CSS :target, как на странице пакетов) -->
+
+<div class="облако-фон" id="окно-файл"><a class="облако-закрыть-фон" href="#загрузки" aria-label="Закрыть"></a>
+  <div class="облако широкое" role="dialog" aria-labelledby="окно-файл-з"><div class="облако-шапка"><h2 id="окно-файл-з">Загрузить файл для скачивания</h2><a class="облако-закрыть" href="#загрузки" aria-label="Закрыть">×</a></div>
+  <div class="облако-тело">
+    <form id="форма" onsubmit="return false">
+      <label class="дроп" id="дроп" for="файл">
+        <span class="дроп-значок">⬆️</span>
+        <b id="дроп-текст">Перетащите файл сюда или нажмите, чтобы выбрать</b>
+        <span class="muted">Имя файла латиницей: цифры, точка, «_» и «-». До 2 ГБ. Одинаковое имя заменить нельзя: добавьте номер версии.</span>
+        <input id="файл" type="file" hidden>
+      </label>
+      <p><label>Название на странице «Загрузки»<br><input id="название" type="text" placeholder="Сфера 0.3.3 для Windows"></label></p>
+      <p><label>Описание<br><textarea id="описание" rows="5" placeholder="Что внутри и для кого. Например: компилятор, стандартная библиотека и панель разработчика для Windows 10 и новее."></textarea></label></p>
+      <p class="muted" id="подсказка-названия"></p>
+      <p><button class="button" id="кнопка">Загрузить на сайт</button></p>
+      <p class="muted">SHA-256 считается в браузере и показывается рядом с файлом (на http, вне localhost, браузер не даёт посчитать сумму — тогда она пропускается).</p>
+    </form>
+  </div></div>
+</div>
+
+<div class="облако-фон" id="окно-статья"><a class="облако-закрыть-фон" href="#статьи" aria-label="Закрыть"></a>
+  <div class="облако широкое" role="dialog" aria-labelledby="окно-статья-з"><div class="облако-шапка"><h2 id="окно-статья-з">Добавить статью</h2><a class="облако-закрыть" href="#статьи" aria-label="Закрыть">×</a></div>
+  <div class="облако-тело">
+    <form id="форма-статьи" onsubmit="return false">
+      <p><label>Адрес статьи<br><input id="ст-адрес" type="url" placeholder="https://habr.com/ru/articles/…"></label></p>
+      <p><button class="button" id="ст-проверить">Подтянуть данные</button></p>
+      <div id="ст-поля" hidden>
+        <div class="превью-статьи">
+          <img id="ст-превью" alt="" hidden>
+          <div>
+            <p><label>Название<br><input id="ст-название" type="text"></label></p>
+            <p><label>Описание<br><textarea id="ст-описание" rows="4"></textarea></label></p>
+            <p><label>Адрес картинки (можно заменить)<br><input id="ст-картинка" type="url"></label></p>
+            <p><label>Теги через запятую<br><input id="ст-теги" type="text" placeholder="компиляторы, android, rust"></label></p>
+          </div>
+        </div>
+        <p><button class="button" id="ст-добавить">Добавить на сайт</button></p>
+      </div>
+    </form>
+  </div></div>
+</div>
+
+<div class="облако-фон" id="окно-автор"><a class="облако-закрыть-фон" href="#пакеты" aria-label="Закрыть"></a>
+  <div class="облако" role="dialog" aria-labelledby="окно-автор-з"><div class="облако-шапка"><h2 id="окно-автор-з">Выдать токен автору</h2><a class="облако-закрыть" href="#пакеты" aria-label="Закрыть">×</a></div>
+  <div class="облако-тело">
+    <form onsubmit="return false">
+      <p><label>Имя автора (латиница, цифры, «_», «-»)<br><input id="ав-имя" type="text"></label></p>
+      <p><button class="button" id="ав-создать">Выдать токен</button></p>
+      <p id="ав-токен" class="токен-выдан"></p>
+    </form>
+  </div></div>
+</div>
+
+<div class="облако-фон" id="окно-каталог"><a class="облако-закрыть-фон" href="#пакеты" aria-label="Закрыть"></a>
+  <div class="облако" role="dialog" aria-labelledby="окно-каталог-з"><div class="облако-шапка"><h2 id="окно-каталог-з">Добавить пакет в git-каталог</h2><a class="облако-закрыть" href="#пакеты" aria-label="Закрыть">×</a></div>
+  <div class="облако-тело">
+    <form onsubmit="return false">
+      <p><label>Имя пакета<br><input id="пк-имя" type="text" placeholder="математика"></label></p>
+      <p><label>Адрес репозитория<br><input id="пк-адрес" type="url" placeholder="https://github.com/…/….git"></label></p>
+      <p><label>Описание<br><input id="пк-описание" type="text" maxlength="200"></label></p>
+      <p><button class="button" id="пк-добавить">Добавить в каталог</button></p>
+    </form>
+  </div></div>
+</div>
+
+<!-- Сообщения о результатах действий (исчезают сами) -->
+<div class="тосты" aria-live="polite">
+  <span id="статус" class="тост"></span>
+  <span id="ст-статус" class="тост"></span>
+  <span id="ав-статус" class="тост"></span>
+  <span id="ава-статус" class="тост"></span>
+  <span id="пк-статус" class="тост"></span>
+  <span id="донаты-статус" class="тост"></span>
+</div>
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
@@ -445,7 +524,7 @@ SHA-256 считается в браузере и показывается ря�
       .then(function (р) { return р.json().then(function (о) { $('фл-статус').textContent = р.ok ? 'Удалено.' : 'Ошибка: ' + (о['ошибка'] || р.status); файлы(); }); })
       .catch(function (е) { $('фл-статус').textContent = 'Ошибка: ' + е.message; });
   });
-  var ас = function (т) { $('ав-статус').textContent = т; };
+  var ас = function (т) { $('ава-статус').textContent = т; };
   $('ав-файл').addEventListener('change', function () {
     var ф = this.files[0]; if (!ф) return;
     if (!токен()) { ас('Укажите токен'); return; }
@@ -475,4 +554,41 @@ SHA-256 считается в браузере и показывается ря�
     });
     показать();
   })();
+</script>
+<script>
+/* Оформление: сообщения-«тосты», перетаскивание файла, подсказка названия */
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  Array.prototype.forEach.call(document.querySelectorAll('.тост'), function (т) {
+    var таймер = null;
+    new MutationObserver(function () {
+      clearTimeout(таймер);
+      if (т.textContent && !/^Загружено \d+%|^Проверяю|^Считаю/.test(т.textContent)) таймер = setTimeout(function () { т.textContent = ''; }, 9000);
+    }).observe(т, { childList: true, characterData: true, subtree: true });
+  });
+  var вход = $('файл'), дроп = $('дроп');
+  function размер(б) { return б > 1048576 ? (б / 1048576).toFixed(1) + ' МБ' : Math.max(1, Math.round(б / 1024)) + ' КБ'; }
+  function подсказать(имя) {
+    var н = имя.toLowerCase(), система = '', тип = '', вер = (имя.match(/(\d+\.\d+\.\d+)/) || [])[1] || '';
+    if (н.indexOf('windows') >= 0) { система = 'Windows'; тип = 'Компилятор, стандартная библиотека и панель разработчика. Распакуйте архив и запустите установщик.'; }
+    else if (н.indexOf('macos') >= 0) { система = 'macOS' + (н.indexOf('intel') >= 0 ? ' (Intel)' : ' (Apple Silicon)'); тип = 'Приложение «Панель Сферы» с компилятором и стандартной библиотекой' + (н.indexOf('intel') >= 0 ? ' для Mac с процессором Intel.' : ' для Mac с процессорами Apple (M1 и новее).'); }
+    else if (н.indexOf('linux') >= 0) { система = 'Linux'; тип = 'Панель разработчика, компилятор и стандартная библиотека. Ubuntu 24.04 и новее.'; }
+    else if (н.slice(-4) === '.apk' || н.indexOf('android') >= 0) { система = 'Android'; тип = 'Приложение с компилятором: пишите и запускайте программы на телефоне.'; }
+    if (!система) return;
+    if (!$('название').value) $('название').value = 'Сфера ' + (вер ? вер + ' ' : '') + 'для ' + система;
+    if (!$('описание').value) $('описание').value = тип;
+    $('подсказка-названия').textContent = 'Название и описание подставлены по имени файла: поправьте их, если нужно.';
+  }
+  function показать() {
+    var ф = вход.files[0];
+    $('дроп-текст').textContent = ф ? ф.name + ' (' + размер(ф.size) + ')' : 'Перетащите файл сюда или нажмите, чтобы выбрать';
+    if (ф) подсказать(ф.name);
+  }
+  вход.addEventListener('change', показать);
+  ['dragenter', 'dragover'].forEach(function (с) { дроп.addEventListener(с, function (e) { e.preventDefault(); дроп.classList.add('над'); }); });
+  ['dragleave', 'drop'].forEach(function (с) { дроп.addEventListener(с, function (e) { e.preventDefault(); дроп.classList.remove('над'); }); });
+  дроп.addEventListener('drop', function (e) {
+    if (e.dataTransfer && e.dataTransfer.files.length) { вход.files = e.dataTransfer.files; показать(); }
+  });
+})();
 </script>
