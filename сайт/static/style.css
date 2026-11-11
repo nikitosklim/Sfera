@@ -612,3 +612,14 @@ html{scroll-behavior:smooth}
 .метка-статус{display:inline-block;margin-left:6px;padding:1px 9px;border-radius:999px;font-size:.78rem;font-weight:650;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
 .статус-проверен{color:#2e8b57;border-color:#2e8b57}
 .статус-нежелательный{color:#c0392b;border-color:#c0392b}
+
+/* оценки и модерация */
+.оценки{margin-top:28px}
+.оценки-строка,.оценки-мод{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.комментарий{border-top:1px solid var(--line,#ddd);padding:10px 0}
+.комментарий p{margin:4px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.комментарий-шапка{display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}
+.комментарий-удалить{margin-left:auto;background:none;border:0;color:#c0392b;cursor:pointer;font:inherit}
+.комментарий-форма textarea{width:100%;box-sizing:border-box;margin-bottom:8px;font:inherit;padding:8px}
+.button.опасно{background:#c0392b;border-color:#c0392b;color:#fff}
+.мод-фильтры{display:flex;flex-wrap:wrap;gap:8px}

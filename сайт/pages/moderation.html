@@ -1,0 +1,18 @@
+<meta name="robots" content="noindex">
+<div class="wrap page">
+<p class="muted"><a href="/пакеты">← Все пакеты</a></p>
+<h1>Модерация пакетов</h1>
+<div id="мод-запрет" hidden><p>Страница для модераторов и администраторов. <a href="/аккаунт">Войти</a></p></div>
+<div id="мод-блок" hidden>
+<p class="tagline">Новые пакеты приходят «непроверенными». Откройте пакет, посмотрите код и отметьте его. Администратор может удалить пакет совсем.</p>
+<p class="мод-фильтры">
+  <button class="button small secondary" data-фильтр="все">Все</button>
+  <button class="button small secondary" data-фильтр="непроверен">Непроверенные</button>
+  <button class="button small secondary" data-фильтр="проверен">Проверенные</button>
+  <button class="button small secondary" data-фильтр="нежелательный">Нежелательные</button>
+</p>
+<div class="таблица-прокрутка"><table class="загрузки-таблица" id="мод-таблица"></table></div>
+<p id="мод-сообщение" class="акк-сообщение"></p>
+</div>
+</div>
+<script src="/статика/оценки.js" defer></script>
