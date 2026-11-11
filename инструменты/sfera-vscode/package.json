@@ -2,7 +2,7 @@
   "name": "sfera-lang",
   "displayName": "Сфера",
   "description": "Язык программирования «Сфера»: подсветка синтаксиса, ошибки в реальном времени, подсказки и автодополнение.",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "publisher": "sfera-lang",
   "license": "MIT",
   "icon": "images/icon.png",
@@ -69,6 +69,17 @@
           "default": true,
           "description": "Включить языковой сервер (ошибки, подсказки, автодополнение)."
         }
+      }
+    },
+    "configurationDefaults": {
+      "[sfera]": {
+        "editor.quickSuggestions": {
+          "other": true,
+          "comments": false,
+          "strings": false
+        },
+        "editor.suggest.showWords": false,
+        "editor.wordBasedSuggestions": "off"
       }
     }
   },
