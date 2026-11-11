@@ -16,8 +16,15 @@ jobs:
         run: |
           wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc >/dev/null
           echo "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main" | sudo tee /etc/apt/sources.list.d/llvm18.list
-          sudo apt-get update
-          sudo apt-get install -y llvm-18-dev libpolly-18-dev libzstd-dev libffi-dev zlib1g-dev libxml2-dev clang-18 xz-utils
+          echo 'Acquire::Retries "5";' | sudo tee /etc/apt/apt.conf.d/80-retries
+          for i in 1 2 3 4; do
+            sudo apt-get update && sudo apt-get install -y --fix-missing llvm-18-dev libpolly-18-dev libzstd-dev libffi-dev zlib1g-dev libxml2-dev clang-18 xz-utils; then
+              exit 0
+            fi
+            echo "Попытка $i не удалась, повторяем"
+            sleep 20
+          done
+          exit 1
       - name: Сборка компилятора
         env:
           LLVM_SYS_180_PREFIX: /usr/lib/llvm-18
