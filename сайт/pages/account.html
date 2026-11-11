@@ -1,0 +1,54 @@
+<meta name="robots" content="noindex">
+<div class="wrap page page-narrow акк">
+<h1>Аккаунт</h1>
+
+<section id="акк-гость" hidden>
+  <p class="tagline">Аккаунт нужен, чтобы публиковать пакеты, ставить им звёзды и оставлять комментарии. Почту мы не спрашиваем.</p>
+  <div class="кнопки-ряд">
+    <button class="button" type="button" data-вкладка="вход">Вход</button>
+    <button class="button secondary" type="button" data-вкладка="рег">Регистрация</button>
+  </div>
+  <form id="вход-форма" class="акк-форма" autocomplete="on">
+    <p><label>Имя<br><input id="вход-имя" type="text" autocomplete="username" required></label></p>
+    <p><label>Пароль<br><input id="вход-пароль" type="password" autocomplete="current-password" required></label></p>
+    <p><button class="button" type="submit">Войти</button></p>
+    <p id="вход-сообщение" class="акк-сообщение"></p>
+  </form>
+  <form id="рег-форма" class="акк-форма" autocomplete="on" hidden>
+    <p><label>Имя (3–32 знака: буквы, цифры, «_», «-»)<br><input id="рег-имя" type="text" autocomplete="username" required></label></p>
+    <p><label>Пароль (не короче 8 знаков)<br><input id="рег-пароль" type="password" autocomplete="new-password" required></label></p>
+    <p><label>Пароль ещё раз<br><input id="рег-пароль2" type="password" autocomplete="new-password" required></label></p>
+    <p><button class="button" type="submit">Создать аккаунт</button></p>
+    <p id="рег-сообщение" class="акк-сообщение"></p>
+    <p class="muted">Пароль превращается в хеш прямо в вашем браузере, на сервер он не отправляется. Из-за этого мы не можем его восстановить: если забудете, администратор выдаст новый аккаунт. Запишите пароль в надёжное место.</p>
+  </form>
+</section>
+
+<section id="акк-профиль" hidden>
+  <div class="блок-админ">
+    <div class="блок-шапка">
+      <div><h2 id="акк-имя"></h2><p class="muted">Ваша роль: <span id="акк-роль" class="роль-метка"></span></p></div>
+      <button class="button secondary" id="акк-выход" type="button">Выйти</button>
+    </div>
+  </div>
+  <div class="блок-админ">
+    <div class="блок-шапка">
+      <div><h2>Публикация пакетов</h2><p class="muted">Загрузите файлы на сайте, без терминала. Новый пакет получает пометку «непроверенный», пока его не посмотрит модератор.</p></div>
+      <a class="button" href="/пакеты/загрузить">Загрузить пакет</a>
+    </div>
+    <div class="блок-тело"><h3>Мои пакеты</h3><ul id="акк-пакеты" class="muted"></ul></div>
+  </div>
+  <div class="блок-админ">
+    <div class="блок-шапка"><div><h2>Токен для терминала</h2><p class="muted">Для команды <code>сфера войти</code>: так публикуют пакеты из терминала командой <code>сфера опубликовать</code>. Никому не показывайте.</p></div></div>
+    <div class="блок-тело">
+      <p><input id="акк-токен" type="password" readonly style="width:100%;font-family:var(--mono)"></p>
+      <div class="кнопки-ряд">
+        <button class="button secondary" id="токен-показать" type="button">Показать</button>
+        <button class="button secondary" id="токен-копия" type="button">Скопировать</button>
+        <button class="button secondary" id="токен-новый" type="button">Выдать новый</button>
+      </div>
+      <p id="токен-сообщение" class="акк-сообщение"></p>
+    </div>
+  </div>
+</section>
+</div>

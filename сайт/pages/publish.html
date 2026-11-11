@@ -1,0 +1,26 @@
+<meta name="robots" content="noindex">
+<div class="wrap page page-narrow">
+<p class="muted"><a href="/пакеты">← Все пакеты</a></p>
+<h1>Загрузить пакет</h1>
+<div id="пуб-гость" hidden><p>Чтобы публиковать пакеты, <a href="/аккаунт">войдите или зарегистрируйтесь</a>.</p></div>
+<div id="пуб-форма-блок" hidden>
+<p class="tagline">Выберите файлы пакета (<code>.код</code>, <code>README.md</code>, <code>LICENSE</code>): сайт сам соберёт архив и опубликует его. Версии не перезаписываются: для обновления увеличьте номер.</p>
+<form id="пуб-форма" onsubmit="return false">
+  <label class="дроп" id="пуб-дроп" for="пуб-файлы">
+    <span class="дроп-значок">📦</span>
+    <b id="пуб-дроп-текст">Перетащите файлы сюда или нажмите, чтобы выбрать</b>
+    <span class="muted">Файлы лежат в корне пакета, без папок. Можно сразу готовый архив .tar.gz. До 5 МБ.</span>
+    <input id="пуб-файлы" type="file" multiple hidden>
+  </label>
+  <ul id="пуб-список" class="muted"></ul>
+  <p><label>Название пакета (буквы, цифры, «_», «-»; не зарезервированное слово вроде «текст»)<br><input id="пуб-имя" type="text" placeholder="геометрия"></label></p>
+  <p><label>Версия (X.Y.Z)<br><input id="пуб-версия" type="text" value="1.0.0"></label></p>
+  <p><label>Описание (одна строка, до 200 знаков)<br><input id="пуб-описание" type="text" maxlength="200" placeholder="Что делает пакет"></label></p>
+  <p><label>Лицензия<br><input id="пуб-лицензия" type="text" value="MIT"></label></p>
+  <p><button class="button" id="пуб-кнопка" type="button">Опубликовать</button></p>
+  <p id="пуб-сообщение" class="акк-сообщение"></p>
+  <p class="muted">Подробнее о правилах: <a href="/документация/packages">документация по пакетам</a>. Опубликованный пакет получает пометку «непроверенный», пока его не отметит модератор. Запрещённый или опасный код удаляется, а автор может быть заблокирован.</p>
+</form>
+</div>
+</div>
+<script src="/статика/публикация.js"></script>
