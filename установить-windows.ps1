@@ -49,6 +49,37 @@ function Выполнить-Внешнюю {
     }
 }
 
+# Сеть иногда подводит (особенно на серверах GitHub Actions): до 4 попыток, а к api.github.com
+# добавляется токен из GITHUB_TOKEN, если он есть, чтобы не упереться в лимит запросов.
+function Заголовки-Запроса([string]$Uri) {
+    $з = @{ "User-Agent" = "sfera-installer" }
+    if ($env:GITHUB_TOKEN -and $Uri -like "https://api.github.com/*") { $з["Authorization"] = "Bearer $($env:GITHUB_TOKEN)" }
+    return $з
+}
+function Скачать-СПовтором([string]$Uri, [string]$OutFile) {
+    for ($п = 1; $п -le 4; $п++) {
+        try {
+            Invoke-WebRequest -Uri $Uri -OutFile $OutFile -UseBasicParsing -Headers (Заголовки-Запроса $Uri) -ErrorAction Stop
+            return
+        } catch {
+            if ($п -eq 4) { throw }
+            Write-Host "Не удалось скачать (попытка $п из 4): $($_.Exception.Message). Повторяю..." -ForegroundColor Yellow
+            Start-Sleep -Seconds (5 * $п)
+        }
+    }
+}
+function Json-СПовтором([string]$Uri) {
+    for ($п = 1; $п -le 4; $п++) {
+        try {
+            return Invoke-RestMethod -Uri $Uri -Headers (Заголовки-Запроса $Uri) -ErrorAction Stop
+        } catch {
+            if ($п -eq 4) { throw }
+            Write-Host "Запрос не удался (попытка $п из 4): $($_.Exception.Message). Повторяю..." -ForegroundColor Yellow
+            Start-Sleep -Seconds (5 * $п)
+        }
+    }
+}
+
 function Написать-Шаг {
     param([string]$Текст)
     Write-Host ""
@@ -121,7 +152,7 @@ if ($rustcУстановлен) {
 } else {
     Написать-Шаг "Rust не найден — скачиваю официальный установщик (rustup)"
     $rustupInit = Join-Path $ПапкаВременная "rustup-init.exe"
-    Invoke-WebRequest -Uri "https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-msvc/rustup-init.exe" -OutFile $rustupInit
+    Скачать-СПовтором -Uri "https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-msvc/rustup-init.exe" -OutFile $rustupInit
     # -y — без интерактивных вопросов; --default-toolchain stable — обычный,
     # стабильный канал Rust, ничего экзотического компилятору не нужно.
     Выполнить-Внешнюю { & $rustupInit -y --default-toolchain stable --profile default }
@@ -175,7 +206,7 @@ if (Test-Path $llvmConfigПуть) {
     # Находим АКТУАЛЬНОЕ имя файла релиза через GitHub API, а не жёстко
     # прописанное — так скрипт не сломается, если формат имени файла
     # слегка изменится в будущем релизе.
-    $релизИнфо = Invoke-RestMethod -Uri "https://api.github.com/repos/vovkos/llvm-package-windows/releases/tags/llvm-18.1.8"
+    $релизИнфо = Json-СПовтором -Uri "https://api.github.com/repos/vovkos/llvm-package-windows/releases/tags/llvm-18.1.8"
     # НАЙДЕНО РЕАЛЬНОЙ ПРОВЕРКОЙ: фильтр раньше не исключал "-dbg" варианты —
     # в итоге скачивался debug-пакет, у которого вдобавок обрезаны некоторые
     # редкие таргеты (см. Cargo.toml) — предпочитаем обычный release.
@@ -199,14 +230,14 @@ if (Test-Path $llvmConfigПуть) {
 
     $архивLLVM = Join-Path $ПапкаВременная $актив.name
     Написать-Шаг "Найден файл: $($актив.name) — скачиваю..."
-    Invoke-WebRequest -Uri $актив.browser_download_url -OutFile $архивLLVM
+    Скачать-СПовтором -Uri $актив.browser_download_url -OutFile $архивLLVM
 
     # Пакет — формат .7z, встроенный Expand-Archive его не понимает.
     # Скачиваем портативный 7za.exe (без установки) специально для распаковки.
     $семьЗип = Join-Path $ПапкаВременная "7za.exe"
     if (-not (Test-Path $семьЗип)) {
         Написать-Шаг "Скачиваю портативный 7-Zip (нужен для распаковки .7z)"
-        Invoke-WebRequest -Uri "https://www.7-zip.org/a/7zr.exe" -OutFile $семьЗип
+        Скачать-СПовтором -Uri "https://www.7-zip.org/a/7zr.exe" -OutFile $семьЗип
     }
 
     Написать-Шаг "Распаковываю LLVM в $ПапкаLLVM"
@@ -261,7 +292,7 @@ if (Test-Path $clangПуть) {
 } else {
     Написать-Шаг "Скачиваю Clang 18.1.8 (пакет для Windows)"
 
-    $релизИнфоClang = Invoke-RestMethod -Uri "https://api.github.com/repos/vovkos/llvm-package-windows/releases/tags/clang-18.1.8"
+    $релизИнфоClang = Json-СПовтором -Uri "https://api.github.com/repos/vovkos/llvm-package-windows/releases/tags/clang-18.1.8"
     # debug-вариант этого пакета собирается с CLANG_BUILD_TOOLS=OFF — то есть
     # САМОГО clang.exe там нет вообще, только библиотеки — поэтому "-dbg"
     # здесь исключаем безусловно, в отличие от LLVM.
@@ -280,12 +311,12 @@ if (Test-Path $clangПуть) {
 
     $архивClang = Join-Path $ПапкаВременная $активClang.name
     Написать-Шаг "Найден файл: $($активClang.name) — скачиваю..."
-    Invoke-WebRequest -Uri $активClang.browser_download_url -OutFile $архивClang
+    Скачать-СПовтором -Uri $активClang.browser_download_url -OutFile $архивClang
 
     $семьЗип = Join-Path $ПапкаВременная "7za.exe"
     if (-not (Test-Path $семьЗип)) {
         Написать-Шаг "Скачиваю портативный 7-Zip (нужен для распаковки .7z)"
-        Invoke-WebRequest -Uri "https://www.7-zip.org/a/7zr.exe" -OutFile $семьЗип
+        Скачать-СПовтором -Uri "https://www.7-zip.org/a/7zr.exe" -OutFile $семьЗип
     }
 
     Написать-Шаг "Распаковываю Clang в $ПапкаClang"
@@ -458,7 +489,7 @@ function Установить-SDL-Пакет {
     # ВСЕХ релизов, начиная с самых свежих — так находим актуальную
     # версию именно 2.x, какой бы тег ни был "последним" в репозитории.
     try {
-        $релизы = Invoke-RestMethod -Uri "https://api.github.com/repos/$Репозиторий/releases?per_page=20"
+        $релизы = Json-СПовтором -Uri "https://api.github.com/repos/$Репозиторий/releases?per_page=20"
     } catch {
         Написать-Ошибку "Не удалось получить список релизов $Репозиторий — проверь интернет-соединение. Панель Сферы собираться не будет, пока это не исправлено."
         return $null
@@ -477,7 +508,7 @@ function Установить-SDL-Пакет {
     } else {
         $архив = Join-Path $ПапкаВременная $актив.name
         Написать-Шаг "Скачиваю $($актив.name)"
-        Invoke-WebRequest -Uri $актив.browser_download_url -OutFile $архив
+        Скачать-СПовтором -Uri $актив.browser_download_url -OutFile $архив
         New-Item -ItemType Directory -Force -Path $ПапкаSDL | Out-Null
         # У SDL-архивов, в отличие от LLVM/Clang, внутри сразу папка с
         # версией в имени (например "SDL2-2.30.9\") — Expand-Archive (это

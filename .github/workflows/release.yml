@@ -167,7 +167,6 @@ jobs:
 
   windows:
     name: Windows (x86-64)
-    continue-on-error: true
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v5
@@ -179,6 +178,7 @@ jobs:
         shell: pwsh
         env:
           RUST_BACKTRACE: "1"
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\установить-windows.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -191,10 +191,42 @@ jobs:
           $env:Path = [Environment]::GetEnvironmentVariable('Path', 'User') + ';' + $env:Path
           powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\собрать-релиз-windows.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      # Проверяем именно готовый архив, как его получит человек: распаковываем в чистую папку, без переменных
+      # окружения установщика, и запускаем из неё компилятор на примере «Привет, мир!».
+      - name: Проверка готового архива
+        shell: pwsh
+        run: |
+          $Пути = [Environment]::GetEnvironmentVariable('Path', 'User') + ';' + [Environment]::GetEnvironmentVariable('Path', 'Machine')
+          $env:Path = $Пути
+          foreach ($имя in 'LLVM_SYS_180_PREFIX', 'SFERA_LIB_PATHS', 'SFERA_PTHREAD_WIN_O') { Remove-Item "env:$имя" -ErrorAction SilentlyContinue }
+          $Архив = Resolve-Path 'релиз/Sfera-Panel-Windows.zip'
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zip = [System.IO.Compression.ZipFile]::OpenRead($Архив)
+          $имена = $zip.Entries | ForEach-Object { $_.FullName -replace '\\', '/' }
+          $zip.Dispose()
+          foreach ($нужен in 'Sfera-Panel-Windows/Sfera-Panel.exe', 'Sfera-Panel-Windows/bin/запустить.exe', 'Sfera-Panel-Windows/bin/сфера_lsp.exe', 'Sfera-Panel-Windows/bin/сфера_пакеты.exe', 'Sfera-Panel-Windows/bin/сфера.exe', 'Sfera-Panel-Windows/lib/sfera/pthread_win.o') {
+            if (-not ($имена -contains $нужен)) { Write-Host "В архиве нет $нужен. Есть:"; $имена | ForEach-Object { Write-Host "  $_" }; exit 1 }
+          }
+          if (-not ($имена | Where-Object { $_ -like 'Sfera-Panel-Windows/*.dll' })) { Write-Host 'В архиве нет DLL графики'; exit 1 }
+          $Чисто = Join-Path $env:RUNNER_TEMP 'проверка-архива'
+          if (Test-Path $Чисто) { Remove-Item -Recurse -Force $Чисто }
+          Expand-Archive -Path $Архив -DestinationPath $Чисто
+          $Папка = Join-Path $Чисто 'Sfera-Panel-Windows'
+          $Рабочая = Join-Path $Чисто 'работа'
+          New-Item -ItemType Directory -Force -Path $Рабочая | Out-Null
+          [System.IO.File]::WriteAllText((Join-Path $Рабочая 'привет.код'), "функция главная(): целое`n    вывести(`"Привет, мир!`");`n    вернуть 0;`nконец`n", (New-Object System.Text.UTF8Encoding($false)))
+          Push-Location $Рабочая
+          $вывод = & (Join-Path $Папка 'bin\запустить.exe') 'привет.код' 2>&1 | Out-String
+          $код = $LASTEXITCODE
+          Pop-Location
+          Write-Host $вывод
+          if ($код -ne 0 -or $вывод -notmatch 'Привет, мир!') { Write-Host "Программа из архива не запустилась (код $код)"; exit 1 }
+          Write-Host 'Архив проверен: компилятор из него собирает и запускает программу.'
       - uses: actions/upload-artifact@v4
         with:
           name: sfera-panel-windows
           path: релиз/Sfera-Panel-Windows.zip
+          compression-level: 0
       - name: Приложить к релизу
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
