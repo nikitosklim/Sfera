@@ -6,14 +6,49 @@
 (function () {
   'use strict';
   var скрипт = document.currentScript;
-  var модуль = скрипт && скрипт.getAttribute('data-модуль');
-  var запас = скрипт && скрипт.getAttribute('data-запас');
-  if (!модуль) return;
+  var модули = ((скрипт && скрипт.getAttribute('data-модуль')) || '').split(/\s+/).filter(Boolean);
+  var запасные = ((скрипт && скрипт.getAttribute('data-запас')) || '').split(/\s+/).filter(Boolean);
 
-  function запасной() {
-    if (!запас) return;
-    var с = document.createElement('script'); с.src = запас; document.head.appendChild(с);
+  // Общие помощники страниц: запросы к серверу, хеш пароля, «кто я». Ими пользуются и программы на Сфере (через мост ниже),
+  // и ещё не переписанные скрипты страниц (window.Сфера).
+  var С = window.Сфера = window.Сфера || {};
+  function шестнадцатеричное(буфер) {
+    return Array.prototype.map.call(new Uint8Array(буфер), function (б) { return ('0' + б.toString(16)).slice(-2); }).join('');
   }
+  // PBKDF2: из пароля и имени получается 64 hex-символа. Имя служит солью, поэтому одинаковые пароли у разных людей дают разные хеши.
+  С.хешПароля = function (имя, пароль) {
+    if (!window.crypto || !window.crypto.subtle) {
+      return Promise.reject(new Error('Браузер не поддерживает безопасный ввод пароля: откройте сайт по https.'));
+    }
+    var к = new TextEncoder();
+    return crypto.subtle.importKey('raw', к.encode(пароль), 'PBKDF2', false, ['deriveBits']).then(function (ключ) {
+      return crypto.subtle.deriveBits({ name: 'PBKDF2', salt: к.encode('sfera:' + имя.toLowerCase()), iterations: 150000, hash: 'SHA-256' }, ключ, 256);
+    }).then(шестнадцатеричное);
+  };
+  С.отправить = function (путь, поля) {
+    var тело = typeof поля === 'string' ? поля : new URLSearchParams(поля || {}).toString();
+    return fetch(путь, { method: 'POST', headers: { 'X-Sfera': '1', 'Content-Type': 'application/x-www-form-urlencoded' }, body: тело })
+      .then(function (о) { return о.json().catch(function () { return { ok: false, ошибка: 'Сервер ответил не так, как ожидалось' }; }); });
+  };
+  С.получить = function (путь) {
+    return fetch(путь, { headers: { 'X-Sfera': '1' } })
+      .then(function (о) { return о.json().catch(function () { return { ok: false }; }); });
+  };
+  С.кто = function () {
+    if (!С._кто) С._кто = С.получить('/аккаунт/я').catch(function () { return { вошёл: false }; });
+    return С._кто;
+  };
+  С.роли = { 'пользователь': 'пользователь', 'модератор': 'модератор', 'админ': 'администратор' };
+
+  function запасной(номер) {
+    var путь = запасные[номер];
+    if (!путь) return;
+    var с = document.createElement('script'); с.src = путь; document.head.appendChild(с);
+  }
+  if (!модули.length) return;
+  модули.forEach(запустить);
+
+  function запустить(модуль, номер) {
 
   var ручки = [null];          // ручка 0 = «ничего»
   var событие = 0;
@@ -42,6 +77,13 @@
     кольцо.где += байты.length + 1;
     return адрес;
   }
+  var результат = 0;
+  function ждать(обещание, имя) {
+    обещание.then(function (з) {
+      var было = ручки.length; результат = выдать(з); вызвать(имя); результат = 0; ручки.length = было;
+    });
+    return 0;
+  }
   function вызвать(имя) {
     var ф = экспорт[имя];
     if (typeof ф === 'function') { try { ф(); } catch (е) { if (!(е && е.выход !== undefined)) console.error('Сфера:', е); } }
@@ -68,7 +110,7 @@
       ц.addEventListener(читатьТекст(событиеИмя), function (э) {
         var было = ручки.length, прежнее = событие;
         событие = выдать(э); вызвать(имя); событие = прежнее; ручки.length = было;
-      }, { passive: true });
+      });
       return 0;
     },
     'х_каждые': function (мс, обработчик) {
@@ -81,6 +123,18 @@
       try { navigator.sendBeacon(читатьТекст(адрес), new Blob([читатьТекст(тело)], { type: 'application/x-www-form-urlencoded' })); } catch (е) {}
       return 0;
     },
+    // Запросы к серверу. Когда ответ готов, браузер вызывает функцию программы; ответ лежит в х_результат().
+    'х_получить': function (адрес, обработчик) { return ждать(С.получить(читатьТекст(адрес)), читатьТекст(обработчик)); },
+    'х_отправить': function (адрес, тело, обработчик) { return ждать(С.отправить(читатьТекст(адрес), читатьТекст(тело)), читатьТекст(обработчик)); },
+    'х_текстом': function (адрес, обработчик) {
+      return ждать(fetch(читатьТекст(адрес)).then(function (о) { return о.text(); }), читатьТекст(обработчик));
+    },
+    'х_хеш': function (имя, пароль, обработчик) {
+      return ждать(С.хешПароля(читатьТекст(имя), читатьТекст(пароль)).then(function (х) { return { ok: true, хеш: х }; },
+        function (е) { return { ok: false, ошибка: е.message }; }), читатьТекст(обработчик));
+    },
+    'х_результат': function () { return результат; },
+    'х_когда': function (обещание, обработчик) { var п = взять(обещание); return п && п.then ? ждать(п, читатьТекст(обработчик)) : 0; },
     'х_метка': function () { return ручки.length; },
     'х_сбросить': function (м) { if (м > 0 && м <= ручки.length) ручки.length = м; return 0; }
   };
@@ -125,5 +179,6 @@
       кольцо.начало = старые * 65536; кольцо.размер = страниц * 65536; кольцо.где = 0;
       try { экспорт._start(); } catch (е) { if (!(е && е.выход !== undefined)) throw е; }
     })
-    .catch(function (е) { console.warn('Сфера: ' + модуль + ' не запустился, включаю запасной скрипт.', е); запасной(); });
+    .catch(function (е) { console.warn('Сфера: ' + модуль + ' не запустился, включаю запасной скрипт.', е); запасной(номер); });
+  }
 })();
