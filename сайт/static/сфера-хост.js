@@ -34,6 +34,17 @@
     return fetch(путь, { headers: { 'X-Sfera': '1' } })
       .then(function (о) { return о.json().catch(function () { return { ok: false }; }); });
   };
+  // Запросы админки: тот же JSON, но с токеном администратора в заголовке Authorization.
+  С.получитьСТокеном = function (путь, токен) {
+    return Promise.resolve().then(function () { return fetch(путь, { headers: { Authorization: 'Bearer ' + токен } }); })
+      .then(function (о) { return о.ok ? о.json() : { ok: false, ошибка: 'Сервер ответил ' + о.status }; })
+      .catch(function () { return { ok: false, ошибка: 'Сервер ответил не так, как ожидалось' }; });
+  };
+  С.отправитьСТокеном = function (путь, тело, токен) {
+    return Promise.resolve().then(function () { return fetch(путь, { method: 'POST', headers: { Authorization: 'Bearer ' + токен, 'Content-Type': 'application/x-www-form-urlencoded' }, body: тело }); })
+      .then(function (о) { return о.json().catch(function () { return {}; }).then(function (д) { д.ok = о.ok; if (!о.ok && !д['ошибка']) д['ошибка'] = String(о.status); return д; }); })
+      .catch(function () { return { ok: false, ошибка: 'Нет связи с сервером' }; });
+  };
   С.кто = function () {
     if (!С._кто) С._кто = С.получить('/аккаунт/я').catch(function () { return { вошёл: false }; });
     return С._кто;
@@ -186,6 +197,8 @@
     'х_опубликовать': function (имя, версия, данные, обработчик) {
       return ждать(С.опубликовать(читатьТекст(имя), читатьТекст(версия), взять(данные)).catch(function (е) { return { ok: false, ошибка: е.message }; }), читатьТекст(обработчик));
     },
+    'х_получить_с_токеном': function (адрес, токен, обработчик) { return ждать(С.получитьСТокеном(читатьТекст(адрес), читатьТекст(токен)), читатьТекст(обработчик)); },
+    'х_отправить_с_токеном': function (адрес, тело, токен, обработчик) { return ждать(С.отправитьСТокеном(читатьТекст(адрес), читатьТекст(тело), читатьТекст(токен)), читатьТекст(обработчик)); },
     'х_результат': function () { return результат; },
     'х_когда': function (обещание, обработчик) { var п = взять(обещание); return п && п.then ? ждать(п, читатьТекст(обработчик)) : 0; },
     'х_метка': function () { return ручки.length; },

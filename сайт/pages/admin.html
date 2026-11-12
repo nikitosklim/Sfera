@@ -605,42 +605,4 @@
   });
 })();
 </script>
-<script>
-/* Пользователи: роли и блокировка */
-(function () {
-  var $ = function (id) { return document.getElementById(id); };
-  var эск = function (с) { return String(с).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
-  function токен() { return $('токен').value.trim(); }
-  function действие(путь, поля) {
-    return fetch(путь, { method: 'POST', headers: { Authorization: 'Bearer ' + токен(), 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(поля).toString() })
-      .then(function (р) { return р.json().then(function (о) { if (!р.ok) throw new Error(о['ошибка'] || р.status); return о; }); });
-  }
-  function список() {
-    if (!токен()) { $('пол-таблица').innerHTML = '<tr><td class="muted">Введите токен вверху страницы</td></tr>'; return; }
-    fetch('/управление/пользователи', { headers: { Authorization: 'Bearer ' + токен() } }).then(function (р) { return р.ok ? р.json() : []; }).then(function (а) {
-      $('пол-таблица').innerHTML = а.length ? а.map(function (п) {
-        var блок = п['блок'] === '1';
-        var роли = ['пользователь', 'модератор', 'админ'].map(function (р) { return '<option value="' + р + '"' + (р === п['роль'] ? ' selected' : '') + '>' + (р === 'админ' ? 'администратор' : р) + '</option>'; }).join('');
-        var дата = п['время'] ? new Date(Number(п['время']) * 1000).toLocaleDateString('ru-RU') : '';
-        return '<tr data-имя="' + эск(п['имя']) + '"><td><b>' + эск(п['имя']) + '</b>' + (блок ? ' <span class="роль-метка роль-блок">заблокирован</span>' : '') + '<br><span class="muted">с ' + эск(дата) + '</span></td>' +
-          '<td><select data-д="роль" aria-label="Роль">' + роли + '</select></td>' +
-          '<td style="text-align:right"><button class="button small secondary" data-д="блок" data-значение="' + (блок ? 0 : 1) + '">' + (блок ? 'Разблокировать' : 'Заблокировать') + '</button></td></tr>';
-      }).join('') : '<tr><td class="muted">Пока никто не зарегистрировался</td></tr>';
-    });
-  }
-  $('пол-таблица').addEventListener('change', function (с) {
-    var п = с.target; if (п.getAttribute('data-д') !== 'роль') return;
-    var имя = п.closest('tr').getAttribute('data-имя');
-    действие('/управление/пользователь/роль', { имя: имя, роль: п.value }).then(function () { $('пол-статус').textContent = 'Роль изменена: ' + имя; }).catch(function (е) { $('пол-статус').textContent = 'Ошибка: ' + е.message; список(); });
-  });
-  $('пол-таблица').addEventListener('click', function (с) {
-    var к = с.target; if (!к.getAttribute || к.getAttribute('data-д') !== 'блок') return;
-    var имя = к.closest('tr').getAttribute('data-имя'), знач = к.getAttribute('data-значение');
-    if (знач === '1' && !confirm('Заблокировать «' + имя + '»? Он не сможет входить и публиковать.')) return;
-    действие('/управление/пользователь/блок', { имя: имя, значение: знач }).then(список).catch(function (е) { $('пол-статус').textContent = 'Ошибка: ' + е.message; });
-  });
-  $('пол-обновить').addEventListener('click', список);
-  $('токен').addEventListener('change', список);
-  try { if (sessionStorage.getItem('sfera-token')) setTimeout(список, 80); } catch (е) {}
-})();
-</script>
+<script src="/статика/сфера-хост.js" data-модуль="админ_пользователи" data-запас="" defer></script>
