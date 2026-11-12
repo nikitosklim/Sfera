@@ -148,8 +148,44 @@ impl Лексер {
         let mut текст = String::new();
         let mut дробное = false;
 
+        // Шестнадцатеричные (0x…) и двоичные (0b…) литералы — для адресов
+        // и регистров устройств. Разделитель «_» допустим: 0xB800_0000.
+        if self.текущий() == Some('0') {
+            let основание = match self.заглянуть_вперёд(1) {
+                Some('x') | Some('X') => Some(16),
+                Some('b') | Some('B') => Some(2),
+                _ => None,
+            };
+            if let Some(осн) = основание {
+                if self.заглянуть_вперёд(2).map_or(false, |н| н.is_digit(осн) ) {
+                    self.продвинуться();
+                    self.продвинуться();
+                    let mut цифры = String::new();
+                    while let Some(c) = self.текущий() {
+                        if c.is_digit(осн) {
+                            цифры.push(c);
+                            self.продвинуться();
+                        } else if c == '_' {
+                            self.продвинуться();
+                        } else {
+                            break;
+                        }
+                    }
+                    return u64::from_str_radix(&цифры, осн)
+                        .map(|в| Token::ЦелоеЛит(в as i64))
+                        .map_err(|_| ОшибкаЛексера {
+                            сообщение: format!("не удалось разобрать число: {}", цифры),
+                            строка: self.строка,
+                            столбец: self.столбец,
+                        });
+                }
+            }
+        }
+
         while let Some(c) = self.текущий() {
-            if c.is_ascii_digit() {
+            if c == '_' && !текст.is_empty() && self.заглянуть_вперёд(1).map_or(false, |н| н.is_ascii_digit()) {
+                self.продвинуться();
+            } else if c.is_ascii_digit() {
                 текст.push(c);
                 self.продвинуться();
             } else if c == '.' && !дробное && self.заглянуть_вперёд(1).map_or(false, |n| n.is_ascii_digit()) {
