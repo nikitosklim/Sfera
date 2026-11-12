@@ -1,0 +1,129 @@
+// Загрузчик программ Сферы на страницах сайта.
+// <script src="/статика/сфера-хост.js" data-модуль="стат" data-запас="/статика/stat.js" defer></script>
+// Берёт /статика/клиент/<модуль>.wasm (сервер собирает его из сайт/клиент/<модуль>.код), даёт программе
+// мост к странице (см. стандартная_библиотека/браузер.код) и запускает главную().
+// Если сборка недоступна, подключает запасной скрипт из data-запас, чтобы страница не осталась без логики.
+(function () {
+  'use strict';
+  var скрипт = document.currentScript;
+  var модуль = скрипт && скрипт.getAttribute('data-модуль');
+  var запас = скрипт && скрипт.getAttribute('data-запас');
+  if (!модуль) return;
+
+  function запасной() {
+    if (!запас) return;
+    var с = document.createElement('script'); с.src = запас; document.head.appendChild(с);
+  }
+
+  var ручки = [null];          // ручка 0 = «ничего»
+  var событие = 0;
+  var память = null, экспорт = null;
+  var кольцо = { начало: 0, размер: 0, где: 0 };
+  var кодер = new TextEncoder(), декодер = new TextDecoder();
+
+  function взять(о) { return о > 0 && о < ручки.length ? ручки[о] : undefined; }
+  function выдать(значение) {
+    if (значение === undefined || значение === null) return 0;
+    ручки.push(значение); return ручки.length - 1;
+  }
+  function читатьТекст(адрес) {
+    var б = new Uint8Array(память.buffer), конец = адрес;
+    while (б[конец] !== 0) конец++;
+    return декодер.decode(б.subarray(адрес, конец));
+  }
+  // Текст для программы кладём в кольцевой буфер внутри её памяти: строка живёт, пока не пройдёт круг в 64 КБ.
+  function писатьТекст(текст) {
+    var байты = кодер.encode(String(текст));
+    if (байты.length > кольцо.размер - 2) байты = байты.subarray(0, кольцо.размер - 2);
+    if (кольцо.где + байты.length + 1 > кольцо.размер) кольцо.где = 0;
+    var адрес = кольцо.начало + кольцо.где;
+    var б = new Uint8Array(память.buffer);
+    б.set(байты, адрес); б[адрес + байты.length] = 0;
+    кольцо.где += байты.length + 1;
+    return адрес;
+  }
+  function вызвать(имя) {
+    var ф = экспорт[имя];
+    if (typeof ф === 'function') { try { ф(); } catch (е) { if (!(е && е.выход !== undefined)) console.error('Сфера:', е); } }
+    else console.error('Сфера: в программе нет функции «' + имя + '»');
+  }
+
+  var хост = {
+    'х_глобал': function () { return выдать(window); },
+    'х_св': function (о, имя) { var ц = взять(о); if (ц === undefined) return 0; var з; try { з = ц[читатьТекст(имя)]; } catch (е) { return 0; } return выдать(з); },
+    'х_уст': function (о, имя, з) { var ц = взять(о); if (ц !== undefined) { try { ц[читатьТекст(имя)] = взять(з); } catch (е) {} } return 0; },
+    'х_вызов': function (о, имя, а, б, в) {
+      var ц = взять(о); if (ц === undefined) return 0;
+      var арг = [взять(а), взять(б), взять(в)];
+      while (арг.length && арг[арг.length - 1] === undefined) арг.pop();
+      try { var ф = ц[читатьТекст(имя)]; return typeof ф === 'function' ? выдать(ф.apply(ц, арг)) : 0; } catch (е) { return 0; }
+    },
+    'х_текст': function (адрес) { return выдать(читатьТекст(адрес)); },
+    'х_число': function (ч) { return выдать(ч); },
+    'х_в_текст': function (о) { var з = взять(о); return писатьТекст(з === undefined ? '' : з); },
+    'х_в_число': function (о) { var з = Number(взять(о)); return isNaN(з) ? 0 : з; },
+    'х_истина': function (о) { return взять(о) ? 1 : 0; },
+    'х_слушать': function (о, событиеИмя, обработчик) {
+      var ц = взять(о), имя = читатьТекст(обработчик); if (!ц || !ц.addEventListener) return 0;
+      ц.addEventListener(читатьТекст(событиеИмя), function (э) {
+        var было = ручки.length, прежнее = событие;
+        событие = выдать(э); вызвать(имя); событие = прежнее; ручки.length = было;
+      }, { passive: true });
+      return 0;
+    },
+    'х_каждые': function (мс, обработчик) {
+      var имя = читатьТекст(обработчик);
+      setInterval(function () { var было = ручки.length; вызвать(имя); ручки.length = было; }, мс);
+      return 0;
+    },
+    'х_событие': function () { return событие; },
+    'х_маяк': function (адрес, тело) {
+      try { navigator.sendBeacon(читатьТекст(адрес), new Blob([читатьТекст(тело)], { type: 'application/x-www-form-urlencoded' })); } catch (е) {}
+      return 0;
+    },
+    'х_метка': function () { return ручки.length; },
+    'х_сбросить': function (м) { if (м > 0 && м <= ручки.length) ручки.length = м; return 0; }
+  };
+
+  var wasi = {
+    fd_write: function (fd, iovs, n, пишем) {
+      var v = new DataView(память.buffer), всего = 0, текст = '';
+      for (var i = 0; i < n; i++) {
+        var адрес = v.getUint32(iovs + i * 8, true), длина = v.getUint32(iovs + i * 8 + 4, true);
+        текст += декодер.decode(new Uint8Array(память.buffer, адрес, длина)); всего += длина;
+      }
+      if (текст.trim()) console.log(текст.replace(/\n$/, ''));
+      v.setUint32(пишем, всего, true); return 0;
+    },
+    fd_fdstat_get: function (fd, p) { var v = new DataView(память.buffer); v.setUint8(p, 2); v.setUint16(p + 2, 0, true); v.setBigUint64(p + 8, 0n, true); v.setBigUint64(p + 16, 0n, true); return 0; },
+    args_sizes_get: function (a, b) { var v = new DataView(память.buffer); v.setUint32(a, 0, true); v.setUint32(b, 0, true); return 0; },
+    args_get: function () { return 0; },
+    environ_get: function () { return 0; },
+    environ_sizes_get: function (a, b) { var v = new DataView(память.buffer); v.setUint32(a, 0, true); v.setUint32(b, 0, true); return 0; },
+    clock_time_get: function (id, точность, пишем) { new DataView(память.buffer).setBigUint64(пишем, BigInt(Math.round(Date.now() * 1e6)), true); return 0; },
+    random_get: function (p, n) { crypto.getRandomValues(new Uint8Array(память.buffer, p, n)); return 0; },
+    proc_exit: function (код) { throw { выход: код }; }
+  };
+
+  fetch('/статика/клиент/' + encodeURIComponent(модуль) + '.wasm', { cache: 'no-cache' })
+    .then(function (о) {
+      if (!о.ok) throw new Error('сборка недоступна (' + о.status + ')');
+      return о.arrayBuffer();
+    })
+    .then(function (байты) { return WebAssembly.compile(байты); })
+    .then(function (м) {
+      var импорты = { env: {}, wasi_snapshot_preview1: {} };
+      WebAssembly.Module.imports(м).forEach(function (и) {
+        if (и.module === 'env') импорты.env[и.name] = хост[и.name] || function () { return 0; };
+        else импорты.wasi_snapshot_preview1[и.name] = wasi[и.name] || function () { return 52; };
+      });
+      return WebAssembly.instantiate(м, импорты);
+    })
+    .then(function (э) {
+      экспорт = э.exports; память = экспорт.memory;
+      var страниц = 1, старые = память.grow(страниц);
+      кольцо.начало = старые * 65536; кольцо.размер = страниц * 65536; кольцо.где = 0;
+      try { экспорт._start(); } catch (е) { if (!(е && е.выход !== undefined)) throw е; }
+    })
+    .catch(function (е) { console.warn('Сфера: ' + модуль + ' не запустился, включаю запасной скрипт.', е); запасной(); });
+})();
