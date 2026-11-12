@@ -40,6 +40,51 @@
   };
   С.роли = { 'пользователь': 'пользователь', 'модератор': 'модератор', 'админ': 'администратор' };
 
+  // Сборка архива пакета: tar + gzip прямо в браузере. Файлы читаются из выбранных пользователем File, манифест передаётся текстом.
+  var МАКС_ПАКЕТА = 5 * 1024 * 1024;
+  function байтыТекста(т) { return new TextEncoder().encode(т); }
+  function писатьВ(буфер, смещение, текст) { буфер.set(байтыТекста(текст), смещение); }
+  function заголовокTar(имя, размер) {
+    var ш = new Uint8Array(512), имяБ = байтыТекста(имя);
+    if (имяБ.length > 100) throw new Error('Имя файла «' + имя + '» слишком длинное');
+    ш.set(имяБ, 0);
+    писатьВ(ш, 100, '0000644\0'); писатьВ(ш, 108, '0000000\0'); писатьВ(ш, 116, '0000000\0');
+    писатьВ(ш, 124, размер.toString(8).padStart(11, '0') + '\0');
+    писатьВ(ш, 136, Math.floor(Date.now() / 1000).toString(8).padStart(11, '0') + '\0');
+    писатьВ(ш, 148, '        '); писатьВ(ш, 156, '0'); писатьВ(ш, 257, 'ustar\0'); писатьВ(ш, 263, '00');
+    var сумма = 0; for (var i = 0; i < 512; i++) сумма += ш[i];
+    писатьВ(ш, 148, сумма.toString(8).padStart(6, '0') + '\0 ');
+    return ш;
+  }
+  function собратьTar(записи) {
+    var части = [], всего = 0;
+    записи.forEach(function (з) {
+      части.push(заголовокTar(з.имя, з.данные.length)); части.push(з.данные);
+      var хвост = (512 - (з.данные.length % 512)) % 512; if (хвост) части.push(new Uint8Array(хвост));
+    });
+    части.push(new Uint8Array(1024));
+    части.forEach(function (ч) { всего += ч.length; });
+    var итог = new Uint8Array(всего), п = 0;
+    части.forEach(function (ч) { итог.set(ч, п); п += ч.length; });
+    return итог;
+  }
+  С.собратьАрхив = function (файлы, манифест) {
+    if (!window.CompressionStream) return Promise.reject(new Error('Браузер не умеет сжимать архивы. Обновите его или загрузите готовый .tar.gz.'));
+    return Promise.all(Array.prototype.map.call(файлы, function (ф) {
+      return ф.arrayBuffer().then(function (б) { return { имя: ф.name, данные: new Uint8Array(б) }; });
+    })).then(function (записи) {
+      записи.unshift({ имя: 'пакет.сфера', данные: байтыТекста(манифест) });
+      var сумма = 0; записи.forEach(function (з) { сумма += з.данные.length; });
+      if (сумма > МАКС_ПАКЕТА) throw new Error('Файлы пакета больше 5 МБ.');
+      return new Response(new Blob([собратьTar(записи)]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer();
+    });
+  };
+  С.опубликовать = function (имя, версия, архив) {
+    return fetch('/пакеты/публикация/' + encodeURIComponent(имя) + '/' + encodeURIComponent(версия), {
+      method: 'PUT', headers: { 'X-Sfera': '1', 'Content-Type': 'application/gzip' }, body: архив
+    }).then(function (о) { return о.json().catch(function () { return { ok: false, ошибка: 'Сервер ответил не так, как ожидалось' }; }); });
+  };
+
   function запасной(номер) {
     var путь = запасные[номер];
     if (!путь) return;
@@ -132,6 +177,14 @@
     'х_хеш': function (имя, пароль, обработчик) {
       return ждать(С.хешПароля(читатьТекст(имя), читатьТекст(пароль)).then(function (х) { return { ok: true, хеш: х }; },
         function (е) { return { ok: false, ошибка: е.message }; }), читатьТекст(обработчик));
+    },
+    'х_архив': function (файлы, манифест, обработчик) {
+      var ф = взять(файлы) || [];
+      return ждать(С.собратьАрхив(ф, читатьТекст(манифест)).then(function (д) { return { ok: true, данные: д }; },
+        function (е) { return { ok: false, ошибка: е.message }; }), читатьТекст(обработчик));
+    },
+    'х_опубликовать': function (имя, версия, данные, обработчик) {
+      return ждать(С.опубликовать(читатьТекст(имя), читатьТекст(версия), взять(данные)).catch(function (е) { return { ok: false, ошибка: е.message }; }), читатьТекст(обработчик));
     },
     'х_результат': function () { return результат; },
     'х_когда': function (обещание, обработчик) { var п = взять(обещание); return п && п.then ? ждать(п, читатьТекст(обработчик)) : 0; },
