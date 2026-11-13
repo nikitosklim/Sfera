@@ -25,13 +25,16 @@ for PKG in llvm@18 sdl2 sdl2_ttf; do
 done
 export LLVM_SYS_180_PREFIX=$(brew --prefix llvm@18)
 
-echo "1/4  Собираю компилятор..."
+PANEL_VERSION=$(grep -A1 'функция текущая_версия' инструменты/панель-разработчика/панель_unix.код | grep -o '"[^"]*"' | head -1 | tr -d '"')
+[ -n "$PANEL_VERSION" ] || PANEL_VERSION="$VERSION"
+
+echo "1/5  Собираю компилятор..."
 cargo build --release
 
-echo "2/4  Собираю панель разработчика..."
+echo "2/5  Собираю панель разработчика..."
 (cd инструменты/панель-разработчика && "$ROOT/target/release/запустить" панель_unix.код --только-собрать --линковать SDL2 --линковать SDL2_ttf --линковать m)
 
-echo "3/4  Собираю приложение..."
+echo "3/5  Собираю приложение..."
 OUT="$ROOT/релиз"
 APP="$OUT/Панель Сферы.app"
 rm -rf "$APP"
@@ -40,6 +43,7 @@ cp инструменты/панель-разработчика/панель_uni
 for NAME in запустить сфера_lsp сфера_пакеты сфера; do cp "target/release/$NAME" "$APP/Contents/Resources/bin/$NAME"; done
 cp examples/привет.код "$APP/Contents/Resources/bin/привет.код"
 cp README.md "$APP/Contents/Resources/README.md"
+cp инструменты/иконки/Sfera.icns "$APP/Contents/Resources/Sfera.icns"
 cp -r стандартная_библиотека "$APP/Contents/Resources/lib/sfera/стандартная_библиотека"
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -50,6 +54,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleDisplayName</key><string>Панель Сферы</string>
   <key>CFBundleIdentifier</key><string>ru.sfera.panel</string>
   <key>CFBundleExecutable</key><string>Sfera-Panel</string>
+  <key>CFBundleIconFile</key><string>Sfera</string>
   <key>CFBundleVersion</key><string>$VERSION</string>
   <key>CFBundleShortVersionString</key><string>$VERSION</string>
   <key>CFBundlePackageType</key><string>APPL</string>
@@ -63,6 +68,18 @@ chmod +x "$APP/Contents/MacOS/Sfera-Panel" "$APP"/Contents/Resources/bin/зап�
 # Подпись «ad hoc»: не заменяет подпись разработчика, но без неё на Apple Silicon приложение не запускается совсем.
 codesign --force --deep -s - "$APP" || echo "Предупреждение: codesign не сработал"
 
-echo "4/4  Упаковываю..."
+echo "4/5  Упаковываю архив..."
 (cd "$OUT" && rm -f Sfera-Panel-macOS.zip && ditto -c -k --keepParent "Панель Сферы.app" Sfera-Panel-macOS.zip)
 echo "Готово: $OUT/Sfera-Panel-macOS.zip"
+
+# Установочный образ: открываешь .dmg и перетаскиваешь «Панель Сферы» в «Программы».
+echo "5/5  Собираю установочный образ (.dmg)..."
+case "$(uname -m)" in arm64) ARCH_LABEL=ARM ;; *) ARCH_LABEL=Intel ;; esac
+DMG="$OUT/Sfera-Setup-macOS-$ARCH_LABEL-$PANEL_VERSION.dmg"
+STAGE=$(mktemp -d)
+ditto "$APP" "$STAGE/Панель Сферы.app"
+ln -s /Applications "$STAGE/Applications"
+rm -f "$DMG"
+hdiutil create -volname "Панель Сферы" -srcfolder "$STAGE" -fs HFS+ -format UDZO -ov "$DMG" >/dev/null
+rm -rf "$STAGE"
+echo "Готово: $DMG ($(du -h "$DMG" | cut -f1))"

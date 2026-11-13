@@ -2334,6 +2334,12 @@ impl<'ctx> Кодогенератор<'ctx> {
                 // таргеты) не поддерживается — готовый пакет LLVM включает
                 // только x86/x86_64 (см. большой комментарий выше). Честно
                 // отказываем заранее, а не падаем на линковке.
+                if cfg!(target_os = "android") && (тройка.starts_with("riscv") || тройка.starts_with("arm") || тройка.starts_with("thumb")) {
+                    return Err(ошибка(format!(
+                        "кросс-компиляция под '{}' не поддерживается сборкой компилятора для Android — в ней LLVM собран только для AArch64",
+                        тройка
+                    )));
+                }
                 if cfg!(target_os = "windows") && !(тройка.starts_with("x86_64") || тройка.starts_with("i686") || тройка.starts_with("i386")) {
                     return Err(ошибка(format!(
                         "кросс-компиляция под '{}' не поддерживается этой сборкой компилятора для Windows —                          здесь доступен только x86/x86_64, т.к. готовый пакет LLVM для Windows не включает                          остальные таргеты (см. комментарий у записать_объектный_файл в codegen.rs)",
@@ -2342,12 +2348,31 @@ impl<'ctx> Кодогенератор<'ctx> {
                 }
                 if cfg!(target_os = "windows") {
                     Target::initialize_x86(&InitializationConfig::default());
+                } else if тройка.starts_with("riscv") {
+                    #[cfg(not(any(windows, target_os = "android")))]
+                    Target::initialize_riscv(&InitializationConfig::default());
+                } else if тройка.starts_with("arm") || тройка.starts_with("thumb") {
+                    #[cfg(not(any(windows, target_os = "android")))]
+                    Target::initialize_arm(&InitializationConfig::default());
                 } else if cfg!(target_os = "android") || тройка.starts_with("aarch64") {
                     Target::initialize_aarch64(&InitializationConfig::default());
                 } else {
                     Target::initialize_all(&InitializationConfig::default());
                 }
-                (inkwell::targets::TargetTriple::create(тройка), "generic".to_string(), String::new())
+                // Для микроконтроллеров берём разумный набор команд: умножение,
+                // деление, атомарные операции и (где есть) дробные числа в железе —
+                // иначе LLVM потребует библиотеку программной эмуляции, которой нет.
+                let (процессор, возможности) = if тройка.starts_with("riscv64") {
+                    ("generic-rv64", "+m,+a,+f,+d,+c")
+                } else if тройка.starts_with("riscv32") {
+                    ("generic-rv32", "+m,+a,+c")
+                } else if тройка.starts_with("thumbv7em") {
+                    // Cortex-M7: дробные числа (в том числе двойной точности) считает сам процессор
+                    ("cortex-m7", "+fp-armv8d16")
+                } else {
+                    ("generic", "")
+                };
+                (inkwell::targets::TargetTriple::create(тройка), процессор.to_string(), возможности.to_string())
             }
             None => {
                 if cfg!(target_os = "windows") {
@@ -2364,9 +2389,15 @@ impl<'ctx> Кодогенератор<'ctx> {
                     (inkwell::targets::TargetTriple::create("aarch64-linux-android23"), "generic".to_string(), String::new())
                 } else {
                     let triple = TargetMachine::get_default_triple();
-                    let cpu = TargetMachine::get_host_cpu_name().to_string();
-                    let features = TargetMachine::get_host_cpu_features().to_string();
-                    (triple, cpu, features)
+                    if сборка_без_операционной_системы() {
+                        // Ядро или прошивка не знает, на каком процессоре запустится: берём
+                        // базовый набор команд, без AVX и прочего, что нашлось на этой машине.
+                        (triple, "generic".to_string(), String::new())
+                    } else {
+                        let cpu = TargetMachine::get_host_cpu_name().to_string();
+                        let features = TargetMachine::get_host_cpu_features().to_string();
+                        (triple, cpu, features)
+                    }
                 }
             }
         };
@@ -2380,8 +2411,12 @@ impl<'ctx> Кодогенератор<'ctx> {
                 &cpu,
                 &features,
                 inkwell::OptimizationLevel::None,
-                RelocMode::Default,
-                CodeModel::Default,
+                // Ядро на x86-64 не имеет таблицы GOT: адреса берём напрямую (иначе адрес функции
+                // читался бы из несуществующей таблицы).
+                if сборка_без_операционной_системы() && triple.as_str().to_string_lossy().starts_with("x86_64") { RelocMode::Static } else { RelocMode::Default },
+                // RISC-V 64 грузит программу по адресу выше 2 ГБ (0x80000000): обычная
+                // модель кода не дотягивается до таких адресов, нужна «средняя».
+                if triple.as_str().to_string_lossy().starts_with("riscv64") { CodeModel::Medium } else { CodeModel::Default },
             )
             .ok_or_else(|| ошибка(format!("не удалось создать TargetMachine для платформы '{}'", triple.as_str().to_string_lossy())))?;
 
@@ -6186,6 +6221,50 @@ impl<'ctx> Кодогенератор<'ctx> {
                 self.сгенерировать_подстрока(аргументы)
             }
 
+            Выражение::ВызовФункции { имя, аргументы, .. } if matches!(имя.as_str(), "адрес_текста" | "указатель_по_адресу" | "записать_байт" | "прочитать_целое64" | "записать_целое64") => {
+                self.сгенерировать_сырую_память(имя, аргументы)
+            }
+
+            // адрес_функции(имя) — адрес начала машинного кода функции (целое). Нужен системам без ОС:
+            // запуск задач, таблицы обработчиков.
+            Выражение::ВызовФункции { имя, аргументы, .. } if имя == "адрес_функции" => {
+                let имя_ф = match аргументы.first() {
+                    Some(Выражение::Идентификатор(и)) if аргументы.len() == 1 => и.clone(),
+                    _ => return Err(ошибка("адрес_функции(...) ожидает имя одной функции, например адрес_функции(моя_задача)")),
+                };
+                let ф = match self.модуль.get_function(&имя_ф) {
+                    Some(ф) => ф,
+                    None => {
+                        let модуль = self.однозначные_модульные_функции.get(&имя_ф).cloned();
+                        let манглированное = модуль.and_then(|м| self.манглированные_имена_функций.get(&(м, имя_ф.clone())).cloned());
+                        match манглированное.and_then(|м| self.модуль.get_function(&м)) {
+                            Some(ф) => ф,
+                            None => return Err(ошибка(format!("адрес_функции: функция '{}' не объявлена", имя_ф))),
+                        }
+                    }
+                };
+                // Скрытая видимость делает функцию «локальной для программы» (dso_local): адрес берётся напрямую,
+                // а не из таблицы GOT, которой нет в ядре и прошивке.
+                ф.as_global_value().set_visibility(inkwell::GlobalVisibility::Hidden);
+                let указатель = ф.as_global_value().as_pointer_value();
+                Ok(self.билдер.build_ptr_to_int(указатель, self.контекст.i64_type(), "адрес_функции")
+                    .map_err(|e| ошибка(format!("адрес_функции: {:?}", e)))?.into())
+            }
+
+            Выражение::ВызовФункции { имя, аргументы, .. } if matches!(имя.as_str(), "биты_дробного" | "дробное_из_битов") => {
+                let значение = self.сгенерировать_выражение(&аргументы[0])?;
+                let карта = |e: inkwell::builder::BuilderError| ошибка(format!("{}: {:?}", имя, e));
+                if имя == "биты_дробного" {
+                    let д = значение.into_float_value();
+                    let д = if д.get_type() == self.контекст.f64_type() { д } else {
+                        self.билдер.build_float_ext(д, self.контекст.f64_type(), "в_double").map_err(карта)?
+                    };
+                    Ok(self.билдер.build_bit_cast(д, self.контекст.i64_type(), "биты_дробного").map_err(карта)?)
+                } else {
+                    Ok(self.билдер.build_bit_cast(значение.into_int_value(), self.контекст.f64_type(), "дробное_из_битов").map_err(карта)?)
+                }
+            }
+
             Выражение::ВызовФункции { имя, аргументы, .. } if crate::semantic::разобрать_аппаратную_функцию(имя).is_some() => {
                 self.сгенерировать_аппаратную(имя, аргументы)
             }
@@ -6346,7 +6425,7 @@ impl<'ctx> Кодогенератор<'ctx> {
             Выражение::ВызовФункции { имя, аргументы, .. } if аргументы.len() == 1 && информация_числового_типа(self.контекст, имя).is_some() => {
                 let (целевой_llvm_тип, целевой_дробный, целевой_беззнаковый) = информация_числового_типа(self.контекст, имя).unwrap();
                 let исходное_значение = self.сгенерировать_выражение(&аргументы[0])?;
-                self.сгенерировать_приведение_числа(исходное_значение, целевой_llvm_тип, целевой_дробный, целевой_беззнаковый)
+                { let источник_беззнаковый = self.беззнаковое_ли(&аргументы[0]); self.сгенерировать_приведение_числа(исходное_значение, целевой_llvm_тип, целевой_дробный, целевой_беззнаковый, источник_беззнаковый) }
             }
 
             // Вызов с именем, совпадающим с известной структурой, — это вызов
@@ -6474,7 +6553,7 @@ impl<'ctx> Кодогенератор<'ctx> {
                         let итоговое = match ожидаемый_basic_тип {
                             Some(ожидаемый) if ожидаемый != значение.get_type() && (значение.is_int_value() || значение.is_float_value()) => {
                                 let целевой_дробный = ожидаемый.is_float_type();
-                                self.сгенерировать_приведение_числа(значение, ожидаемый, целевой_дробный, false)?
+                                self.сгенерировать_приведение_числа(значение, ожидаемый, целевой_дробный, false, false)?
                             }
                             _ => значение,
                         };
@@ -6598,6 +6677,87 @@ impl<'ctx> Кодогенератор<'ctx> {
         }
     }
 
+    /// Функция рантайма с буквальным именем: объявляется при первом обращении.
+    fn хук_рантайма(&mut self, имя: &str, параметры: &[inkwell::types::BasicMetadataTypeEnum<'ctx>], возврат: Option<BasicTypeEnum<'ctx>>) -> FunctionValue<'ctx> {
+        if let Some(ф) = self.модуль.get_function(имя) {
+            return ф;
+        }
+        let тип = match возврат {
+            Some(в) => в.fn_type(параметры, false),
+            None => self.контекст.void_type().fn_type(параметры, false),
+        };
+        self.модуль.add_function(имя, тип, None)
+    }
+
+    /// Записывает число в текстовый буфер: «%lld» (целое) или «%f» (дробное).
+    /// Обычная сборка — snprintf из libc; без операционной системы — функции рантайма
+    /// sfera_целое_в_буфер / sfera_дробное_в_буфер.
+    fn форматировать_число(&mut self, буфер: PointerValue<'ctx>, размер: inkwell::values::IntValue<'ctx>, формат: &str, значение: BasicValueEnum<'ctx>) -> Result<(), ОшибкаКодогенерации> {
+        if сборка_без_операционной_системы() {
+            let указатель_тип: BasicTypeEnum = self.контекст.i8_type().ptr_type(inkwell::AddressSpace::default()).into();
+            let (имя, тип_значения): (&str, BasicTypeEnum) = if формат == "%lld" {
+                ("sfera_целое_в_буфер", self.контекст.i64_type().into())
+            } else {
+                ("sfera_дробное_в_буфер", self.контекст.f64_type().into())
+            };
+            let хук = self.хук_рантайма(имя, &[указатель_тип.into(), self.контекст.i64_type().into(), тип_значения.into()], None);
+            self.билдер
+                .build_call(хук, &[буфер.into(), размер.into(), значение.into()], "число_в_буфер")
+                .map_err(|e| ошибка(format!("ошибка форматирования числа: {:?}", e)))?;
+            return Ok(());
+        }
+        let snprintf = self
+            .модуль
+            .get_function("snprintf")
+            .ok_or_else(|| ошибка("внутренняя ошибка: snprintf не была объявлена"))?;
+        let формат_значение = self.сгенерировать_текстовый_литерал(формат)?;
+        self.билдер
+            .build_call(snprintf, &[буфер.into(), размер.into(), формат_значение.into(), значение.into()], "snprintf_вызов")
+            .map_err(|e| ошибка(format!("ошибка форматирования числа в текст: {:?}", e)))?;
+        Ok(())
+    }
+
+    /// Сырая память: адрес_текста, указатель_по_адресу, записать_байт, прочитать/записать_целое64.
+    fn сгенерировать_сырую_память(&mut self, имя: &str, аргументы: &[Выражение]) -> Result<BasicValueEnum<'ctx>, ОшибкаКодогенерации> {
+        let ноль: BasicValueEnum<'ctx> = self.контекст.i32_type().const_int(0, false).into();
+        let i64_тип = self.контекст.i64_type();
+        let i8_тип = self.контекст.i8_type();
+        let указатель_тип = i8_тип.ptr_type(inkwell::AddressSpace::default());
+        let карта = |e: inkwell::builder::BuilderError| ошибка(format!("{}: {:?}", имя, e));
+        match имя {
+            "адрес_текста" => {
+                let у = self.сгенерировать_выражение(&аргументы[0])?.into_pointer_value();
+                Ok(self.билдер.build_ptr_to_int(у, i64_тип, "адрес_числом").map_err(карта)?.into())
+            }
+            "указатель_по_адресу" => {
+                let ч = self.сгенерировать_выражение(&аргументы[0])?.into_int_value();
+                let ч = self.билдер.build_int_cast_sign_flag(ч, i64_тип, false, "адрес_64").map_err(карта)?;
+                Ok(self.билдер.build_int_to_ptr(ч, указатель_тип, "указатель_из_числа").map_err(карта)?.into())
+            }
+            _ => {
+                let у = self.сгенерировать_выражение(&аргументы[0])?.into_pointer_value();
+                let смещение = self.сгенерировать_выражение(&аргументы[1])?.into_int_value();
+                let смещение = self.билдер.build_int_cast_sign_flag(смещение, i64_тип, true, "смещение_64").map_err(карта)?;
+                let адрес = unsafe { self.билдер.build_gep(i8_тип, у, &[смещение], "адрес_ячейки").map_err(карта)? };
+                match имя {
+                    "прочитать_целое64" => Ok(self.билдер.build_load(i64_тип, адрес, "целое64").map_err(карта)?),
+                    "записать_байт" => {
+                        let з = self.сгенерировать_выражение(&аргументы[2])?.into_int_value();
+                        let з = self.билдер.build_int_cast_sign_flag(з, i8_тип, false, "байт").map_err(карта)?;
+                        self.билдер.build_store(адрес, з).map_err(карта)?;
+                        Ok(ноль)
+                    }
+                    _ => {
+                        let з = self.сгенерировать_выражение(&аргументы[2])?.into_int_value();
+                        let з = self.билдер.build_int_cast_sign_flag(з, i64_тип, true, "целое64_значение").map_err(карта)?;
+                        self.билдер.build_store(адрес, з).map_err(карта)?;
+                        Ok(ноль)
+                    }
+                }
+            }
+        }
+    }
+
     fn отметить_знаковость(&mut self, имя: &str, беззнаковая: bool) {
         if беззнаковая {
             self.беззнаковые_имена.insert(имя.to_string());
@@ -6614,6 +6774,7 @@ impl<'ctx> Кодогенератор<'ctx> {
             Выражение::Идентификатор(имя) => self.беззнаковые_имена.contains(имя),
             Выражение::ВызовФункции { имя, аргументы, .. } => {
                 имя.starts_with("беззнак")
+                    || имя == "биты_дробного"
                     || имя.starts_with("аппаратное_чтение")
                     || имя.starts_with("порт_ввод")
                     || (matches!(имя.as_str(), "наложить_маску" | "включить_биты" | "переключить_биты" | "инвертировать_биты" | "сдвинуть_влево" | "сдвинуть_вправо")
@@ -7096,9 +7257,22 @@ impl<'ctx> Кодогенератор<'ctx> {
         };
         let формат_значение = self.сгенерировать_текстовый_литерал(формат)?;
 
-        self.билдер
-            .build_call(printf, &[формат_значение.into(), значение_для_printf.into()], "вывести_вызов")
-            .map_err(|e| ошибка(format!("ошибка вызова вывести: {:?}", e)))?;
+        if сборка_без_операционной_системы() {
+            // Без libc: печатаем через функции рантайма (см. стандартная_библиотека/голое_железо.код).
+            let (имя_хука, тип_параметра): (&str, BasicTypeEnum) = match формат {
+                "%s\n" => ("sfera_вывод_текста", self.контекст.i8_type().ptr_type(inkwell::AddressSpace::default()).into()),
+                "%lld\n" => ("sfera_вывод_целого", self.контекст.i64_type().into()),
+                _ => ("sfera_вывод_дробного", self.контекст.f64_type().into()),
+            };
+            let хук = self.хук_рантайма(имя_хука, &[тип_параметра.into()], None);
+            self.билдер
+                .build_call(хук, &[значение_для_printf.into()], "вывести_вызов")
+                .map_err(|e| ошибка(format!("ошибка вызова вывести: {:?}", e)))?;
+        } else {
+            self.билдер
+                .build_call(printf, &[формат_значение.into(), значение_для_printf.into()], "вывести_вызов")
+                .map_err(|e| ошибка(format!("ошибка вызова вывести: {:?}", e)))?;
+        }
 
         // НОВОЕ (текст под ARC): вывести(...) — самый частый, буквально
         // задокументированный пример утечки ("вывести(целое_в_текст(42));") —
@@ -7167,14 +7341,7 @@ impl<'ctx> Кодогенератор<'ctx> {
             .ok_or_else(|| ошибка("malloc неожиданно не вернул значение"))?
             .into_pointer_value();
 
-        let snprintf = self
-            .модуль
-            .get_function("snprintf")
-            .ok_or_else(|| ошибка("внутренняя ошибка: snprintf не была объявлена"))?;
-        let формат = self.сгенерировать_текстовый_литерал("%lld")?;
-        self.билдер
-            .build_call(snprintf, &[буфер.into(), размер_буфера.into(), формат.into(), число_значение.into()], "snprintf_вызов")
-            .map_err(|e| ошибка(format!("ошибка форматирования числа в текст: {:?}", e)))?;
+        self.форматировать_число(буфер, размер_буфера, "%lld", число_значение.into())?;
 
         Ok(буфер.into())
     }
@@ -7224,14 +7391,7 @@ impl<'ctx> Кодогенератор<'ctx> {
             .ok_or_else(|| ошибка("malloc неожиданно не вернул значение"))?
             .into_pointer_value();
 
-        let snprintf = self
-            .модуль
-            .get_function("snprintf")
-            .ok_or_else(|| ошибка("внутренняя ошибка: snprintf не была объявлена"))?;
-        let формат = self.сгенерировать_текстовый_литерал("%f")?;
-        self.билдер
-            .build_call(snprintf, &[буфер.into(), размер_буфера.into(), формат.into(), число_как_f64.into()], "snprintf_вызов_дробного")
-            .map_err(|e| ошибка(format!("ошибка форматирования дробного числа в текст: {:?}", e)))?;
+        self.форматировать_число(буфер, размер_буфера, "%f", число_как_f64.into())?;
 
         Ok(буфер.into())
     }
@@ -7646,6 +7806,7 @@ impl<'ctx> Кодогенератор<'ctx> {
         целевой_тип: BasicTypeEnum<'ctx>,
         целевой_дробный: bool,
         целевой_беззнаковый: bool,
+        источник_беззнаковый: bool,
     ) -> Result<BasicValueEnum<'ctx>, ОшибкаКодогенерации> {
         match исходное {
             inkwell::values::BasicValueEnum::IntValue(исходное_int) => {
@@ -7659,16 +7820,18 @@ impl<'ctx> Кодогенератор<'ctx> {
                     // здесь используем знаковое преобразование как разумный
                     // вариант по умолчанию (совпадает с обычным поведением
                     // языка — целые числа по умолчанию знаковые).
-                    let результат = self
-                        .билдер
-                        .build_signed_int_to_float(исходное_int, целевой_float_тип, "приведение_int_в_float")
-                        .map_err(|e| ошибка(format!("ошибка приведения целого к дробному: {:?}", e)))?;
+                    let результат = if источник_беззнаковый {
+                        self.билдер.build_unsigned_int_to_float(исходное_int, целевой_float_тип, "приведение_uint_в_float")
+                    } else {
+                        self.билдер.build_signed_int_to_float(исходное_int, целевой_float_тип, "приведение_int_в_float")
+                    }
+                    .map_err(|e| ошибка(format!("ошибка приведения целого к дробному: {:?}", e)))?;
                     Ok(результат.into())
                 } else {
                     let целевой_int_тип = целевой_тип.into_int_type();
                     let результат = self
                         .билдер
-                        .build_int_cast_sign_flag(исходное_int, целевой_int_тип, !целевой_беззнаковый, "приведение_int")
+                        .build_int_cast_sign_flag(исходное_int, целевой_int_тип, !источник_беззнаковый, "приведение_int")
                         .map_err(|e| ошибка(format!("ошибка приведения целого числа: {:?}", e)))?;
                     Ok(результат.into())
                 }
@@ -9702,14 +9865,7 @@ impl<'ctx> Кодогенератор<'ctx> {
                     .ok_or_else(|| ошибка("malloc неожиданно не вернул значение"))?
                     .into_pointer_value();
 
-                let snprintf = self
-                    .модуль
-                    .get_function("snprintf")
-                    .ok_or_else(|| ошибка("внутренняя ошибка: snprintf не была объявлена"))?;
-                let формат = self.сгенерировать_текстовый_литерал("%lld")?;
-                self.билдер
-                    .build_call(snprintf, &[буфер.into(), размер_буфера.into(), формат.into(), как_i64.into()], "интерполяция_snprintf_целое")
-                    .map_err(|e| ошибка(format!("ошибка форматирования целого числа для интерполяции строки: {:?}", e)))?;
+                self.форматировать_число(буфер, размер_буфера, "%lld", как_i64.into())?;
 
                 Ok(буфер)
             }
@@ -9741,14 +9897,7 @@ impl<'ctx> Кодогенератор<'ctx> {
                     .ok_or_else(|| ошибка("malloc неожиданно не вернул значение"))?
                     .into_pointer_value();
 
-                let snprintf = self
-                    .модуль
-                    .get_function("snprintf")
-                    .ok_or_else(|| ошибка("внутренняя ошибка: snprintf не была объявлена"))?;
-                let формат = self.сгенерировать_текстовый_литерал("%f")?;
-                self.билдер
-                    .build_call(snprintf, &[буфер.into(), размер_буфера.into(), формат.into(), как_f64.into()], "интерполяция_snprintf_дробное")
-                    .map_err(|e| ошибка(format!("ошибка форматирования дробного числа для интерполяции строки: {:?}", e)))?;
+                self.форматировать_число(буфер, размер_буфера, "%f", как_f64.into())?;
 
                 Ok(буфер)
             }
@@ -11132,7 +11281,7 @@ impl<'ctx> Кодогенератор<'ctx> {
                 .ok_or_else(|| ошибка(format!("не удалось определить тип поля '{}' структуры '{}'", имена_полей[индекс], имя_структуры)))?;
             let значение_для_записи = if значение.get_type() != ожидаемый_тип_поля {
                 let целевой_дробный = ожидаемый_тип_поля.is_float_type();
-                self.сгенерировать_приведение_числа(значение, ожидаемый_тип_поля, целевой_дробный, false)?
+                self.сгенерировать_приведение_числа(значение, ожидаемый_тип_поля, целевой_дробный, false, false)?
             } else {
                 значение
             };
@@ -13609,7 +13758,7 @@ impl<'ctx> Кодогенератор<'ctx> {
                 let итоговое = match ожидаемый_basic_тип {
                     Some(ожидаемый) if ожидаемый != значение.get_type() => {
                         let целевой_дробный = ожидаемый.is_float_type();
-                        self.сгенерировать_приведение_числа(значение, ожидаемый, целевой_дробный, false)?
+                        self.сгенерировать_приведение_числа(значение, ожидаемый, целевой_дробный, false, false)?
                     }
                     _ => значение,
                 };

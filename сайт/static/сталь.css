@@ -1,0 +1,252 @@
+/* Тема «Синяя сталь»: тёмно-синий металл, сдержанный глянец, компактные элементы одной высоты.
+   Подключается после style.css и переопределяет цвета, формы и размеры. Чтобы вернуть прежний вид — уберите ссылку на этот файл из layout.html. */
+:root{
+  color-scheme:dark;
+  --bg:#0a1226; --bg-soft:#111d38; --ink:#dfe9ff; --muted:#8ea4d0; --line:#2b4070;
+  --accent:#3b9cff; --accent-ink:#ffffff; --accent-soft:#17294f; --inline-bg:#0b1630;
+  --code-bg:#070f20; --code-fg:#dfe9ff; --code-line:#1d2e58;
+  --win:#111d38; --win-2:#16264a; --sunk:#0a1426;
+  --metal:linear-gradient(180deg,#5878b8 0%,#34508a 45%,#1c3162 52%,#2a4478 100%);
+  --metal-soft:linear-gradient(180deg,#2f4a82 0%,#223a6c 50%,#182c58 52%,#1f3566 100%);
+  --btn:linear-gradient(180deg,#4a68a4 0%,#30497d 48%,#1c2f5a 52%,#2a4272 100%);
+  --btn-pri:linear-gradient(180deg,#8fd8ff 0%,#2e8ef0 48%,#1458be 52%,#4aa2ff 100%);
+  --sel:linear-gradient(180deg,#5aa6ff 0%,#2368dc 52%,#184aa8 100%);
+  --h:34px; --h-big:40px; --h-small:30px;
+  --radius:10px; --r-in:6px;
+  --font:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,"Inter",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root{--bg:#0a1226;--bg-soft:#111d38;--ink:#dfe9ff;--muted:#8ea4d0;--line:#2b4070;--accent:#3b9cff;--accent-ink:#fff;--accent-soft:#17294f;--inline-bg:#0b1630;--code-bg:#070f20;--code-line:#1d2e58}}
+
+/* ---- основа: компактный текст, фон «космос» ---- */
+html{background:#060b1a}
+body{font-size:1rem;line-height:1.55;background:transparent}
+/* Фон «космос» лежит на своём слое: он не перерисовывается при прокрутке (раньше background-attachment:fixed давал рывки). */
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;transform:translateZ(0);
+  background-image:
+    radial-gradient(1.5px 1.5px at 20% 30%,rgba(255,255,255,.7),transparent),
+    radial-gradient(1px 1px at 70% 60%,rgba(255,255,255,.6),transparent),
+    radial-gradient(1.5px 1.5px at 40% 80%,rgba(190,220,255,.6),transparent),
+    radial-gradient(900px 500px at 80% 0%,rgba(59,156,255,.16),transparent 70%),
+    radial-gradient(700px 500px at 0% 100%,rgba(30,60,160,.2),transparent 70%),
+    linear-gradient(180deg,#0a1226,#060b1a);
+  background-size:210px 210px,170px 170px,260px 260px,auto,auto,auto}
+h1,h2,h3{line-height:1.2;letter-spacing:-.01em}
+h1{font-size:clamp(1.8rem,3.6vw,2.4rem);font-weight:700}
+h2{font-size:clamp(1.35rem,2.4vw,1.7rem);font-weight:680}
+h3{font-size:1.1rem;font-weight:660}
+p{margin:0 0 .85em}
+a{color:#7fbaff}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #7fbaff;outline-offset:2px;border-radius:var(--r-in)}
+::selection{background:#2368dc;color:#fff}
+.page{padding-top:40px}
+.tagline{font-size:1.05rem;margin-bottom:1.4em}
+.section{padding:60px 0}
+.section-head{margin-bottom:32px}.section-head p{font-size:1.02rem}
+
+/* ---- полосы прокрутки ---- */
+*{scrollbar-width:thin;scrollbar-color:#3d5fa6 #0a1426}
+::-webkit-scrollbar{width:12px;height:12px}
+::-webkit-scrollbar-track{background:#0a1426;box-shadow:inset 1px 0 0 #1d2e58}
+::-webkit-scrollbar-thumb{background:linear-gradient(90deg,#4a68a4,#2b457c);border:2px solid #0a1426;border-radius:999px}
+::-webkit-scrollbar-thumb:hover{background:linear-gradient(90deg,#5b7fc4,#3a5a9c)}
+::-webkit-scrollbar-corner{background:#0a1426}
+
+/* ---- кнопки: одна высота, овальные, глянцевые ---- */
+.button,.ещё-кнопка,.профиль{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  height:var(--h);padding:0 16px;font-size:.95rem;font-weight:650;line-height:1;
+  border-radius:999px;border:1px solid #0a1328;color:#eaf1ff;
+  background:var(--btn);box-shadow:0 2px 3px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.28);
+  text-shadow:0 -1px 0 rgba(0,0,0,.45);white-space:nowrap;
+}
+.button:hover{filter:brightness(1.12)}
+.button:active{filter:brightness(.9);transform:translateY(1px)}
+.button:not(.secondary):not(.small):not(.big),.button.big{background:var(--btn-pri);border-color:#093b8a;color:#fff;text-shadow:0 -1px 0 rgba(0,40,120,.6)}
+.button.secondary{background:var(--btn);border-color:#0a1328;color:#eaf1ff}
+.button.big{height:var(--h-big);padding:0 22px;font-size:1rem}
+.button.small,.период .button{height:var(--h-small);padding:0 13px;font-size:.88rem}
+.button.small:not(.secondary){background:var(--btn-pri)}
+label.button{cursor:pointer}
+.ещё-кнопка,.профиль{background:none;border-color:transparent;box-shadow:none;text-shadow:none;color:var(--muted);font-weight:600}
+.профиль{border-color:#0a1328;background:var(--btn);color:#eaf1ff;text-shadow:0 -1px 0 rgba(0,0,0,.45);box-shadow:0 2px 3px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.28)}
+.профиль:hover{background:var(--btn);filter:brightness(1.12)}
+.ещё-кнопка:hover,.ещё-кнопка[aria-expanded="true"]{background:var(--sel);color:#fff;border-color:transparent}
+.cta .button,.курс .button.big,.пример .button,.карточка-текст .button{background:var(--btn-pri);border-color:#093b8a;color:#fff}
+.cta .button.secondary{background:var(--btn);border-color:#0a1328;color:#eaf1ff}
+.курс-железо .button.big{color:#fff}
+
+/* ---- шапка ---- */
+.site-header{background:var(--metal);border-bottom:1px solid #050b18;box-shadow:0 2px 0 rgba(0,0,0,.35);backdrop-filter:none}
+.site-header .wrap{height:54px;gap:14px}
+.brand{font-size:1.1rem;font-weight:720;color:#fff;text-shadow:0 -1px 0 rgba(0,0,0,.5)}
+.brand img{width:26px;height:26px}
+.site-nav a{height:var(--h);display:inline-flex;align-items:center;padding:0 12px;font-size:.95rem;color:#c8d8f8;border-radius:var(--r-in);text-shadow:0 -1px 0 rgba(0,0,0,.4)}
+.site-nav a:hover,.gh-link:hover{color:#fff;background:var(--sel)}
+.поиск-значок:hover{background:var(--sel)}
+.ещё-меню{background:#0f1a36;border:1px solid #0a1328;border-radius:var(--radius);box-shadow:0 18px 36px -14px #000;padding:5px}
+.ещё-меню a{height:var(--h);display:flex;align-items:center;padding:0 12px;border-radius:var(--r-in);color:var(--ink);font-size:.95rem}
+.ещё-меню a:hover{background:var(--sel);color:#fff}
+.ещё-черта{background:#1d2e58}
+.header-actions{gap:8px}
+
+/* ---- поля ввода, списки, флажки ---- */
+input[type=text],input[type=password],input[type=search],input[type=url],input[type=email],input[type=number],textarea,select,
+.акк-форма input,.акк input[type=text],.акк input[type=password],.page input#пуб-имя,.page input#пуб-версия,.page input#пуб-описание,.page input#пуб-лицензия,
+.облако input[type=url],.облако input[type=text],.админ textarea,.облако textarea,.search input,.поиск-пакетов input{
+  font:inherit;font-size:.95rem;color:var(--ink);background:var(--sunk);
+  border:1px solid #0a1328;border-radius:var(--r-in);
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.45),0 1px 0 rgba(120,160,255,.15);
+  min-height:var(--h);padding:0 12px;
+}
+textarea{padding:8px 12px;line-height:1.45}
+input[type=file]{height:auto;padding:5px 10px;line-height:1.6}
+input::placeholder,textarea::placeholder{color:#5f77a6}
+input:focus,textarea:focus,select:focus{outline:none;border-color:#3b9cff;box-shadow:inset 0 2px 4px rgba(0,0,0,.45),0 0 0 2px rgba(59,156,255,.4)}
+.search input{width:150px;height:var(--h);border-radius:999px;padding:0 14px}.search input:focus{width:200px}
+.search-big input,.поиск-пакетов input{height:var(--h-big);border-radius:999px;padding:0 18px}
+.поиск-пакетов input{background:var(--sunk);color:var(--ink)}
+input[type=checkbox],input[type=radio]{accent-color:#3b9cff;width:16px;height:16px;vertical-align:-3px}
+label{font-weight:560}
+
+/* выпадающие списки (в том числе выбор роли пользователя) */
+select{
+  appearance:none;-webkit-appearance:none;cursor:pointer;padding:0 34px 0 12px;font-weight:600;
+  background-color:#16264a;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23dfe9ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"),
+    linear-gradient(180deg,#4a68a4 0%,#30497d 48%,#1c2f5a 52%,#2a4272 100%);
+  background-repeat:no-repeat,no-repeat;background-position:right 12px center,0 0;background-size:12px 8px,100% 100%;
+  border:1px solid #0a1328;border-radius:999px;color:#eaf1ff;
+  box-shadow:0 2px 3px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.28);text-shadow:0 -1px 0 rgba(0,0,0,.45);
+}
+select:hover{filter:brightness(1.1)}
+select:focus{box-shadow:0 2px 3px rgba(0,0,0,.4),0 0 0 2px rgba(59,156,255,.5)}
+select option,select optgroup{background:#0f1a36;color:#dfe9ff;text-shadow:none;font-weight:500}
+td select,.список-статей-админ select{height:var(--h-small);min-height:var(--h-small);font-size:.9rem}
+
+/* ---- окна-панели ---- */
+.плитка,.steps li,.статья,.блок-админ,.подблок,.пакет,.вкладка-панель,.note-box,.карточка-токен,.плитка-стат,.достижения li,.кому,.док-баннер,.облако,.вкладки-список .пл-метка,.админ-меню a,.админ-меню-низ{
+  background:var(--win);border:1px solid #0a1328;border-radius:var(--radius);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 10px 22px -14px rgba(0,0,0,.8);
+}
+.плитка{transition:none}.плитка:hover,.статья:hover,.админ-меню a:hover,.пл-метка:hover{border-color:#3b9cff;box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 0 0 1px #3b9cff}
+.плитка em,.результат em{color:#7fbaff}
+.блок-шапка,.облако-шапка{background:var(--metal);border-bottom:1px solid #050b18;color:#fff}
+.блок-шапка h2,.облако-шапка h2{color:#fff;text-shadow:0 -1px 0 rgba(0,0,0,.5);font-size:1.1rem}
+.блок-шапка p{color:#c8d8f8}
+.блок-админ,.облако{overflow:hidden}
+.блок-шапка{padding:10px 18px}.блок-тело{padding:16px 18px 20px}
+.облако-закрыть{background:var(--btn);border:1px solid #0a1328;color:#fff;width:30px;height:30px;font-size:1.2rem}
+.облако-закрыть:hover{background:var(--sel);border-color:#0a1328}
+.облако-фон{background:rgba(3,7,18,.7)}
+.подблок{box-shadow:none;background:var(--win-2)}
+.section.soft{background:rgba(17,29,56,.55);border-color:#0a1328}
+.site-footer{background:linear-gradient(180deg,#14223f,#0b1428);border-top:1px solid #050b18}
+.footer-bottom{border-color:#1d2e58}
+.steps li::before{background:var(--sel);color:#fff;border-radius:999px;width:28px;height:28px}
+.steps li,.плитка{background:var(--win)}
+.soft .плитка{background:var(--win)}
+.hero{background:transparent;border-bottom:1px solid #0a1328}
+.hero-sphere{color:#1d2e58}
+
+/* код */
+.codewin{background:var(--code-bg);border:1px solid #0a1328;border-radius:var(--radius);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 14px 28px -14px #000}
+.codewin .tab{background:var(--metal-soft);border-bottom:1px solid #050b18;color:#c8d8f8}
+pre{background:var(--code-bg);border:1px solid #0a1328;border-radius:var(--radius);box-shadow:inset 0 2px 6px rgba(0,0,0,.5)}
+.codewin pre{border:0;box-shadow:none}
+p code,li code,td code{background:var(--inline-bg);border:1px solid #1d2e58;border-radius:4px}
+.caret{background:#7fbaff}
+
+/* ---- выбранные строки и ссылки навигации: градиент ---- */
+.toc a:hover,.curriculum a:hover,.материалы a:hover,.док-темы a:hover,.результат:hover,.чип:hover,.плейлист a:hover{background:var(--sel);color:#fff;border-color:transparent}
+.док-темы a.текущая,.toc a.текущая,.админ-меню a.текущая,.toc a[aria-current],.плейлист a[aria-current],.плейлист a.текущий{background:var(--sel);border-left-color:#9fd0ff;color:#fff;font-weight:650}
+.curriculum a:hover .go,.curriculum a:hover span,.материалы a:hover .muted{color:#fff}
+.токен,.toc{border-color:#1d2e58}
+.toc .у1 a{color:var(--ink)}
+.док-темы a{border-radius:var(--r-in);color:var(--ink)}
+.чип{background:var(--btn);border:1px solid #0a1328;color:#eaf1ff;border-radius:999px;height:var(--h-small);display:inline-flex;align-items:center;padding:0 13px;font-size:.88rem;box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
+.пл-метка{height:var(--h);padding:0 14px;color:var(--ink);font-weight:620;border-radius:var(--r-in)}
+.вкладки-список{gap:4px}
+#пл-windows:checked ~ .вкладки-бок label[for="пл-windows"],#пл-macos:checked ~ .вкладки-бок label[for="пл-macos"],#пл-linux:checked ~ .вкладки-бок label[for="пл-linux"],#пл-android:checked ~ .вкладки-бок label[for="пл-android"],#пл-sites:checked ~ .вкладки-бок label[for="пл-sites"],#пл-servers:checked ~ .вкладки-бок label[for="пл-servers"],
+#зп-windows:checked ~ .вкладки-бок label[for="зп-windows"],#зп-macos:checked ~ .вкладки-бок label[for="зп-macos"],#зп-linux:checked ~ .вкладки-бок label[for="зп-linux"],#зп-android:checked ~ .вкладки-бок label[for="зп-android"],#зп-vscode:checked ~ .вкладки-бок label[for="зп-vscode"],#зп-прочее:checked ~ .вкладки-бок label[for="зп-прочее"]{
+  background:var(--sel);border-color:#093b8a;color:#fff;text-shadow:0 -1px 0 rgba(0,30,100,.6)}
+.вкладки-админ{border-color:#1d2e58}
+.вкладки-админ a{height:var(--h);display:inline-flex;align-items:center;border-radius:var(--r-in) var(--r-in) 0 0}
+.вкладки-админ a:hover{background:var(--sel);color:#fff;border-bottom-color:transparent}
+
+/* ---- метки, таблицы, диаграммы ---- */
+.тег,.версия,.роль-метка,.метка-статус,.метка-источник,.курс-метка{border-radius:999px}
+.тег{background:var(--btn);border:1px solid #0a1328;color:#dfe9ff;box-shadow:inset 0 1px 0 rgba(255,255,255,.2);padding:1px 11px}
+.тег.активный{background:var(--btn-pri);border-color:#093b8a;color:#fff}
+.версия{background:#17294f;color:#9fd0ff;border:1px solid #0a1328}
+.роль-метка{background:#17294f;border-color:#0a1328;color:#dfe9ff}
+.роль-админ{background:var(--btn-pri);border-color:#093b8a;color:#fff}
+.роль-модератор{background:linear-gradient(180deg,#58c98a,#1f8f58);border-color:#0b4d2c;color:#fff}
+.роль-блок{background:linear-gradient(180deg,#e8776e,#b02f25);border-color:#5e150f;color:#fff}
+th{background:var(--metal-soft);color:#c8d8f8;font-weight:650}
+table{border:1px solid #0a1328}
+th,td{padding:9px 12px;border-bottom-color:#1d2e58}
+tr:hover td{background:rgba(59,156,255,.07)}
+.стат-таблица th,.загрузки-таблица th{background:var(--metal-soft);border-bottom-color:#050b18}
+.плитка-стат b{font-size:1.6rem}
+.полоса{background:#0a1426;border-radius:999px;box-shadow:inset 0 1px 3px rgba(0,0,0,.6)}.полоса i{background:linear-gradient(180deg,#8fd8ff,#2e8ef0 50%,#1458be);border-radius:999px}
+.график .сетка{stroke:#1d2e58}.график .столбик{fill:#3b9cff}
+mark{background:#2368dc;color:#fff}
+.текст blockquote{background:var(--win);border-left-color:#3b9cff}
+.дроп{background:var(--sunk);border-color:#2b4070;border-radius:var(--radius)}
+.дроп:hover,.дроп.над{border-color:#3b9cff;background:var(--accent-soft)}
+.токен-выдан:not(:empty){background:var(--sunk);border-color:#3b9cff;border-radius:var(--r-in)}
+.тост{background:#0f1a36;border:1px solid #3b9cff;border-radius:999px}
+.акк-сообщение{color:#ff8f86}.акк-сообщение.хорошо{color:#8fe0a6}
+.комментарий{border-top-color:#1d2e58}
+.обл-мини{border-radius:var(--r-in)}
+
+/* курсы и примеры: карточки на фоновой картинке остаются, но с рамкой и без большого скругления */
+.курс,.пример,.карточка-фон,.лучшие{border-radius:var(--radius);border:1px solid #0a1328}
+.курс-метка,.теги li{background:rgba(255,255,255,.14)}
+.плейлист a{border-radius:var(--r-in);background:rgba(8,16,40,.55);border-color:rgba(255,255,255,.18)}
+.плейлист i{border-radius:var(--r-in);background:var(--btn-pri);color:#fff;width:30px;height:30px}
+.герой-основа{border-radius:var(--radius) var(--radius) 0 0;background:#0a1226;box-shadow:0 -14px 30px -14px #000}
+.герой-пакеты{background:linear-gradient(rgba(6,11,26,.65),rgba(6,11,26,.8)),var(--картинка) center/cover}
+.лучшие-список i{background:var(--btn-pri);color:#fff;border-radius:var(--r-in)}
+
+@media (max-width:760px){
+  .site-header .wrap{height:50px}
+  .профиль{height:var(--h);width:var(--h);padding:0;font-size:0;gap:0}
+  .профиль::before{font-size:1.1rem}
+  .brand-имя{display:none}
+}
+
+/* ---- уточнения: размеры первого экрана, длинные кнопки в боковой панели ---- */
+.hero h1{font-size:clamp(2rem,4vw,2.9rem);line-height:1.12;letter-spacing:-.02em}
+.hero .lead{font-size:1.05rem;max-width:32em;margin-bottom:1.3em}
+.hero .wrap{padding-top:56px;padding-bottom:60px;gap:44px}
+.герой-фикс h1{font-size:clamp(2rem,5vw,3.2rem)}
+.герой-фикс p{font-size:clamp(1rem,2vw,1.15rem)}
+.курс h3{font-size:clamp(1.3rem,2.6vw,1.7rem)}
+.админ-меню-низ .button,.админ-меню-низ .button.secondary{height:auto;min-height:var(--h);padding:7px 14px;border-radius:var(--radius);white-space:normal;line-height:1.3;text-align:left;justify-content:flex-start}
+.админ-меню a{height:var(--h);padding:0 12px;border-radius:var(--r-in)}
+
+/* ---- окна строго квадратные ---- */
+.облако,.облако-шапка,.облако-тело,.облако-закрыть,.облако input,.облако textarea,.облако .button{border-radius:0}
+@media (max-width:760px){.облако{border-radius:0}}
+/* таблица «о файле» */
+.о-файле{width:100%;border-collapse:collapse;margin:0 0 14px;border:1px solid var(--line)}
+.о-файле th,.о-файле td{padding:9px 14px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}
+.о-файле th{background:var(--sunk);color:var(--muted);font-weight:600;white-space:nowrap;width:1%;text-shadow:none;border-right:1px solid var(--line)}
+.о-файле tr:last-child th,.о-файле tr:last-child td{border-bottom:0}
+.о-файле code{word-break:break-all}
+/* модерация: ячейка действий остаётся ячейкой */
+.загрузки-таблица td.действия{display:table-cell;text-align:right;white-space:nowrap}
+.загрузки-таблица td.действия>*{margin:2px 0 2px 4px;vertical-align:middle}
+#мод-таблица td{vertical-align:middle}
+@media (max-width:760px){.загрузки-таблица td.действия{white-space:normal;text-align:left}}
+
+/* ---- реклама: тихий квадрат в конце страницы ---- */
+.реклама{margin:40px 0 28px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.реклама-окно{width:300px;height:250px;max-width:100%;border:1px solid var(--line);background:var(--sunk);overflow:hidden}
+.реклама-окно.пусто{background:repeating-linear-gradient(135deg,transparent 0 10px,rgba(59,156,255,.05) 10px 11px),var(--sunk)}
+.реклама-подпись{margin:0;font-size:.82rem;color:var(--muted)}
+.реклама-подпись a{color:var(--muted);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.реклама-подпись a:hover{color:var(--ink)}
+@media (max-width:760px){.реклама-окно{width:100%;height:auto;aspect-ratio:6/5;max-width:300px}}

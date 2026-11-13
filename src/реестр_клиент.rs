@@ -258,18 +258,91 @@ pub fn искать(запрос: &str) -> Result<Vec<ЗаписьРеестра
 
 // ---------------------------------------------------------------- работа с архивами
 
-/// Список имён в архиве. GNU tar по умолчанию экранирует не-ASCII имена, поэтому просим «как есть».
-fn имена_в_архиве(архив: &Path) -> Result<Vec<String>, String> {
-    let mut вывод = Command::new("tar").arg("--quoting-style=literal").arg("-tzf").arg(архив).output();
-    if !matches!(&вывод, Ok(в) if в.status.success()) {
-        // bsdtar (macOS, Windows) такой опции не знает и не экранирует.
-        вывод = Command::new("tar").arg("-tzf").arg(архив).output();
+/// Один файл из архива: имя (как есть, UTF-8) и содержимое.
+struct ФайлАрхива {
+    имя: String,
+    данные: Vec<u8>,
+}
+
+/// Читает .tar.gz собственным кодом, без внешней программы tar: на Windows bsdtar портит русские
+/// имена файлов (читает UTF-8 как ANSI-кодировку), и пакет «Цвета» оставался без файлов .код.
+/// Понимает форматы ustar, GNU (длинные имена) и pax (полные имена в расширенных заголовках).
+fn прочитать_архив(архив: &Path) -> Result<Vec<ФайлАрхива>, String> {
+    use std::io::Read;
+    let сжатые = fs::read(архив).map_err(|e| format!("не удалось прочитать архив: {}", e))?;
+    let mut данные = Vec::new();
+    flate2::read::GzDecoder::new(&сжатые[..])
+        .read_to_end(&mut данные)
+        .map_err(|_| "архив повреждён или это не .tar.gz".to_string())?;
+
+    fn текст_поля(б: &[u8]) -> String {
+        let конец = б.iter().position(|&x| x == 0).unwrap_or(б.len());
+        String::from_utf8_lossy(&б[..конец]).to_string()
     }
-    let вывод = вывод.map_err(|e| format!("не удалось запустить tar: {}", e))?;
-    if !вывод.status.success() {
-        return Err("архив повреждён или это не .tar.gz".to_string());
+    fn число(б: &[u8]) -> Option<usize> {
+        let т = текст_поля(б);
+        let т = т.trim();
+        if т.is_empty() { return Some(0); }
+        usize::from_str_radix(т, 8).ok()
     }
-    Ok(String::from_utf8_lossy(&вывод.stdout).lines().map(str::to_string).filter(|с| !с.is_empty()).collect())
+
+    let mut файлы = Vec::new();
+    let mut позиция = 0usize;
+    let mut длинное_имя: Option<String> = None;
+    let mut имя_из_pax: Option<String> = None;
+    while позиция + 512 <= данные.len() {
+        let заголовок = &данные[позиция..позиция + 512];
+        if заголовок.iter().all(|&б| б == 0) {
+            break;
+        }
+        let размер = число(&заголовок[124..136]).ok_or("повреждён заголовок архива (размер)")?;
+        let вид = заголовок[156];
+        let начало = позиция + 512;
+        let конец = начало + размер;
+        if конец > данные.len() {
+            return Err("архив обрезан".to_string());
+        }
+        let тело = &данные[начало..конец];
+        позиция = начало + размер.div_ceil(512) * 512;
+        match вид {
+            b'L' => {
+                длинное_имя = Some(текст_поля(тело));
+            }
+            b'x' => {
+                // pax: записи «длина ключ=значение\n»
+                let mut i = 0;
+                while i < тело.len() {
+                    let Some(пробел) = тело[i..].iter().position(|&x| x == b' ') else { break };
+                    let Ok(длина) = String::from_utf8_lossy(&тело[i..i + пробел]).parse::<usize>() else { break };
+                    if длина == 0 || i + длина > тело.len() { break; }
+                    let запись = String::from_utf8_lossy(&тело[i + пробел + 1..i + длина]).to_string();
+                    if let Some(п) = запись.strip_prefix("path=") {
+                        имя_из_pax = Some(п.trim_end_matches('\n').to_string());
+                    }
+                    i += длина;
+                }
+            }
+            b'g' => {}
+            b'0' | 0 => {
+                let mut имя = текст_поля(&заголовок[0..100]);
+                if &заголовок[257..262] == b"ustar" {
+                    let префикс = текст_поля(&заголовок[345..500]);
+                    if !префикс.is_empty() {
+                        имя = format!("{}/{}", префикс, имя);
+                    }
+                }
+                if let Some(п) = имя_из_pax.take() { имя = п; }
+                if let Some(д) = длинное_имя.take() { имя = д; }
+                файлы.push(ФайлАрхива { имя, данные: тело.to_vec() });
+            }
+            _ => {
+                // каталоги, ссылки и прочее в пакетах не нужны
+                длинное_имя = None;
+                имя_из_pax = None;
+            }
+        }
+    }
+    Ok(файлы)
 }
 
 /// Скачивает архив версии, сверяет SHA-256 с реестром (и с блокировкой, если она есть) и
@@ -316,20 +389,16 @@ pub fn установить_из_реестра(
                 ));
             }
         }
-        for файл in имена_в_архиве(&временный)? {
-            if файл.starts_with('/') || файл.starts_with('.') || файл.contains('/') || файл.contains('\\') || файл.contains("..") {
-                return Err(format!("в архиве '{}' недопустимый путь '{}' — установка отменена", имя, файл));
+        let файлы = прочитать_архив(&временный)?;
+        for файл in &файлы {
+            let имя_файла = &файл.имя;
+            if имя_файла.starts_with('/') || имя_файла.starts_with('.') || имя_файла.contains('/') || имя_файла.contains('\\') || имя_файла.contains("..") {
+                return Err(format!("в архиве '{}' недопустимый путь '{}' — установка отменена", имя, имя_файла));
             }
         }
-        let вывод = Command::new("tar")
-            .arg("-xzf")
-            .arg(&временный)
-            .arg("-C")
-            .arg(назначение)
-            .output()
-            .map_err(|e| format!("не удалось запустить tar: {}", e))?;
-        if !вывод.status.success() {
-            return Err(format!("не удалось распаковать архив: {}", String::from_utf8_lossy(&вывод.stderr).trim()));
+        for файл in &файлы {
+            fs::write(назначение.join(&файл.имя), &файл.данные)
+                .map_err(|e| format!("не удалось записать '{}': {}", файл.имя, e))?;
         }
         Ok(сумма)
     })();
@@ -512,5 +581,38 @@ mod тесты {
     #[test]
     fn кодирование_адреса() {
         assert_eq!(закодировать("пакет-1.0"), "%D0%BF%D0%B0%D0%BA%D0%B5%D1%82-1.0");
+    }
+}
+
+#[cfg(test)]
+mod тесты_архива {
+    use super::*;
+
+    // Архивы в разных форматах tar с русскими именами: имена должны читаться как есть.
+    #[test]
+    fn русские_имена_во_всех_форматах_tar() {
+        let папка = std::env::temp_dir().join(format!("сфера_тест_архива_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&папка);
+        fs::create_dir_all(&папка).unwrap();
+        fs::write(папка.join("Цвета.код"), "функция а(): целое\n    вернуть 1;\nконец\n").unwrap();
+        fs::write(папка.join("сфера.зависимости"), "").unwrap();
+        let длинное = format!("{}.код", "очень_длинное_имя_".repeat(5));
+        fs::write(папка.join(&длинное), "x").unwrap();
+        for формат in ["gnu", "pax", "ustar", "v7"] {
+            let архив = папка.join(format!("п_{}.tar.gz", формат));
+            let статус = Command::new("tar")
+                .args(["--format", формат, "-czf"]).arg(&архив).arg("-C").arg(&папка)
+                .args(["Цвета.код", "сфера.зависимости"]).arg(&длинное)
+                .status().unwrap();
+            if !статус.success() { continue; } // формат не поддержан этим tar или имя не влезло
+            let mut имена: Vec<String> = прочитать_архив(&архив).unwrap().into_iter().map(|ф| ф.имя).collect();
+            имена.sort();
+            assert!(имена.contains(&"Цвета.код".to_string()), "формат {}: {:?}", формат, имена);
+            assert!(имена.contains(&"сфера.зависимости".to_string()), "формат {}: {:?}", формат, имена);
+            let файлы = прочитать_архив(&архив).unwrap();
+            let цвета = файлы.iter().find(|ф| ф.имя == "Цвета.код").unwrap();
+            assert!(String::from_utf8_lossy(&цвета.данные).contains("вернуть 1"));
+        }
+        let _ = fs::remove_dir_all(&папка);
     }
 }

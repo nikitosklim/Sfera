@@ -18,31 +18,38 @@
 <link rel="apple-touch-icon" href="/статика/apple-touch-icon.png">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Сфера","alternateName":["Sfera","язык Сфера","языксфера"],"description":"Язык программирования на русском","url":"https://xn--80ajfm5aev7c8a.xn--p1ai/","inLanguage":"ru"}</script>
 <link rel="stylesheet" href="/статика/style.css">
+<link rel="stylesheet" href="/статика/сталь.css">
 </head>
 <body>
 <header class="site-header">
   <div class="wrap">
-    <a class="brand" href="/"><img src="/статика/logo.png" alt="">Сфера</a>
-    <nav class="site-nav" aria-label="Основная навигация">
+    <a class="brand" href="/"><img src="/статика/logo.png" alt=""><span class="brand-имя">Сфера</span></a>
+    <nav class="site-nav" id="шапка-нав" aria-label="Основная навигация">
       <a href="/попробовать">Попробовать</a>
-      <a href="/уроки">Уроки</a>
-      <a href="/документация">Документация</a>
-      <a href="/примеры">Примеры</a>
+      <a href="/обучение">Обучение</a>
       <a href="/статьи">Статьи</a>
       <a href="/пакеты">Пакеты</a>
       <a href="/о-языке">О языке</a>
     </nav>
     <div class="header-actions">
       <form class="search" action="/поиск" role="search"><input type="search" name="q" placeholder="Поиск" aria-label="Поиск по сайту"></form>
-      <a class="gh-link" href="/поддержать">Поддержать</a>
-      <a class="gh-link" id="шапка-аккаунт" href="/аккаунт">Войти</a>
+      <a class="поиск-значок" href="/поиск" aria-label="Поиск по сайту">🔍</a>
+      <div class="ещё" id="шапка-ещё">
+        <button class="ещё-кнопка" id="шапка-ещё-кнопка" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="шапка-ещё-меню">Ещё <span aria-hidden="true">▾</span></button>
+        <div class="ещё-меню" id="шапка-ещё-меню" hidden>
+          <div class="ещё-лишние" id="шапка-лишние"></div>
+          <a href="/поддержать">❤️ Поддержать</a>
+        </div>
+      </div>
       <a class="button" href="/загрузки">Скачать</a>
+      <a class="профиль" id="шапка-аккаунт" href="/аккаунт" title="Аккаунт">Войти</a>
     </div>
   </div>
 </header>
 <main>
 {{содержимое}}
 </main>
+{{реклама}}
 <footer class="site-footer">
   <div class="wrap">
     <div class="footer-cols">
@@ -54,9 +61,8 @@
         <h4>Изучение</h4>
         <ul>
           <li><a href="/уроки/быстрый-старт">Быстрый старт</a></li>
-          <li><a href="/уроки">Уроки</a></li>
+          <li><a href="/обучение">Обучение: курсы, уроки, примеры</a></li>
           <li><a href="/документация">Документация</a></li>
-          <li><a href="/примеры">Примеры</a></li>
         </ul>
       </div>
       <div>
@@ -100,6 +106,8 @@
   ym(114069274, 'init', { ssr: true, clickmap: true, trackLinks: true, accurateTrackBounce: true, referrer: document.referrer, url: location.href });
 })();
 </script>
+<script src="/статика/шапка.js" defer></script>
+<script src="/статика/слежение.js" defer></script>
 <script src="/статика/сфера-хост.js" data-модуль="стат аккаунт" data-запас="/статика/stat.js /статика/аккаунт.js" defer></script>
 </body>
 </html>

@@ -14,12 +14,18 @@
 # (см. метка_текущей_платформы в панель_windows.код).
 
 param(
-    [string]$Версия = "0.3.3"
+    [string]$Версия = ""
 )
 
 $ErrorActionPreference = "Continue"
 $Корень = $PSScriptRoot
 $ЛокальнаяСфера = Join-Path $env:LOCALAPPDATA "Сфера"
+# Версия — та же, что показывает сама панель (функция текущая_версия в панель_windows.код).
+if (-not $Версия) {
+    $Версия = "0.0.0"
+    $ТекстПанели = [System.IO.File]::ReadAllText((Join-Path $Корень "инструменты\панель-разработчика\панель_windows.код"), [System.Text.Encoding]::UTF8)
+    if ($ТекстПанели -match 'функция текущая_версия\(\): текст\s+вернуть "([^"]+)"') { $Версия = $Matches[1] }
+}
 
 function Остановить([string]$Сообщение) {
     Write-Host "ОШИБКА: $Сообщение" -ForegroundColor Red
@@ -28,7 +34,7 @@ function Остановить([string]$Сообщение) {
 
 # cargo пишет предупреждения в stderr — это не ошибка, статус смотрим по
 # коду завершения.
-Write-Host "1/5  Собираю компилятор (cargo build --release)..." -ForegroundColor Cyan
+Write-Host "1/6  Собираю компилятор (cargo build --release)..." -ForegroundColor Cyan
 Push-Location $Корень
 & cargo build --release
 if ($LASTEXITCODE -ne 0) { Pop-Location; Остановить "cargo build --release завершился с кодом $LASTEXITCODE" }
@@ -39,16 +45,21 @@ foreach ($имя in @("запустить.exe", "сфера_lsp.exe", "сфер�
     if (-not (Test-Path (Join-Path $Релиз $имя))) { Остановить "не найден $имя в target\release" }
 }
 
-Write-Host "2/5  Собираю панель разработчика..." -ForegroundColor Cyan
+Write-Host "2/6  Собираю панель разработчика..." -ForegroundColor Cyan
 $ПапкаПанели = Join-Path $Корень "инструменты\панель-разработчика"
 Push-Location $ПапкаПанели
-& (Join-Path $Релиз "запустить.exe") "панель_windows.код" --только-собрать --линковать SDL2 --линковать SDL2_ttf --линковать m
+& (Join-Path $Релиз "запустить.exe") "панель_windows.код" --только-собрать --без-консоли --линковать SDL2 --линковать SDL2_ttf --линковать m
 if ($LASTEXITCODE -ne 0) { Pop-Location; Остановить "не удалось собрать панель (код $LASTEXITCODE)" }
 Pop-Location
 $ПанельExe = Join-Path $ПапкаПанели "панель_windows.exe"
 if (-not (Test-Path $ПанельExe)) { Остановить "после сборки нет панель_windows.exe" }
+# Проверяем, что панель оконная (подсистема 2), а не консольная (3): иначе при запуске откроется чёрное окно.
+$Байты = [System.IO.File]::ReadAllBytes($ПанельExe)
+$ЗаголовокPE = [BitConverter]::ToInt32($Байты, 0x3C)
+$Подсистема = [BitConverter]::ToUInt16($Байты, $ЗаголовокPE + 24 + 68)
+if ($Подсистема -ne 2) { Остановить "панель собрана как консольная (подсистема $Подсистема), ожидалась оконная (2): проверь флаг --без-консоли" }
 
-Write-Host "3/5  Раскладываю файлы..." -ForegroundColor Cyan
+Write-Host "3/6  Раскладываю файлы..." -ForegroundColor Cyan
 $Выход = Join-Path $Корень "релиз"
 $Папка = Join-Path $Выход "Sfera-Panel-Windows"
 if (Test-Path $Папка) { Remove-Item -Recurse -Force $Папка }
@@ -60,6 +71,9 @@ foreach ($имя in @("запустить.exe", "сфера_lsp.exe", "сфер�
     Copy-Item (Join-Path $Релиз $имя) (Join-Path $Папка "bin\$имя")
 }
 Copy-Item (Join-Path $Корень "examples\привет.код") (Join-Path $Папка "bin\привет.код")
+# Иконка окна панели (Sfera-Panel.bmp подхватывается при запуске) и файл иконки для ярлыков.
+Copy-Item (Join-Path $Корень "инструменты\иконки\окно.bmp") (Join-Path $Папка "Sfera-Panel.bmp")
+Copy-Item (Join-Path $Корень "инструменты\иконки\Sfera.ico") (Join-Path $Папка "Sfera.ico")
 
 # pthread_win.o — рантайм потоков, без него не слинкуется ни одна программа.
 $Pthread = Join-Path $ЛокальнаяСфера "lib\sfera\pthread_win.o"
@@ -90,7 +104,7 @@ $Читай = @"
 "@
 [System.IO.File]::WriteAllText((Join-Path $Папка "ЧИТАЙ_МЕНЯ.txt"), $Читай, (New-Object System.Text.UTF8Encoding($true)))
 
-Write-Host "4/5  Упаковываю в zip..." -ForegroundColor Cyan
+Write-Host "4/6  Упаковываю в zip..." -ForegroundColor Cyan
 $Архив = Join-Path $Выход "Sfera-Panel-Windows.zip"
 if (Test-Path $Архив) { Remove-Item -Force $Архив }
 # Упаковка средствами .NET: имена файлов пишутся в UTF-8 (запустить.exe, сфера_пакеты.exe
@@ -105,7 +119,27 @@ try {
 }
 
 $Размер = [math]::Round((Get-Item $Архив).Length / 1MB, 1)
-Write-Host "5/5  Готово: $Архив ($Размер МБ)" -ForegroundColor Green
+Write-Host "     zip: $Архив ($Размер МБ)" -ForegroundColor Green
+
+# Установщик (Inno Setup): обычная программа установки с ярлыками и удалением. Нужен Inno Setup 6:
+#   winget install JRSoftware.InnoSetup   или   choco install innosetup
+Write-Host "5/6  Собираю установщик (Inno Setup)..." -ForegroundColor Cyan
+$Iscc = $null
+$Кандидаты = @(
+    (Get-Command ISCC.exe -ErrorAction SilentlyContinue | ForEach-Object { $_.Source }),
+    (Join-Path ${env:ProgramFiles(x86)} "Inno Setup 6\ISCC.exe"),
+    (Join-Path $env:ProgramFiles "Inno Setup 6\ISCC.exe"),
+    (Join-Path $env:LOCALAPPDATA "Programs\Inno Setup 6\ISCC.exe")
+)
+foreach ($к in $Кандидаты) { if ($к -and (Test-Path $к)) { $Iscc = $к; break } }
+if (-not $Iscc) { Остановить "не найден Inno Setup (ISCC.exe). Установи: winget install JRSoftware.InnoSetup" }
+$Скрипт = Join-Path $Корень "инструменты\установщик\Sfera-Windows.iss"
+& $Iscc "/DAppVersion=$Версия" "/DSourceDir=$Папка" "/DOutDir=$Выход" $Скрипт
+if ($LASTEXITCODE -ne 0) { Остановить "Inno Setup завершился с кодом $LASTEXITCODE" }
+$Установщик = Join-Path $Выход "Sfera-Setup-Windows-$Версия.exe"
+if (-not (Test-Path $Установщик)) { Остановить "после сборки нет $Установщик" }
+$РазмерУ = [math]::Round((Get-Item $Установщик).Length / 1MB, 1)
+Write-Host "6/6  Готово: $Установщик ($РазмерУ МБ)" -ForegroundColor Green
 Write-Host ""
 Write-Host "Опубликовать релиз:"
 Write-Host "  1) https://github.com/nikitosklim/Sfera/releases/new"

@@ -1,0 +1,162 @@
+<link rel="stylesheet" href="/статика/design-lab.css">
+<div class="лаб" id="лаб" data-тема="win">
+<div class="лаб-в">
+
+  <section class="окно" aria-labelledby="лаб-заг">
+    <div class="окно-шапка"><span class="имя">💾 Лаборатория дизайна — квадратный стиль</span><span class="окно-кнопки"><b>_</b><b>□</b><b>×</b></span></div>
+    <div class="окно-тело">
+      <h1 id="лаб-заг" style="font-size:24px;margin-bottom:6px">Сфера в квадратных окнах</h1>
+      <p>Это песочница: здесь мы пробуем, как выглядел бы сайт, если заменить скруглённые карточки на окна с рамкой, как в старых Windows и Mac OS. Основной сайт не затронут. Переключайте оформление и смотрите, что нравится.</p>
+      <p style="margin-top:10px" class="переключатель"><b>Оформление:</b>
+        <button class="кн малая главная" type="button" data-тема-кнопка="win">Windows 95</button>
+        <button class="кн малая" type="button" data-тема-кнопка="mac">Mac OS Platinum</button>
+      </p>
+    </div>
+    <div class="окно-статус"><span>Готово</span><span>Тема: <b id="лаб-имя-темы">Windows 95</b></span></div>
+  </section>
+
+  <section class="окно" aria-label="Шапка сайта">
+    <div class="окно-шапка"><span class="имя">Шапка сайта: строка меню</span><span class="окно-кнопки"><b>_</b><b>□</b><b>×</b></span></div>
+    <div class="окно-тело" style="padding:6px">
+      <div class="меню-строка">
+        <a class="лого" href="#"><span></span>Сфера</a>
+        <a href="#">Попробовать</a><a href="#">Обучение</a><a href="#">Статьи</a><a href="#">Пакеты</a>
+        <div class="справа">
+          <button type="button" id="лаб-ещё" aria-expanded="false">Ещё ▾</button>
+          <a class="кн малая главная" href="#" style="min-width:0">Скачать</a>
+          <a class="кн малая" href="#" style="min-width:0">👤 Войти</a>
+        </div>
+        <div class="выпад" id="лаб-выпад"><a href="#">О языке</a><a href="#">❤️ Поддержать</a><a href="#">Модерация</a></div>
+      </div>
+      <p style="margin-top:8px;font-size:12px">Нажмите «Ещё»: сюда уходят «О языке», «Поддержать» и всё, что не поместилось по ширине. Справа всегда остаются «Ещё», «Скачать» и профиль.</p>
+    </div>
+  </section>
+
+  <div class="две">
+    <section class="окно код-окно" aria-label="Пример кода">
+      <div class="окно-шапка"><span class="имя">📄 привет.код</span><span class="окно-кнопки"><b>_</b><b>□</b><b>×</b></span></div>
+      <pre><b>функция</b> главная(): <u>целое</u>
+    <b>печать</b>(<i>"Привет, мир!"</i>);
+    <b>вернуть</b> <i>0</i>;
+<b>конец</b></pre>
+      <div class="окно-статус"><span>Строка 4</span><span>UTF-8</span></div>
+    </section>
+
+    <section class="окно диалог" aria-label="Диалог загрузки">
+      <div class="окно-шапка"><span class="имя">Скачать Сферу</span><span class="окно-кнопки"><b>?</b><b>□</b><b>×</b></span></div>
+      <div class="окно-тело">
+        <div class="строка"><div class="знак">💿</div>
+          <div><p><b>Сфера 0.3.3 для Windows</b></p><p style="margin-top:4px">Панель разработчика, компилятор и примеры. Размер около 120 МБ.</p></div></div>
+        <div class="кнопки"><a class="кн главная" href="#">Скачать</a><a class="кн" href="#">Отмена</a></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="две">
+    <section class="окно" aria-label="Курс">
+      <div class="окно-шапка"><span class="имя">🎓 Курс: Для обучения программированию</span><span class="окно-кнопки"><b>_</b><b>□</b><b>×</b></span></div>
+      <div class="окно-тело">
+        <p>Пройдено 3 из 7 уроков</p>
+        <div class="прогресс" style="margin:6px 0 10px"><i></i><i></i><i></i><i class="пуст"></i><i class="пуст"></i><i class="пуст"></i><i class="пуст"></i></div>
+        <div class="впадина"><ul class="список">
+          <li><a href="#"><i>1</i> Что такое программа</a></li>
+          <li><a href="#"><i>2</i> Переменные и данные</a></li>
+          <li class="тек"><a href="#"><i>3</i> Решения и условия</a></li>
+          <li><a href="#"><i>4</i> Повторение и циклы</a></li>
+          <li><a href="#"><i>5</i> Функции</a></li>
+        </ul></div>
+        <p style="margin-top:10px"><a class="кн главная" href="#">Продолжить курс</a></p>
+      </div>
+    </section>
+
+    <section class="окно" aria-label="Примеры">
+      <div class="окно-шапка"><span class="имя">🧩 Примеры</span><span class="окно-кнопки"><b>_</b><b>□</b><b>×</b></span></div>
+      <div class="окно-тело" style="display:grid;gap:12px">
+        <div class="карточка-пример"><div class="пример-значок впадина">🗄️</div>
+          <div><p><b>SQLite: база данных</b></p><p style="font-size:13px">Создать таблицу, добавить запись и прочитать её.</p>
+          <ul class="теги-л"><li>Данные</li><li>SQLite</li></ul><a class="кн малая" href="#">Подробнее</a></div></div>
+        <div class="карточка-пример"><div class="пример-значок впадина">🌐</div>
+          <div><p><b>HTTP-сервер на сокетах</b></p><p style="font-size:13px">Принимаем подключения и обрабатываем каждое в своём потоке.</p>
+          <ul class="теги-л"><li>Сеть</li><li>Сокеты</li></ul><a class="кн малая" href="#">Подробнее</a></div></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="окно" aria-label="Документация">
+    <div class="окно-шапка"><span class="имя">📖 Документация — Типы данных</span><span class="окно-кнопки"><b>_</b><b>□</b><b>×</b></span></div>
+    <div class="окно-тело">
+      <div class="док-макет">
+        <div class="впадина дерево">
+          <details open><summary>🌱 Основы</summary><a href="#">Первая программа</a><a href="#">Основы синтаксиса</a><a class="тек" href="#">Типы данных</a><a href="#">Переменные</a></details>
+          <details><summary>🧮 Данные и типы</summary><a href="#">Структуры</a><a href="#">Обработка ошибок</a></details>
+          <details><summary>🌐 Сеть и данные</summary><a href="#">Сеть</a><a href="#">Файлы</a></details>
+        </div>
+        <div>
+          <div class="вкладки" role="tablist"><button role="tab" aria-selected="true" data-вкл="0">Описание</button><button role="tab" aria-selected="false" data-вкл="1">Примеры</button><button role="tab" aria-selected="false" data-вкл="2">См. также</button></div>
+          <div class="панель-вкл" data-панель="0"><h2 style="font-size:19px;margin-bottom:6px">Целые числа</h2><p>Тип <code>целое</code> занимает 64 бита и хранит знак. Есть варианты на 8, 16 и 32 бита, а также беззнаковые.</p></div>
+          <div class="панель-вкл" data-панель="1" hidden><p><code>целое32 x = 5;</code> — тридцатидвухбитное число со знаком.</p></div>
+          <div class="панель-вкл" data-панель="2" hidden><p>Переменные, Операторы, Структуры.</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="окно-статус"><span>Темы слева, материал справа</span><span>Вкладки внутри материала — по желанию</span></div>
+  </section>
+
+  <section class="окно" aria-label="Элементы">
+    <div class="окно-шапка"><span class="имя">🧰 Элементы интерфейса</span><span class="окно-кнопки"><b>_</b><b>□</b><b>×</b></span></div>
+    <div class="окно-тело" style="display:grid;gap:14px">
+      <div class="ряд"><a class="кн главная" href="#">Главная кнопка</a><a class="кн" href="#">Обычная</a><a class="кн нажата" href="#">Нажатая</a><span class="кн выкл">Недоступна</span><a class="кн малая" href="#">Малая</a></div>
+      <div class="ряд" style="align-items:stretch"><div style="flex:1;min-width:220px"><input type="search" placeholder="Найти по документации, урокам и примерам"></div><a class="кн" href="#">Найти</a></div>
+      <div class="ряд"><label><input type="checkbox" checked> Запомнить меня</label><label><input type="radio" name="р" checked> Светлая</label><label><input type="radio" name="р"> Тёмная</label></div>
+    </div>
+  </section>
+
+  <section class="окно" aria-label="Заметки">
+    <div class="окно-шапка"><span class="имя">📝 Что здесь решено и что можно менять</span><span class="окно-кнопки"><b>_</b><b>□</b><b>×</b></span></div>
+    <div class="окно-тело">
+      <ul class="заметки">
+        <li>Рамка окна и заголовок передают «старую ОС»: у Windows 95 это синяя полоса и фаска, у Mac OS Platinum — полосатая шапка и тонкая чёрная рамка с тенью.</li>
+        <li>Всё квадратное: ни одного скругления. Цвета берём из системной палитры, акцент — один (синий выделения).</li>
+        <li>Темы-вкладки документации — это «дерево папок» слева, как в проводнике.</li>
+        <li>Если направление понравится, перенесём стили в основной <code>style.css</code> под переключатель или заменим им текущий вид.</li>
+      </ul>
+    </div>
+  </section>
+
+</div>
+</div>
+<script>
+(function () {
+  var лаб = document.getElementById('лаб');
+  var имена = { win: 'Windows 95', mac: 'Mac OS Platinum' };
+  function тема(т) {
+    лаб.setAttribute('data-тема', т);
+    document.getElementById('лаб-имя-темы').textContent = имена[т];
+    Array.prototype.forEach.call(document.querySelectorAll('[data-тема-кнопка]'), function (б) {
+      б.classList.toggle('главная', б.getAttribute('data-тема-кнопка') === т);
+    });
+    try { localStorage.setItem('лаб-тема', т); } catch (e) {}
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('[data-тема-кнопка]'), function (б) {
+    б.addEventListener('click', function () { тема(б.getAttribute('data-тема-кнопка')); });
+  });
+  try { var с = localStorage.getItem('лаб-тема'); if (с && имена[с]) тема(с); } catch (e) {}
+  var ещё = document.getElementById('лаб-ещё'), выпад = document.getElementById('лаб-выпад');
+  ещё.addEventListener('click', function (с) {
+    с.stopPropagation();
+    var о = выпад.classList.toggle('открыт'); ещё.setAttribute('aria-expanded', о ? 'true' : 'false');
+  });
+  document.addEventListener('click', function () { выпад.classList.remove('открыт'); ещё.setAttribute('aria-expanded', 'false'); });
+  var вкл = document.querySelectorAll('[data-вкл]'), панели = document.querySelectorAll('[data-панель]');
+  Array.prototype.forEach.call(вкл, function (б) {
+    б.addEventListener('click', function () {
+      var н = б.getAttribute('data-вкл');
+      Array.prototype.forEach.call(вкл, function (х) { х.setAttribute('aria-selected', х === б ? 'true' : 'false'); });
+      Array.prototype.forEach.call(панели, function (п) { п.hidden = п.getAttribute('data-панель') !== н; });
+    });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#лаб a[href="#"]'), function (а) {
+    а.addEventListener('click', function (с) { с.preventDefault(); });
+  });
+})();
+</script>

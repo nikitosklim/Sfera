@@ -1,0 +1,47 @@
+name: Железо (проверки в QEMU)
+
+# Собирает компилятор и прогоняет все проверить.sh: x86-64, мини-ОС (в т. ч. загрузка с диска),
+# RISC-V 64/32, ARM Cortex-M7/M0. Запуск: при изменениях и вручную.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/**'
+      - 'стандартная_библиотека/**'
+      - 'examples/голое-железо/**'
+      - 'examples/ос/**'
+      - '.github/workflows/железо.yml'
+
+jobs:
+  hardware:
+    name: QEMU (Ubuntu 24.04)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Установка пакетов
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y llvm-18-dev libpolly-18-dev libzstd-dev libffi-dev zlib1g-dev libxml2-dev clang-18 lld-18 llvm-18 binutils qemu-system-x86 qemu-system-arm qemu-system-misc
+          sudo ln -sf /usr/bin/clang-18 /usr/local/bin/clang
+          sudo ln -sf /usr/bin/ld.lld-18 /usr/local/bin/ld.lld
+          sudo ln -sf /usr/bin/llvm-objcopy-18 /usr/local/bin/llvm-objcopy
+      - name: Сборка компилятора
+        env:
+          LLVM_SYS_180_PREFIX: /usr/lib/llvm-18
+        run: cargo build --release
+      - name: x86-64
+        run: sh examples/голое-железо/проверить.sh
+      - name: Мини-ОС
+        run: sh examples/ос/проверить.sh
+      - name: Мини-ОС с диска (свой загрузчик)
+        run: sh examples/ос/проверить.sh диск
+      - name: RISC-V 64
+        run: sh examples/голое-железо/riscv/проверить.sh
+      - name: RISC-V 32
+        run: sh examples/голое-железо/riscv32/проверить.sh
+      - name: ARM Cortex-M7
+        run: sh examples/голое-железо/cortex-m/проверить.sh
+      - name: ARM Cortex-M0
+        run: sh examples/голое-железо/cortex-m0/проверить.sh
+      - name: Raspberry Pi Pico (только сборка UF2)
+        run: sh examples/голое-железо/pico/собрать.sh привет_pico "$RUNNER_TEMP/pico.uf2"

@@ -4,6 +4,8 @@ name: Сборка релиза
 # Также срабатывает при публикации тега версии (например v0.3.3):
 # собранные архивы автоматически прикладываются к релизу на GitHub.
 # Собираются: Linux, Windows, macOS (Apple Silicon и Intel), Android.
+# Кроме архивов (zip / tar.xz) собираются установочные файлы: Windows — Sfera-Setup-Windows-<версия>.exe,
+# macOS — Sfera-Setup-macOS-<ARM|Intel>-<версия>.dmg, Linux — Sfera-Setup-Linux-<версия>.deb.
 # Каждая платформа независима: если одна не собралась, остальные архивы всё равно останутся.
 on:
   workflow_dispatch:
@@ -34,12 +36,16 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: sfera-panel-linux
-          path: релиз/Sfera-Panel-Linux.tar.xz
+          path: |
+            релиз/Sfera-Panel-Linux.tar.xz
+            релиз/Sfera-Setup-Linux-*.deb
       - name: Приложить к релизу
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: релиз/Sfera-Panel-Linux.tar.xz
+          files: |
+            релиз/Sfera-Panel-Linux.tar.xz
+            релиз/Sfera-Setup-Linux-*.deb
 
   macos:
     name: macOS (Apple Silicon)
@@ -63,12 +69,16 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: sfera-panel-macos-arm64
-          path: релиз/Sfera-Panel-macOS.zip
+          path: |
+            релиз/Sfera-Panel-macOS.zip
+            релиз/Sfera-Setup-macOS-*.dmg
       - name: Приложить к релизу
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: релиз/Sfera-Panel-macOS.zip
+          files: |
+            релиз/Sfera-Panel-macOS.zip
+            релиз/Sfera-Setup-macOS-*.dmg
 
   android:
     name: Android (ARM64, с компилятором)
@@ -158,18 +168,30 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: sfera-panel-macos-intel
-          path: релиз/Sfera-Panel-macOS-Intel.zip
+          path: |
+            релиз/Sfera-Panel-macOS-Intel.zip
+            релиз/Sfera-Setup-macOS-*.dmg
       - name: Приложить к релизу
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: релиз/Sfera-Panel-macOS-Intel.zip
+          files: |
+            релиз/Sfera-Panel-macOS-Intel.zip
+            релиз/Sfera-Setup-macOS-*.dmg
 
   windows:
     name: Windows (x86-64)
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v5
+      # Inno Setup собирает установщик панели (Sfera-Setup-Windows-<версия>.exe).
+      - name: Установка Inno Setup
+        shell: pwsh
+        run: |
+          if (-not (Get-Command ISCC.exe -ErrorAction SilentlyContinue) -and -not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup -y --no-progress
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
       # Тот же установщик, которым пользуются люди: он ставит LLVM 18, SDL2 и рантайм потоков,
       # затем собирает компилятор. Скачивание LLVM (около 500 МБ) занимает несколько минут.
       - name: Установка окружения и сборка архива
@@ -225,10 +247,14 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: sfera-panel-windows
-          path: релиз/Sfera-Panel-Windows.zip
+          path: |
+            релиз/Sfera-Panel-Windows.zip
+            релиз/Sfera-Setup-Windows-*.exe
           compression-level: 0
       - name: Приложить к релизу
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: релиз/Sfera-Panel-Windows.zip
+          files: |
+            релиз/Sfera-Panel-Windows.zip
+            релиз/Sfera-Setup-Windows-*.exe
