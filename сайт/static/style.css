@@ -728,3 +728,11 @@ html{scroll-behavior:smooth}
 .попробуй-кнопки{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
 .попробуй-вывод{margin:0;min-height:64px;max-height:320px;overflow:auto;white-space:pre-wrap;word-break:break-word;padding:12px 14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg)}
 .попробуй-вывод.ошибка{color:#b3261e;border-color:#b3261e}
+
+/* Картинки в уроках */
+.картинка{margin:22px 0;text-align:center}
+.картинка img{max-width:100%;height:auto;border-radius:var(--radius);border:1px solid var(--line);background:var(--bg-soft)}
+.картинка figcaption{margin-top:8px;font-size:.92rem;color:var(--muted)}
+.картинка-заглушка{position:relative;border:2px dashed var(--line);border-radius:var(--radius);background:var(--bg-soft);color:var(--muted);overflow:hidden}
+.картинка-заглушка svg{display:block;width:100%;height:auto;max-height:240px}
+.картинка-имя{position:absolute;left:0;right:0;bottom:10px;font-size:.9rem}

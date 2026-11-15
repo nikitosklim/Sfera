@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" role="img" aria-label="Цикл: проверка условия, тело, снова проверка">
+<style>text{font:16px system-ui,sans-serif;fill:#8aa0ff}.c{fill:none;stroke:#8aa0ff;stroke-width:2}.t{fill:#b9c4e8}.a{stroke:#8aa0ff;stroke-width:2.5;fill:none}</style>
+<rect class="c" x="40" y="30" width="230" height="56" rx="28"/><text class="t" x="68" y="64">условие верно?</text>
+<rect class="c" x="40" y="170" width="230" height="56" rx="10"/><text class="t" x="62" y="204">выполнить тело цикла</text>
+<path class="a" d="M155 86v84"/><path class="a" d="M147 162l8 8 8-8"/><text x="168" y="134">да</text>
+<path class="a" d="M40 198h-20v-140h20"/><path class="a" d="M32 50l8 8-8 8"/><text x="60" y="250" class="t">и снова проверка</text>
+<path class="a" d="M270 58h130"/><path class="a" d="M392 50l8 8-8 8"/><text x="316" y="48">нет</text>
+<rect class="c" x="400" y="30" width="200" height="56" rx="10"/><text class="t" x="428" y="64">выйти из цикла</text>
+</svg>

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" role="img" aria-label="Команды программы выполняются сверху вниз">
+<style>text{font:16px system-ui,sans-serif;fill:#8aa0ff}.c{fill:none;stroke:#8aa0ff;stroke-width:2}.t{fill:#b9c4e8}.a{stroke:#8aa0ff;stroke-width:2.5;fill:none}</style>
+<rect class="c" x="30" y="20" width="300" height="46" rx="10"/><text class="t" x="50" y="49">вывести("Привет");</text>
+<rect class="c" x="30" y="100" width="300" height="46" rx="10"/><text class="t" x="50" y="129">вывести("Как дела?");</text>
+<rect class="c" x="30" y="180" width="300" height="46" rx="10"/><text class="t" x="50" y="209">вернуть 0;</text>
+<path class="a" d="M180 66v34M180 146v34"/><path class="a" d="M172 92l8 8 8-8M172 172l8 8 8-8"/>
+<text x="370" y="49">1. выполняется первой</text><text x="370" y="129">2. потом эта</text><text x="370" y="209">3. и в конце эта</text>
+</svg>
