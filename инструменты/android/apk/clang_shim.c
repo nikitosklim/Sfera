@@ -31,25 +31,33 @@ int main(int argc, char **argv) {
     *slash = 0;
     const char *lib = self;
 
+    /* «-shared» — собираем библиотеку (libmain.so для приложения), а не программу. */
+    int shared = 0;
+    for (int i = 1; i < argc; i++) if (!strcmp(argv[i], "-shared")) shared = 1;
+
     char **args = calloc((size_t)argc + 32, sizeof(char *));
     int k = 0;
     args[k++] = join(lib, "liblld.so");
     args[k++] = "-flavor";
     args[k++] = "gnu";
-    args[k++] = "-pie";
-    args[k++] = "--dynamic-linker=/system/bin/linker64";
+    if (shared) {
+        args[k++] = "-shared";
+    } else {
+        args[k++] = "-pie";
+        args[k++] = "--dynamic-linker=/system/bin/linker64";
+    }
     args[k++] = "-z";
     args[k++] = "now";
     args[k++] = "--eh-frame-hdr";
     args[k++] = "-L";
     args[k++] = (char *)lib;
-    args[k++] = join(lib, "libsfera_crtbegin.so");
+    args[k++] = join(lib, shared ? "libsfera_crtbegin_so.so" : "libsfera_crtbegin.so");
 
     for (int i = 1; i < argc; i++) {
         const char *a = argv[i];
         if (!strcmp(a, "-o") && i + 1 < argc) { args[k++] = "-o"; args[k++] = argv[++i]; continue; }
         if (!strcmp(a, "-no-pie") || !strcmp(a, "-nodefaultlibs") || !strcmp(a, "-fuse-ld=lld") ||
-            !strcmp(a, "-fPIC") || !strcmp(a, "-pie") || !strcmp(a, "-lpthread") || !strcmp(a, "-lrt") ||
+            !strcmp(a, "-fPIC") || !strcmp(a, "-pie") || !strcmp(a, "-shared") || !strcmp(a, "-lpthread") || !strcmp(a, "-lrt") ||
             !strncmp(a, "--target=", 9) || !strncmp(a, "--sysroot=", 10)) continue;
         if (!strcmp(a, "-lc") || !strcmp(a, "-lm") || !strcmp(a, "-ldl")) continue; /* добавим ниже */
         args[k++] = argv[i];
@@ -59,7 +67,7 @@ int main(int argc, char **argv) {
     args[k++] = join(lib, "libsfera_m.so");
     args[k++] = join(lib, "libsfera_dl.so");
     args[k++] = join(lib, "libsfera_builtins.so");
-    args[k++] = join(lib, "libsfera_crtend.so");
+    args[k++] = join(lib, shared ? "libsfera_crtend_so.so" : "libsfera_crtend.so");
     args[k] = NULL;
 
     if (getenv("SFERA_SHIM_DEBUG")) {

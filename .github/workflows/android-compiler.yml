@@ -40,6 +40,8 @@ jobs:
         env:
           RUST_BACKTRACE: "1"
         run: bash -x ./собрать-android-компилятор.sh compiler
+      - name: Упаковщик APK под Android
+        run: bash -x ./собрать-android-упаковщик.sh
       - uses: actions/upload-artifact@v4
         with:
           name: sfera-android-bin

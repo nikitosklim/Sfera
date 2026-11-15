@@ -116,6 +116,8 @@ jobs:
         env:
           RUST_BACKTRACE: "1"
         run: bash -x ./собрать-android-компилятор.sh compiler
+      - name: Упаковщик APK под Android
+        run: bash -x ./собрать-android-упаковщик.sh
       - name: Ключ подписи Android (если задан в секретах)
         env:
           KS_B64: ${{ secrets.SFERA_KEYSTORE_B64 }}
