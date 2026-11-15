@@ -45,7 +45,7 @@ LIST="$TMP/список.txt"; : > "$LIST"
 for root in "$TMP" "$DIR"; do
   find "$root" -maxdepth 4 -type f \( -name 'Sfera-Setup-*.exe' -o -name 'Sfera-Setup-*.dmg' -o -name 'Sfera-Setup-*.deb' \
     -o -name 'Sfera-Panel-Windows.zip' -o -name 'Sfera-Panel-macOS.zip' -o -name 'Sfera-Panel-macOS-Intel.zip' \
-    -o -name 'Sfera-Panel-Linux.tar.xz' -o -name 'Sfera-Panel-Android.apk' \) 2>/dev/null >> "$LIST"
+    -o -name 'Sfera-Panel-Linux.tar.xz' -o -name 'Sfera-Panel-Android.apk' -o -name 'Sfera-App-Template.apk' \) 2>/dev/null >> "$LIST"
 done
 sort -u "$LIST" -o "$LIST"
 [ -s "$LIST" ] || { echo "В $DIR не найдено файлов сборки (Sfera-Setup-*, Sfera-Panel-*)."; exit 1; }
@@ -90,6 +90,9 @@ while IFS= read -r FILE; do
     Sfera-Panel-Android.apk)
       NAME="Sfera-$VER.apk"; TITLE="Сфера для Android"
       DESC="Редактор, запуск программ прямо на телефоне, документация и уроки без интернета. Разрешите установку из браузера или файлового менеджера; обновления ставятся поверх." ;;
+    Sfera-App-Template.apk)
+      NAME="Sfera-App-Template-$VER.apk"; TITLE="Сфера для Android: шаблон приложений"
+      DESC="Заготовка для команды «сфера собрать-android»: в неё подставляется ваша программа, получается своё приложение для телефона. Положите файл в ~/.sfera/android/ под именем Sfera-App-Template.apk. Устанавливать на телефон его не нужно." ;;
     *) continue ;;
   esac
   case "$NAME" in *"-$VER"*) ;; *) echo "Пропускаю $BASE: версия в имени ($NAME) не совпадает с $VER"; ERRS=$((ERRS+1)); continue ;; esac

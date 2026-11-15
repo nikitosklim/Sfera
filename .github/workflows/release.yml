@@ -137,12 +137,16 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: sfera-panel-android
-          path: релиз/Sfera-Panel-Android.apk
+          path: |
+            релиз/Sfera-Panel-Android.apk
+            релиз/Sfera-App-Template.apk
       - name: Приложить к релизу
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: релиз/Sfera-Panel-Android.apk
+          files: |
+            релиз/Sfera-Panel-Android.apk
+            релиз/Sfera-App-Template.apk
 
   macos-intel:
     name: macOS (Intel)
