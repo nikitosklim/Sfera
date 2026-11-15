@@ -717,3 +717,14 @@ html{scroll-behavior:smooth}
 .инфо-кнопка:hover{background:var(--accent);color:var(--accent-ink)}
 .инфо-текст{display:block;margin:8px 0 4px;padding:10px 14px;border-left:3px solid var(--accent);background:var(--bg-soft);border-radius:0 10px 10px 0;font-size:.97rem}
 .инфо-текст[hidden]{display:none}
+
+/* «Попробуй сам»: редактор и вывод прямо в уроке */
+.попробуй{margin:22px 0;padding:16px;border:1px solid var(--accent);border-radius:var(--radius);background:var(--bg-soft)}
+.попробуй-шапка{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;margin-bottom:10px}
+.попробуй-шапка span{color:var(--muted);font-size:.92rem}
+.попробуй textarea{width:100%;box-sizing:border-box;font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;padding:12px 14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg);color:inherit;resize:vertical;tab-size:4}
+.попробуй-ввод{display:block;margin-top:10px;font-size:.9rem;color:var(--muted)}
+.попробуй-ввод textarea{margin-top:4px}
+.попробуй-кнопки{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
+.попробуй-вывод{margin:0;min-height:64px;max-height:320px;overflow:auto;white-space:pre-wrap;word-break:break-word;padding:12px 14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg)}
+.попробуй-вывод.ошибка{color:#b3261e;border-color:#b3261e}
