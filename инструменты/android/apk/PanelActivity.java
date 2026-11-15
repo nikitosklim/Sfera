@@ -52,17 +52,34 @@ public class PanelActivity extends SDLActivity {
         t.start();
     }
 
-    private void install(String name) {
+    private void log(String text) {
         try {
+            Files.write(new File(getFilesDir(), "net/install.log").toPath(), (text + "\n").getBytes(StandardCharsets.UTF_8),
+                java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND);
+        } catch (Throwable ignore) {
+        }
+    }
+
+    private void install(String name) {
+        log("установка: получен запрос на " + name);
+        try {
+            File apk = new File(new File(getFilesDir(), "apps"), name);
+            log("файл: " + apk.length() + " байт, Android " + android.os.Build.VERSION.SDK_INT);
+            if (android.os.Build.VERSION.SDK_INT >= 26 && !getPackageManager().canRequestPackageInstalls()) {
+                // Без этого разрешения установщик может не открыться: просим включить его для панели.
+                log("нужно разрешить установку из панели: открываю настройки, затем нажмите «APK» ещё раз");
+                Intent s = new Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getPackageName()));
+                s.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(s);
+                return;
+            }
             Intent i = new Intent(Intent.ACTION_VIEW);
             i.setDataAndType(Uri.parse("content://ru.sfera.panel.apps/" + Uri.encode(name)), "application/vnd.android.package-archive");
             i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(i);
+            log("установщик запущен");
         } catch (Throwable e) {
-            try {
-                Files.write(new File(getFilesDir(), "net/install.err").toPath(), String.valueOf(e).getBytes(StandardCharsets.UTF_8));
-            } catch (Throwable ignore) {
-            }
+            log("ошибка установки: " + e);
         }
     }
 }

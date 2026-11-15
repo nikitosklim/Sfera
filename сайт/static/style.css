@@ -704,3 +704,10 @@ html{scroll-behavior:smooth}
   .док-темы{position:static;max-height:none;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--bg-soft)}
   .материал.док .текст{order:2}
 }
+
+/* Кнопка «Копировать» над блоками кода (копирование-кода.js). */
+.код-блок{position:relative}
+.код-блок>pre{padding-top:40px}
+.код-блок .копировать{position:absolute;top:8px;right:8px;font:inherit;font-size:.82rem;line-height:1;padding:7px 11px;border-radius:8px;border:1px solid var(--code-line);background:rgba(255,255,255,.08);color:var(--code-fg);cursor:pointer}
+.код-блок .копировать:hover{background:rgba(255,255,255,.16)}
+.код-блок .копировать:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
