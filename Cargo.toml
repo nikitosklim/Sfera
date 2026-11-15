@@ -45,6 +45,10 @@ serde = "1.0"
 serde_json = "1.0"
 # Чтение .tar.gz пакетов из реестра (без внешней программы tar).
 flate2 = "1"
+# Упаковка и подпись Android-приложений (src/bin/сфера_apk.rs).
+sha2 = "0.10"
+p256 = { version = "0.13", features = ["ecdsa"] }
+rand_core = { version = "0.6", features = ["getrandom"] }
 
 # НОВОЕ: НАЙДЕНО РЕАЛЬНОЙ ПРОВЕРКОЙ — при кросс-компиляции самого
 # компилятора под Android линковка падала с десятками "undefined

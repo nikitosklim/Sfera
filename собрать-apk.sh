@@ -52,15 +52,15 @@ OUT="$ROOT/релиз"
 mkdir -p "$W" "$OUT"
 
 if [ ! -x target/release/запустить ]; then
-    echo "0/7  Собираю компилятор..."
+    echo "0/8  Собираю компилятор..."
     cargo build --release
 fi
 
-echo "1/7  Загружаю SDL2 и SDL2_ttf..."
+echo "1/8  Загружаю SDL2 и SDL2_ttf..."
 [ -d "$W/SDL" ] || git clone --quiet --depth 1 --branch release-2.30.8 https://github.com/libsdl-org/SDL "$W/SDL"
 [ -d "$W/SDL_ttf" ] || git clone --quiet --depth 1 --branch release-2.22.0 --recurse-submodules --shallow-submodules https://github.com/libsdl-org/SDL_ttf "$W/SDL_ttf"
 
-echo "2/7  Собираю SDL2 и SDL2_ttf под ARM64 (ndk-build)..."
+echo "2/8  Собираю SDL2 и SDL2_ttf под ARM64 (ndk-build)..."
 mkdir -p "$W/jni"
 ln -sfn "$W/SDL" "$W/jni/SDL2"
 ln -sfn "$W/SDL_ttf" "$W/jni/SDL2_ttf"
@@ -71,7 +71,7 @@ printf 'APP_ABI := arm64-v8a\nAPP_PLATFORM := android-21\nAPP_STL := c++_shared\
 LIBS="$W/libs/arm64-v8a"
 ls "$LIBS"
 
-echo "3/7  Компилирую панель на Сфере (libmain.so)..."
+echo "3/8  Компилирую панель на Сфере (libmain.so)..."
 rm -rf "$W/src"; mkdir -p "$W/src"
 cp инструменты/android/панель_android.код "$W/src/"
 cp инструменты/панель-разработчика/тема.код "$W/src/"
@@ -88,7 +88,7 @@ cp "$W/src/панель_android" "$LIBS/libmain.so"
 # всё упаковано под такими именами; panel_android.код находит их в каталоге библиотек.
 BIN="${SFERA_ANDROID_BIN:-$ROOT/релиз/android-bin}"
 if [ -f "$BIN/запустить" ] && [ -f "$BIN/lld" ]; then
-    echo "3b/7  Добавляю компилятор в APK..."
+    echo "3b/8  Добавляю компилятор в APK..."
     cp "$BIN/запустить" "$LIBS/libsferac.so"
     cp "$BIN/lld" "$LIBS/liblld.so"
     "$TOOLCHAIN/bin/aarch64-linux-android23-clang" -O2 инструменты/android/apk/clang_shim.c -o "$LIBS/libsfera_clang.so"
@@ -115,14 +115,14 @@ cp -r "$ROOT/сайт/content/lessons" "$DOCS_STAGE/lessons"
 cp -r "$ROOT/examples" "$DOCS_STAGE/examples"
 tar -cf "$LIBS/libsfera_docs.so" -C "$DOCS_STAGE" docs lessons examples
 
-echo "4/7  Компилирую Java-обвязку SDL..."
+echo "4/8  Компилирую Java-обвязку SDL..."
 rm -rf "$W/classes" "$W/dex"; mkdir -p "$W/classes" "$W/dex"
 javac --release 8 -nowarn -cp "$ANDROID_JAR" -d "$W/classes" \
     $(find "$W/SDL/android-project/app/src/main/java" -name '*.java') \
     инструменты/android/apk/PanelActivity.java инструменты/android/apk/NetBridge.java 2>&1 | grep -v '^Note:\|warning' || true
 "$BT/d8" --lib "$ANDROID_JAR" --min-api 21 --output "$W/dex" $(find "$W/classes" -name '*.class')
 
-echo "5/7  Собираю APK..."
+echo "5/8  Собираю APK..."
 rm -f "$W/res.zip"
 "$BT/aapt2" compile --dir инструменты/android/apk/res -o "$W/res.zip"
 "$BT/aapt2" link -o "$W/base.apk" "$W/res.zip" -I "$ANDROID_JAR" --manifest инструменты/android/apk/AndroidManifest.xml \
@@ -138,7 +138,7 @@ with zipfile.ZipFile(os.path.join(w, "base.apk"), "a") as z:
     z.write(mono, "assets/mono.ttf", zipfile.ZIP_DEFLATED)
 PY
 
-echo "6/7  Выравниваю и подписываю..."
+echo "6/8  Выравниваю и подписываю..."
 "$BT/zipalign" -f -p 4 "$W/base.apk" "$W/aligned.apk"
 if [ -n "$SFERA_KEYSTORE" ]; then
     KS="$SFERA_KEYSTORE"; KP="${SFERA_KEYSTORE_PASS:-android}"
@@ -150,4 +150,38 @@ fi
 "$BT/apksigner" sign --ks "$KS" --ks-pass "pass:$KP" --key-pass "pass:$KP" --out "$OUT/Sfera-Panel-Android.apk" "$W/aligned.apk"
 "$BT/apksigner" verify "$OUT/Sfera-Panel-Android.apk"
 
-echo "7/7  Готово: $OUT/Sfera-Panel-Android.apk"
+# Шаблон для приложений пользователя: окно SDL + SDL2 + шрифты, без компилятора и документации.
+# `сфера собрать-android` (и кнопка «Собрать APK» в панели) подставляет в него libmain.so,
+# меняет имя и идентификатор и подписывает своим ключом (src/bin/сфера_apk.rs).
+echo "7/8  Собираю шаблон приложений Sfera-App-Template.apk..."
+T="$W/шаблон"
+rm -rf "$T"; mkdir -p "$T/classes" "$T/dex" "$T/libs"
+javac --release 8 -nowarn -cp "$ANDROID_JAR" -d "$T/classes" \
+    $(find "$W/SDL/android-project/app/src/main/java" -name '*.java') \
+    инструменты/android/приложение/AppActivity.java 2>&1 | grep -v '^Note:\|warning' || true
+"$BT/d8" --lib "$ANDROID_JAR" --min-api 21 --output "$T/dex" $(find "$T/classes" -name '*.class')
+for so in libSDL2.so libSDL2_ttf.so libc++_shared.so; do
+    [ -f "$LIBS/$so" ] && cp "$LIBS/$so" "$T/libs/$so"
+done
+cp "$LIBS/libmain.so" "$T/libs/libmain.so"   # заглушка: при упаковке заменяется программой пользователя
+"$BT/aapt2" link -o "$T/base.apk" "$W/res.zip" -I "$ANDROID_JAR" --manifest инструменты/android/приложение/AndroidManifest.xml \
+    --min-sdk-version 21 --target-sdk-version 28 --version-code "$CODE" --version-name "$VERSION"
+python3 - "$T" "$FONT" "$MONO" <<'PYEND'
+import sys, glob, os, zipfile
+t, font, mono = sys.argv[1:4]
+with zipfile.ZipFile(os.path.join(t, "base.apk"), "a") as z:
+    z.write(os.path.join(t, "dex", "classes.dex"), "classes.dex", zipfile.ZIP_DEFLATED)
+    for so in sorted(glob.glob(os.path.join(t, "libs", "*.so"))):
+        z.write(so, "lib/arm64-v8a/" + os.path.basename(so), zipfile.ZIP_STORED)
+    z.write(font, "assets/font.ttf", zipfile.ZIP_DEFLATED)
+    z.write(mono, "assets/mono.ttf", zipfile.ZIP_DEFLATED)
+PYEND
+cp "$T/base.apk" "$OUT/Sfera-App-Template.apk"
+if [ -f target/release/сфера_apk ]; then
+    # Проверка: упаковка шаблона даёт валидный подписанный APK.
+    target/release/сфера_apk упаковать --шаблон "$OUT/Sfera-App-Template.apk" --библиотека "$T/libs/libmain.so" \
+        --имя "Проверка" --ключ "$W/app-key.txt" --выход "$T/проверка.apk"
+    "$BT/apksigner" verify "$T/проверка.apk"
+fi
+
+echo "8/8  Готово: $OUT/Sfera-Panel-Android.apk и $OUT/Sfera-App-Template.apk"
