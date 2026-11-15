@@ -42,7 +42,7 @@ public final class NetBridge {
                 File[] files = dir.listFiles();
                 if (files != null) {
                     for (File f : files) {
-                        if (f.getName().endsWith(".req")) {
+                        if (f.getName().endsWith(".req") && !f.getName().equals("install.req")) {
                             handle(f);
                         }
                     }
