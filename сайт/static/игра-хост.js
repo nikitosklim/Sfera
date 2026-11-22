@@ -46,6 +46,20 @@
   холстЭл.addEventListener('pointerdown', function (э) { позиция(э); мышьЗажата = 1; мышьНажата = 1; });
   window.addEventListener('pointerup', function () { мышьЗажата = 0; });
 
+  // ---- сеть (WebSocket)
+  var сокет = null, входящие = [], кольцо = { начало: 0, размер: 0, где: 0 }, кодер = new TextEncoder();
+  function писатьТекст(т) {
+    var б = кодер.encode(String(т));
+    if (!кольцо.размер) return 0;
+    if (б.length > кольцо.размер - 2) б = б.subarray(0, кольцо.размер - 2);
+    if (кольцо.где + б.length + 1 > кольцо.размер) кольцо.где = 0;
+    var а = кольцо.начало + кольцо.где;
+    var м = new Uint8Array(память.buffer);
+    м.set(б, а); м[а + б.length] = 0;
+    кольцо.где += б.length + 1;
+    return а;
+  }
+
   // ---- звук
   var аудио = null;
   function звук(частота, мс) {
@@ -87,6 +101,19 @@
     'и_звук': function (ч, мс) { звук(ч, мс); return 0; },
     'и_сохранить': function (имя, з) { try { localStorage.setItem('сфера-игра:' + текст(имя), String(з)); } catch (е) {} return 0; },
     'и_взять': function (имя) { try { return parseInt(localStorage.getItem('сфера-игра:' + текст(имя)), 10) || 0; } catch (е) { return 0; } },
+    'и_сокет_открыть': function (адрес) {
+      try {
+        входящие = [];
+        сокет = new WebSocket(текст(адрес));
+        сокет.onmessage = function (э) { if (typeof э.data === 'string') { входящие.push(э.data); if (входящие.length > 500) входящие.shift(); } };
+      } catch (е) { сокет = null; }
+      return 0;
+    },
+    'и_сокет_состояние': function () { return !сокет ? 0 : сокет.readyState === 0 ? 1 : сокет.readyState === 1 ? 2 : 3; },
+    'и_сокет_отправить': function (т) { if (сокет && сокет.readyState === 1) { сокет.send(текст(т)); return 1; } return 0; },
+    'и_сокет_есть': function () { return входящие.length; },
+    'и_сокет_взять': function () { return писатьТекст(входящие.length ? входящие.shift() : ''); },
+    'и_сокет_закрыть': function () { if (сокет) { try { сокет.close(); } catch (е) {} } return 0; },
     'и_время': function () { return Math.round(performance.now() - начало) | 0; }
   };
 
@@ -123,6 +150,8 @@
     })
     .then(function (э) {
       экспорт = э.exports; память = экспорт.memory;
+      var старые = память.grow(1);
+      кольцо.начало = старые * 65536; кольцо.размер = 65536; кольцо.где = 0;
       try { экспорт._start(); } catch (е) { if (!(е && е.выход !== undefined)) throw е; }
     })
     .catch(function (е) { console.error('Сфера: игра не запустилась —', е); });
