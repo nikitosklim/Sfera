@@ -7,6 +7,15 @@ description = "Компилятор языка программирования 
 [[bin]]
 name = "запустить"
 path = "src/main.rs"
+# Компилятор тянет LLVM (inkwell). Языковой сервер (сфера_lsp) LLVM не нужен —
+# его можно собрать без LLVM: cargo build --release --no-default-features --bin сфера_lsp
+# (так собирается расширение VS Code на GitHub Actions). Обычная сборка
+# (cargo build --release) работает как раньше: фича "llvm" включена по умолчанию.
+required-features = ["llvm"]
+
+[features]
+default = ["llvm"]
+llvm = ["dep:inkwell", "dep:llvm-sys"]
 
 [dependencies]
 # LLVM-бэкенд для генерации машинного кода.
@@ -32,7 +41,7 @@ path = "src/main.rs"
 # (не только Windows) — безопасно, потому что initialize_native/
 # initialize_all (используются на macOS/Linux) никакой таргет-фичей не
 # гейтятся вовсе (см. комментарий у initialize_x86 в codegen.rs).
-inkwell = { version = "0.5", default-features = false, features = ["llvm18-0", "target-aarch64", "target-x86"] }
+inkwell = { version = "0.5", optional = true, default-features = false, features = ["llvm18-0", "target-aarch64", "target-x86"] }
 
 # Для языкового сервера (src/bin/сфера_lsp.rs) — НЕ нужны компилятору
 # самому по себе (main.rs их не использует), но раз уж они в общем списке
@@ -81,14 +90,14 @@ rand_core = { version = "0.6", features = ["getrandom"] }
 # экспортирована напрямую из библиотеки), так что target.c ей не нужен —
 # тот же приём, что уже работал для initialize_aarch64 на Android.
 [target.'cfg(any(target_os = "android", target_os = "windows"))'.dependencies]
-llvm-sys = { version = "180.0.0", features = ["disable-alltargets-init"] }
+llvm-sys = { version = "180.0.0", optional = true, features = ["disable-alltargets-init"] }
 
 # Таргеты RISC-V и ARM (микроконтроллеры) включаются только не на Windows и не на Android:
 # готовый пакет LLVM для Windows и наша сборка LLVM под Android (только AArch64) их не
 # содержат (см. объяснение выше), и линковка там не удалась бы
 # (undefined symbol: LLVMInitializeRISCVTargetMC).
 [target.'cfg(not(any(windows, target_os = "android")))'.dependencies]
-inkwell = { version = "0.5", default-features = false, features = ["llvm18-0", "target-riscv", "target-arm"] }
+inkwell = { version = "0.5", optional = true, default-features = false, features = ["llvm18-0", "target-riscv", "target-arm"] }
 
 [profile.dev]
 opt-level = 0
