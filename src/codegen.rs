@@ -11466,6 +11466,15 @@ impl<'ctx> Кодогенератор<'ctx> {
         let ptr_тип = self.контекст.i8_type().ptr_type(inkwell::AddressSpace::default());
         let тип_ф = self.контекст.void_type().fn_type(&[ptr_тип.into(), i64_тип.into(), i64_тип.into()], false);
         let ф = self.модуль.add_function("sfera_паника", тип_ф, None);
+        if сборка_без_операционной_системы() {
+            // Без операционной системы нет ни printf, ни exit: остановка — вечный цикл на месте
+            // (плата зависает, как и при любой необработанной ошибке; вывод в порт делает сама программа).
+            let построитель = self.контекст.create_builder();
+            let блок = self.контекст.append_basic_block(ф, "вход");
+            построитель.position_at_end(блок);
+            let _ = построитель.build_unconditional_branch(блок);
+            return ф;
+        }
         let printf = self.модуль.get_function("printf").expect("printf объявлен всегда");
         let exit = self.модуль.get_function("exit").unwrap_or_else(|| {
             self.модуль.add_function("exit", self.контекст.void_type().fn_type(&[i32_тип.into()], false), None)
