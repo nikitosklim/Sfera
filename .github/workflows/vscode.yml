@@ -32,7 +32,7 @@ permissions:
   contents: write
 
 jobs:
-  платформенные:
+  platform:
     name: ${{ matrix.vsce_target }}
     strategy:
       fail-fast: false
@@ -87,7 +87,7 @@ jobs:
           name: vsix-${{ matrix.vsce_target }}
           path: инструменты/sfera-vscode/sfera-${{ matrix.vsce_target }}.vsix
 
-  универсальный:
+  universal:
     # Для платформ без своего пакета (например, Linux на ARM): подсказки работают, ошибки в реальном времени — нет.
     name: universal (без сервера)
     runs-on: ubuntu-24.04
@@ -108,9 +108,9 @@ jobs:
           name: vsix-universal
           path: инструменты/sfera-vscode/sfera-universal.vsix
 
-  публикация:
+  publish:
     name: Публикация в маркетплейс
-    needs: [платформенные, универсальный]
+    needs: [platform, universal]
     if: startsWith(github.ref, 'refs/tags/vscode-v') || (github.event_name == 'workflow_dispatch' && inputs.publish)
     runs-on: ubuntu-24.04
     permissions:
