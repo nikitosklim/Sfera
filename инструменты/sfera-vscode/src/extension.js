@@ -116,6 +116,9 @@ function правкаПодключения(документ, имя) {
 function создатьЭлемент(документ, позиция, э, настройки) {
   const метка = э.подключить ? { label: э.метка, description: `из «${э.подключить}»` } : э.метка;
   const элемент = new vscode.CompletionItem(метка, ВИДЫ[э.вид] || vscode.CompletionItemKind.Text);
+  // Заменяемый диапазон задаём сами (не полагаемся на определение слова редактором, которое для кириллицы ненадёжно).
+  const начало = документ.lineAt(позиция.line).text.slice(0, позиция.character).search(/[A-Za-z0-9_\u0400-\u04FF]*$/);
+  элемент.range = new vscode.Range(new vscode.Position(позиция.line, начало < 0 ? позиция.character : начало), позиция);
   элемент.detail = э.деталь;
   if (э.док) элемент.documentation = new vscode.MarkdownString(э.док.replace(/\n/g, '  \n'));
   элемент.sortText = э.сортировка || '5' + э.метка;

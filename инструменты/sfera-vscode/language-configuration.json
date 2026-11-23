@@ -52,5 +52,5 @@
     "increaseIndentPattern": "^\\s*(функция|структура|контракт|если|иначе|для|пока|параллельно|детерминировано)\\b.*$",
     "decreaseIndentPattern": "^\\s*(конец|иначе)\\b"
   },
-  "wordPattern": "[\\p{L}_][\\p{L}\\p{N}_]*"
+  "wordPattern": "[A-Za-z_\\u0400-\\u04FF][A-Za-z0-9_\\u0400-\\u04FF]*"
 }
