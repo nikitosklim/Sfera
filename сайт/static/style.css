@@ -739,3 +739,14 @@ html{scroll-behavior:smooth}
 .решение-блок{margin:1rem 0;border:1px solid var(--line);border-radius:var(--radius);padding:0 1rem}
 .решение-блок>summary{cursor:pointer;padding:.7rem 0;font-weight:600;color:var(--accent)}
 .решение-блок>pre{margin:0 0 1rem}
+
+/* Витрина на главной: готовая программа рядом с описанием */
+.витрина{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:56px;align-items:center}
+.витрина-окно{margin:0;max-width:520px;justify-self:center;width:100%;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 24px 60px -24px rgba(8,16,48,.45);background:#0b1426}
+.витрина-окно img{display:block;width:100%;height:auto}
+.витрина-текст h2{margin-top:0}
+.витрина-текст .lead{font-size:1.12rem;color:var(--muted)}
+.витрина-текст ul{padding-left:1.2em;margin:0 0 1em}
+.витрина-текст li{margin:.35em 0}
+.витрина-текст .ссылки{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px}
+@media (max-width:860px){.витрина{grid-template-columns:1fr;gap:28px}}
