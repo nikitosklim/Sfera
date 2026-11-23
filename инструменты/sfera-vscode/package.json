@@ -1,8 +1,8 @@
 {
   "name": "sfera-lang",
   "displayName": "Сфера",
-  "description": "Язык программирования «Сфера»: подсветка синтаксиса, ошибки в реальном времени, подсказки и автодополнение.",
-  "version": "0.3.5",
+  "description": "Язык программирования «Сфера»: подсветка, подсказки при наборе кода (в том числе из библиотек), подсказка параметров, переход к определению, ошибки в реальном времени.",
+  "version": "0.4.0",
   "publisher": "sfera-lang",
   "license": "MIT",
   "icon": "images/icon.png",
@@ -15,7 +15,7 @@
     "url": "https://github.com/nikitosklim/Sfera/issues"
   },
   "engines": {
-    "vscode": "^1.75.0"
+    "vscode": "^1.82.0"
   },
   "categories": [
     "Programming Languages",
@@ -27,7 +27,9 @@
     "русский язык программирования",
     "компилятор"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onLanguage:sfera"
+  ],
   "main": "./src/extension.js",
   "contributes": {
     "languages": [
@@ -62,12 +64,22 @@
         "sfera.serverPath": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Путь к языковому серверу `сфера_lsp`. Если пусто, используется `сфера_lsp` из PATH. Сервер лежит в архиве с компилятором."
+          "markdownDescription": "Путь к языковому серверу `сфера_lsp` (он показывает ошибки в реальном времени). Если пусто, используется сервер, вшитый в расширение."
         },
         "sfera.enableLanguageServer": {
           "type": "boolean",
           "default": true,
-          "description": "Включить языковой сервер (ошибки, подсказки, автодополнение)."
+          "description": "Показывать ошибки в реальном времени (языковой сервер). Подсказки при наборе кода работают независимо от этой настройки."
+        },
+        "sfera.stdlibPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Дополнительная папка со стандартной библиотекой Сферы. Обычно не нужна: библиотека вшита в расширение."
+        },
+        "sfera.suggestFromUnimported": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Предлагать функции из ещё не подключённых библиотек; при выборе строка `подключить …;` добавляется сама."
         }
       }
     },
@@ -87,6 +99,9 @@
     "vscode-languageclient": "^9.0.1"
   },
   "scripts": {
+    "vscode:prepublish": "node scripts/копировать-стдлиб.js",
+    "prepare-stdlib": "node scripts/копировать-стдлиб.js",
+    "test": "node tests/движок.test.js && node tests/расширение.test.js",
     "package": "vsce package"
   }
 }
