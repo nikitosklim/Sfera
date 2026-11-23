@@ -87,7 +87,7 @@ jobs:
       - name: Упаковка расширения
         working-directory: инструменты/sfera-vscode
         run: |
-          npx --yes @vscode/vsce ls --target ${{ matrix.vsce_target }} | node scripts/check-ascii.js
+          npx --yes @vscode/vsce ls | node scripts/check-ascii.js
           npx --yes @vscode/vsce package --target ${{ matrix.vsce_target }} --out "sfera-${{ matrix.vsce_target }}.vsix"
       - uses: actions/upload-artifact@v4
         with:
