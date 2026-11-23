@@ -15,6 +15,10 @@ const { Движок } = require('./engine.js');
 const подсказки = require('./hints.json');
 
 let клиент;
+let вызовов = 0;
+// Подсказки запрашиваются при каждой набранной букве: так они появляются сами, даже если редактор
+// не считает кириллицу «словом» и не запускает быстрые подсказки.
+const БУКВЫ = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_'.split('');
 let движок;
 const кэшКонтекстов = new Map();
 
@@ -202,9 +206,13 @@ function activate(context) {
   const язык = { language: 'sfera' };
 
   context.subscriptions.push(vscode.languages.registerCompletionItemProvider(язык, {
-    provideCompletionItems(документ, позиция) {
+    provideCompletionItems(документ, позиция, токен, контекст) {
       const н = vscode.workspace.getConfiguration('sfera');
       const л = документ.lineAt(позиция.line).text.slice(0, позиция.character);
+      if (вызовов < 25) {
+        вызовов++;
+        журнал.appendLine('[подсказки] запрос #' + вызовов + ', вид=' + (контекст ? контекст.triggerKind : '?') + ', перед курсором: «' + л.slice(-20) + '»');
+      }
       // триггер «пробел» нужен только после «подключить »
       if (/\s$/.test(л) && !/^\s*подключить\s+$/u.test(л)) return undefined;
       const к = контекстДокумента(документ);
@@ -212,7 +220,7 @@ function activate(context) {
       if (!н.get('suggestFromUnimported', true)) элементы = элементы.filter(э => !э.подключить);
       return элементы.map(э => создатьЭлемент(документ, позиция, э, н));
     }
-  }, '.', ' '));
+  }, '.', ' ', ...БУКВЫ));
 
   context.subscriptions.push(vscode.languages.registerSignatureHelpProvider(язык, {
     provideSignatureHelp(документ, позиция) {
