@@ -99,9 +99,9 @@
     "vscode-languageclient": "^9.0.1"
   },
   "scripts": {
-    "vscode:prepublish": "node scripts/копировать-стдлиб.js",
-    "prepare-stdlib": "node scripts/копировать-стдлиб.js",
-    "test": "node tests/движок.test.js && node tests/расширение.test.js",
+    "vscode:prepublish": "node scripts/prepare-stdlib.js",
+    "prepare-stdlib": "node scripts/prepare-stdlib.js",
+    "test": "node scripts/prepare-stdlib.js && node tests/движок.test.js && node tests/расширение.test.js",
     "package": "vsce package"
   }
 }

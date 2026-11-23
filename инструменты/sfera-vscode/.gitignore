@@ -1,5 +1,5 @@
 # Копируется из ../../стандартная_библиотека перед упаковкой (npm run prepare-stdlib)
-stdlib/
+stdlib.json
 # Бинарник языкового сервера кладётся сюда при сборке расширения на GitHub Actions
 bin/
 node_modules/

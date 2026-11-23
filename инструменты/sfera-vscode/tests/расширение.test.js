@@ -40,7 +40,9 @@ Module._load = function (запрос, ...остальное) { return запр�
 
 const расширение = require('../src/extension.js');
 const корень = path.join(__dirname, '..');
-расширение.activate({ extensionPath: fs.existsSync(path.join(корень, 'stdlib')) ? корень : path.join(корень, '..', '..'), subscriptions: [] });
+const хранилище = fs.mkdtempSync(path.join(os.tmpdir(), 'сфера-хранилище-'));
+расширение.activate({ extensionPath: корень, globalStorageUri: { fsPath: хранилище }, subscriptions: [] });
+assert.ok(fs.existsSync(path.join(хранилище, 'stdlib-' + require('../package.json').version, 'хеш.код')), 'библиотека не развернулась из stdlib.json');
 assert.ok(зарегистрировано.дополнение && зарегистрировано.параметры && зарегистрировано.определение && зарегистрировано.справка, 'не все провайдеры зарегистрированы');
 
 let версия = 0;

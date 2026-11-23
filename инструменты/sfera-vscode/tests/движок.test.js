@@ -4,10 +4,10 @@ const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { Движок, разобратьФайл } = require('../src/движок.js');
+const { Движок, разобратьФайл } = require('../src/engine.js');
 
-const подсказки = require('../src/подсказки.json');
-const стдлиб = [path.join(__dirname, '..', 'stdlib'), path.join(__dirname, '..', '..', '..', 'стандартная_библиотека')].find(п => fs.existsSync(п));
+const подсказки = require('../src/hints.json');
+const стдлиб = [path.join(__dirname, '..', '..', '..', 'стандартная_библиотека')].find(п => fs.existsSync(п));
 assert.ok(стдлиб, 'не найдена стандартная библиотека');
 const движок = new Движок({ подсказки, стдлибПути: [стдлиб] });
 const папка = fs.mkdtempSync(path.join(os.tmpdir(), 'сфера-тест-'));

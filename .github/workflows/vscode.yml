@@ -42,18 +42,22 @@ jobs:
             os: windows-latest
             rust_target: x86_64-pc-windows-msvc
             exe: сфера_lsp.exe
+            bin_name: sfera_lsp.exe
           - vsce_target: linux-x64
             os: ubuntu-24.04
             rust_target: x86_64-unknown-linux-gnu
             exe: сфера_lsp
+            bin_name: sfera_lsp
           - vsce_target: darwin-arm64
             os: macos-latest
             rust_target: aarch64-apple-darwin
             exe: сфера_lsp
+            bin_name: sfera_lsp
           - vsce_target: darwin-x64
             os: macos-latest
             rust_target: x86_64-apple-darwin
             exe: сфера_lsp
+            bin_name: sfera_lsp
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -70,8 +74,9 @@ jobs:
       - name: Положить сервер в расширение
         run: |
           mkdir -p "инструменты/sfera-vscode/bin"
-          cp "target/${{ matrix.rust_target }}/release/${{ matrix.exe }}" "инструменты/sfera-vscode/bin/${{ matrix.exe }}"
-          chmod +x "инструменты/sfera-vscode/bin/${{ matrix.exe }}" || true
+          # В пакете расширения имена файлов только латиницей: маркетплейс портит русские имена.
+          cp "target/${{ matrix.rust_target }}/release/${{ matrix.exe }}" "инструменты/sfera-vscode/bin/${{ matrix.bin_name }}"
+          chmod +x "инструменты/sfera-vscode/bin/${{ matrix.bin_name }}" || true
           ls -la "инструменты/sfera-vscode/bin"
       - name: Установка зависимостей и проверки
         working-directory: инструменты/sfera-vscode
@@ -81,7 +86,9 @@ jobs:
           npm test
       - name: Упаковка расширения
         working-directory: инструменты/sfera-vscode
-        run: npx --yes @vscode/vsce package --target ${{ matrix.vsce_target }} --out "sfera-${{ matrix.vsce_target }}.vsix"
+        run: |
+          npx --yes @vscode/vsce ls --target ${{ matrix.vsce_target }} | node scripts/check-ascii.js
+          npx --yes @vscode/vsce package --target ${{ matrix.vsce_target }} --out "sfera-${{ matrix.vsce_target }}.vsix"
       - uses: actions/upload-artifact@v4
         with:
           name: vsix-${{ matrix.vsce_target }}
@@ -102,6 +109,7 @@ jobs:
           npm ci
           npm run prepare-stdlib
           npm test
+          npx --yes @vscode/vsce ls | node scripts/check-ascii.js
           npx --yes @vscode/vsce package --out sfera-universal.vsix
       - uses: actions/upload-artifact@v4
         with:

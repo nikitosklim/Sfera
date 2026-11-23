@@ -11,8 +11,8 @@ const vscode = require('vscode');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { Движок } = require('./движок.js');
-const подсказки = require('./подсказки.json');
+const { Движок } = require('./engine.js');
+const подсказки = require('./hints.json');
 
 let клиент;
 let движок;
@@ -42,11 +42,40 @@ function существует(п) {
 
 // ---------- стандартная библиотека ----------
 
-function путиСтандартнойБиблиотеки(context, настройки) {
+// Библиотека лежит в пакете одним файлом stdlib.json (маркетплейс не принимает русские имена файлов),
+// а при запуске разворачивается в папку расширения для пользователя — уже с настоящими именами.
+function развернутьСтандартнуюБиблиотеку(context, журнал) {
+  try {
+    const пакет = path.join(context.extensionPath, 'stdlib.json');
+    if (!fs.existsSync(пакет)) return null;
+    const версия = require('../package.json').version;
+    const основа = context.globalStorageUri && context.globalStorageUri.fsPath
+      ? context.globalStorageUri.fsPath
+      : path.join(os.tmpdir(), 'sfera-vscode');
+    const папка = path.join(основа, 'stdlib-' + версия);
+    const метка = path.join(папка, '.готово');
+    if (!fs.existsSync(метка)) {
+      const данные = JSON.parse(fs.readFileSync(пакет, 'utf8'));
+      fs.rmSync(папка, { recursive: true, force: true });
+      for (const [имя, текст] of Object.entries(данные.файлы)) {
+        const путь = path.join(папка, ...имя.split('/'));
+        fs.mkdirSync(path.dirname(путь), { recursive: true });
+        fs.writeFileSync(путь, текст, 'utf8');
+      }
+      fs.writeFileSync(метка, версия);
+    }
+    return папка;
+  } catch (e) {
+    журнал.appendLine('Не удалось развернуть стандартную библиотеку: ' + (e && e.message ? e.message : e));
+    return null;
+  }
+}
+
+function путиСтандартнойБиблиотеки(context, настройки, журнал) {
   const дом = os.homedir();
   const пути = [
     (настройки.get('stdlibPath') || '').trim(),
-    path.join(context.extensionPath, 'stdlib'), // вшитая — версия совпадает с расширением
+    развернутьСтандартнуюБиблиотеку(context, журнал), // вшитая — версия совпадает с расширением
     path.join(context.extensionPath, '..', '..', 'стандартная_библиотека'), // запуск из репозитория (F5)
     process.env.SFERA_STDLIB || '',
     path.join(дом, '.sfera', 'lib', 'sfera', 'стандартная_библиотека'),
@@ -104,10 +133,11 @@ function создатьЭлемент(документ, позиция, э, на
 function найтиСервер(context, настройки) {
   const заданный = (настройки.get('serverPath') || '').trim();
   if (заданный) return заданный;
+  const вшитый = path.join(context.extensionPath, 'bin', исполняемое('sfera_lsp')); // вшитый сервер (имя латиницей)
+  if (существует(вшитый)) return вшитый;
   const имя = исполняемое('сфера_lsp');
   const дом = os.homedir();
   const места = [
-    path.join(context.extensionPath, 'bin'), // вшитый сервер
     path.join(дом, '.sfera', 'bin'),
     path.join(дом, 'Applications', 'Панель Сферы.app', 'Contents', 'Resources', 'bin'),
     '/Applications/Панель Сферы.app/Contents/Resources/bin',
@@ -163,7 +193,7 @@ function activate(context) {
   const журнал = vscode.window.createOutputChannel('Сфера');
   context.subscriptions.push(журнал);
 
-  движок = new Движок({ подсказки, стдлибПути: путиСтандартнойБиблиотеки(context, настройки) });
+  движок = new Движок({ подсказки, стдлибПути: путиСтандартнойБиблиотеки(context, настройки, журнал) });
   журнал.appendLine('Стандартная библиотека: ' + движок.проект.стдлибПути.join(', '));
 
   const язык = { language: 'sfera' };
