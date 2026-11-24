@@ -467,6 +467,9 @@ html{scroll-behavior:smooth}
 #зп-прочее:checked ~ .вкладки-бок .вкладка-панель[data-панель="прочее"]{display:block}
 #зп-прочее:checked ~ .вкладки-бок label[for="зп-прочее"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 #зп-прочее:focus-visible ~ .вкладки-бок label[for="зп-прочее"]{outline:3px solid var(--accent);outline-offset:2px}
+#зп-проводник:checked ~ .вкладки-бок .вкладка-панель[data-панель="проводник"]{display:block}
+#зп-проводник:checked ~ .вкладки-бок label[for="зп-проводник"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+#зп-проводник:focus-visible ~ .вкладки-бок label[for="зп-проводник"]{outline:3px solid var(--accent);outline-offset:2px}
 .внутри-таблица{padding:22px 24px 26px}
 .внутри-таблица h3{margin:0 0 .6em;font-size:1.5rem}
 .загрузки-подзаголовок{margin-top:1.6em!important;font-size:1.2rem!important}

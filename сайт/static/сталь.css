@@ -168,7 +168,7 @@ p code,li code,td code{background:var(--inline-bg);border:1px solid #1d2e58;bord
 .пл-метка{height:var(--h);padding:0 14px;color:var(--ink);font-weight:620;border-radius:var(--r-in)}
 .вкладки-список{gap:4px}
 #пл-windows:checked ~ .вкладки-бок label[for="пл-windows"],#пл-macos:checked ~ .вкладки-бок label[for="пл-macos"],#пл-linux:checked ~ .вкладки-бок label[for="пл-linux"],#пл-android:checked ~ .вкладки-бок label[for="пл-android"],#пл-sites:checked ~ .вкладки-бок label[for="пл-sites"],#пл-servers:checked ~ .вкладки-бок label[for="пл-servers"],
-#зп-windows:checked ~ .вкладки-бок label[for="зп-windows"],#зп-macos:checked ~ .вкладки-бок label[for="зп-macos"],#зп-linux:checked ~ .вкладки-бок label[for="зп-linux"],#зп-android:checked ~ .вкладки-бок label[for="зп-android"],#зп-vscode:checked ~ .вкладки-бок label[for="зп-vscode"],#зп-прочее:checked ~ .вкладки-бок label[for="зп-прочее"]{
+#зп-windows:checked ~ .вкладки-бок label[for="зп-windows"],#зп-macos:checked ~ .вкладки-бок label[for="зп-macos"],#зп-linux:checked ~ .вкладки-бок label[for="зп-linux"],#зп-android:checked ~ .вкладки-бок label[for="зп-android"],#зп-vscode:checked ~ .вкладки-бок label[for="зп-vscode"],#зп-прочее:checked ~ .вкладки-бок label[for="зп-прочее"],#зп-проводник:checked ~ .вкладки-бок label[for="зп-проводник"]{
   background:var(--sel);border-color:#093b8a;color:#fff;text-shadow:0 -1px 0 rgba(0,30,100,.6)}
 .вкладки-админ{border-color:#1d2e58}
 .вкладки-админ a{height:var(--h);display:inline-flex;align-items:center;border-radius:var(--r-in) var(--r-in) 0 0}
