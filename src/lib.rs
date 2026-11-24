@@ -30,5 +30,7 @@ pub mod parser;
 pub mod indexes;
 pub mod converter;
 pub mod semantic;
+#[path = "перечисления.rs"]
+pub mod перечисления;
 #[path = "подсказки.rs"]
 pub mod подсказки;
