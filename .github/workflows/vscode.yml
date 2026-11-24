@@ -142,10 +142,12 @@ jobs:
           # Основной способ — доверенная публикация (OIDC): секреты не нужны, нужна только политика
           # «Trusted Publishing» у издателя sfera-lang в marketplace.visualstudio.com/manage.
           # Если задан секрет VSCE_PAT (старый способ), используется он.
+          # --skip-duplicate: если такая версия уже в маркетплейсе (например, метку переставили
+          # после правки истории), процесс не падает, а тихо пропускает её.
           if [ -n "$VSCE_PAT" ]; then
-            npx --yes @vscode/vsce publish --packagePath пакеты/*.vsix
+            npx --yes @vscode/vsce publish --skip-duplicate --packagePath пакеты/*.vsix
           else
-            npx --yes @vscode/vsce publish --oidc --packagePath пакеты/*.vsix
+            npx --yes @vscode/vsce publish --skip-duplicate --oidc --packagePath пакеты/*.vsix
           fi
       - name: Приложить пакеты к релизу
         if: startsWith(github.ref, 'refs/tags/')
