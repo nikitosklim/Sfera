@@ -32,5 +32,7 @@ pub mod converter;
 pub mod semantic;
 #[path = "перечисления.rs"]
 pub mod перечисления;
+#[path = "литералы.rs"]
+pub mod литералы;
 #[path = "подсказки.rs"]
 pub mod подсказки;
