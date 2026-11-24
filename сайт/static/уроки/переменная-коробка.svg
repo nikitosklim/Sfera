@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 220" role="img" aria-label="Переменная как коробка с подписью">
 <style>text{font:16px system-ui,sans-serif;fill:#8aa0ff}.c{fill:none;stroke:#8aa0ff;stroke-width:2}.t{fill:#b9c4e8}.big{font-size:30px;font-weight:700}</style>
 <rect class="c" x="40" y="60" width="150" height="110" rx="12"/><rect class="c" x="40" y="40" width="150" height="26" rx="8"/>
-<text class="t" x="62" y="58">возраст</text><text class="big" x="92" y="125">15</text><text x="40" y="196">целое возраст = 15;</text>
+<text class="t" x="62" y="58">возраст</text><text class="big" x="92" y="125">15</text><text x="40" y="196">целое возраст = 15</text>
 <rect class="c" x="245" y="60" width="150" height="110" rx="12"/><rect class="c" x="245" y="40" width="150" height="26" rx="8"/>
-<text class="t" x="290" y="58">имя</text><text class="big" x="283" y="125">"Аня"</text><text x="245" y="196">текст имя = "Аня";</text>
+<text class="t" x="290" y="58">имя</text><text class="big" x="283" y="125">"Аня"</text><text x="245" y="196">текст имя = "Аня"</text>
 <rect class="c" x="450" y="60" width="150" height="110" rx="12"/><rect class="c" x="450" y="40" width="150" height="26" rx="8"/>
-<text class="t" x="498" y="58">рост</text><text class="big" x="488" y="125">1.62</text><text x="450" y="196">дробное рост = 1.62;</text>
+<text class="t" x="498" y="58">рост</text><text class="big" x="488" y="125">1.62</text><text x="450" y="196">дробное рост = 1.62</text>
 </svg>

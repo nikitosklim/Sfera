@@ -13,14 +13,14 @@
     <div class="codewin">
       <div class="tab"><b>привет.код</b></div>
 <pre><code><span class="к-сл">функция</span> главная(): <span class="к-тип">целое</span>
-    <span class="к-тип">Список из текстов</span> гости = <span class="к-тип">Список из текстов</span>();
-    гости.добавить(<span class="к-стр">"Аня"</span>);
-    гости.добавить(<span class="к-стр">"Борис"</span>);
+    <span class="к-тип">Список из текстов</span> гости = <span class="к-тип">Список из текстов</span>()
+    гости.добавить(<span class="к-стр">"Аня"</span>)
+    гости.добавить(<span class="к-стр">"Борис"</span>)
 
     <span class="к-сл">для каждого</span> имя <span class="к-сл">в</span> гости
-        вывести(<span class="к-стр">"Привет, %имя%!"</span>);
+        вывести(<span class="к-стр">"Привет, %имя%!"</span>)
     <span class="к-сл">конец</span>
-    <span class="к-сл">вернуть</span> <span class="к-чис">0</span>;
+    <span class="к-сл">вернуть</span> <span class="к-чис">0</span>
 <span class="к-сл">конец</span></code></pre>
       <div class="run"><span class="cmd">&gt; запустить привет.код</span><br><span class="out">Привет, Аня!</span><br><span class="out">Привет, Борис!</span><span class="caret"></span></div>
     </div>
@@ -109,7 +109,7 @@
             <div class="ссылки"><a class="button small" href="/уроки/свой-веб-сервер">Урок: свой веб-сервер</a><a class="button small secondary" href="/документация/веб-сервер">Веб-сервер</a></div>
           </div>
           <div class="codewin"><div class="tab"><b>Сайты</b></div><pre><code>функция главная(): целое
-    открыть_порт(8080);
+    открыть_порт(8080)
     ...
 конец</code></pre></div>
         </div>
@@ -124,7 +124,7 @@
             <div class="ссылки"><a class="button small" href="/документация/работа-с-сетью">Работа с сетью</a><a class="button small secondary" href="/примеры/http-сервер-на-сокетах">Пример: HTTP-сервер</a></div>
           </div>
           <div class="codewin"><div class="tab"><b>Серверы и сеть</b></div><pre><code>параллельно
-    обработать_подключение(клиент);
+    обработать_подключение(клиент)
 конец</code></pre></div>
         </div>
       </article>
@@ -137,7 +137,7 @@
             <ul><li>Графика и интерфейсы на SDL</li><li>Пример: кликер с сохранением прогресса</li><li>Одна и та же программа на Windows, macOS и Linux</li></ul>
             <div class="ссылки"><a class="button small" href="/документация/графика-и-ui">Графика и UI</a><a class="button small secondary" href="/примеры/кликер-игра-с-сохранением">Пример: кликер</a></div>
           </div>
-          <div class="codewin"><div class="tab"><b>Графика и окна</b></div><pre><code>окно = создать_окно("Игра", 800, 600);</code></pre></div>
+          <div class="codewin"><div class="tab"><b>Графика и окна</b></div><pre><code>окно = создать_окно("Игра", 800, 600)</code></pre></div>
         </div>
       </article>
       <article class="вкладка-панель" data-панель="db">
@@ -149,7 +149,7 @@
             <ul><li>SQLite: запросы и результаты как значения</li><li>Своё хранилище данных с индексом</li><li>Файлы, папки, атомарная запись</li></ul>
             <div class="ссылки"><a class="button small" href="/документация/работа-с-базой-данных">Базы данных</a><a class="button small secondary" href="/документация/собственное-хранилище-данных">Своё хранилище</a></div>
           </div>
-          <div class="codewin"><div class="tab"><b>Базы данных</b></div><pre><code>результат из целого р = открыть_базу("данные.db");</code></pre></div>
+          <div class="codewin"><div class="tab"><b>Базы данных</b></div><pre><code>результат из целого р = открыть_базу("данные.db")</code></pre></div>
         </div>
       </article>
       <article class="вкладка-панель" data-панель="hardware">
@@ -163,8 +163,8 @@
           </div>
           <div class="codewin"><div class="tab"><b>Железо и чипы</b></div><pre><code>функция sfera_irq_timer()
     аппаратная_запись32(0x300000,
-        аппаратное_чтение32(0x300000) + беззнак32(1));
-    порт_вывод8(0x20, беззнак8(0x20));
+        аппаратное_чтение32(0x300000) + беззнак32(1))
+    порт_вывод8(0x20, беззнак8(0x20))
 конец</code></pre></div>
         </div>
       </article>
@@ -219,11 +219,11 @@
         <p>Функция, которая может не получиться, возвращает <code>результат из T</code>. Компилятор не даст забыть проверку, а код читается сверху вниз без скрытых переходов.</p>
       </div>
       <div class="codewin">
-<pre><code><span class="к-тип">результат из целого</span> итог = текст_в_целое(<span class="к-стр">"42"</span>);
+<pre><code><span class="к-тип">результат из целого</span> итог = текст_в_целое(<span class="к-стр">"42"</span>)
 <span class="к-сл">если</span> (итог.успешно)
-    вывести(целое_в_текст(итог.значение));
+    вывести(целое_в_текст(итог.значение))
 <span class="к-сл">иначе</span>
-    вывести(<span class="к-стр">"Это не число"</span>);
+    вывести(<span class="к-стр">"Это не число"</span>)
 <span class="к-сл">конец</span></code></pre>
       </div>
     </div>
@@ -235,12 +235,12 @@
       </div>
       <div class="codewin">
 <pre><code><span class="к-сл">контракт</span> Печатаемый
-    <span class="к-сл">функция</span> напечатать(): <span class="к-тип">текст</span>;
+    <span class="к-сл">функция</span> напечатать(): <span class="к-тип">текст</span>
 <span class="к-сл">конец</span>
 
 <span class="к-сл">структура</span> Кот : Печатаемый
     <span class="к-сл">функция</span> напечатать(): <span class="к-тип">текст</span>
-        <span class="к-сл">вернуть</span> <span class="к-стр">"Мяу"</span>;
+        <span class="к-сл">вернуть</span> <span class="к-стр">"Мяу"</span>
     <span class="к-сл">конец</span>
 <span class="к-сл">конец</span></code></pre>
       </div>
@@ -253,9 +253,9 @@
       </div>
       <div class="codewin">
 <pre><code><span class="к-сл">параллельно</span>
-    вывести(<span class="к-стр">"работает в отдельном потоке"</span>);
+    вывести(<span class="к-стр">"работает в отдельном потоке"</span>)
 <span class="к-сл">конец</span>
-дождаться_все_потоки();</code></pre>
+дождаться_все_потоки()</code></pre>
       </div>
     </div>
   </div>
@@ -276,8 +276,8 @@
         <h3>Напишите код</h3>
         <p>Сохраните программу в файл с расширением <code>.код</code>.</p>
 <pre><code>функция главная(): целое
-    вывести("Привет, мир!");
-    вернуть 0;
+    вывести("Привет, мир!")
+    вернуть 0
 конец</code></pre>
       </li>
       <li>
