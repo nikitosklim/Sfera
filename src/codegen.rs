@@ -705,6 +705,13 @@ impl<'ctx> Кодогенератор<'ctx> {
     ) -> Result<Self, ОшибкаКодогенерации> {
         let модуль = контекст.create_module(имя_модуля);
         let билдер = контекст.create_builder();
+        // AVR: указатели 16-битные, выравнивания нет — размеры и смещения полей считаются
+        // по этой раскладке (иначе по умолчанию взялись бы 64-битные указатели).
+        if цель_avr() {
+            модуль.set_triple(&inkwell::targets::TargetTriple::create("avr-unknown-unknown"));
+            let раскладка = std::ffi::CString::new("e-P1-p:16:8-i8:8-i16:8-i32:8-i64:8-f32:8-f64:8-n8-a:8").unwrap();
+            unsafe { inkwell::llvm_sys::core::LLVMSetDataLayout(модуль.as_mut_ptr(), раскладка.as_ptr()) };
+        }
 
         let отладка = match путь_к_исходнику_для_отладки {
             Some(путь) => Some(Self::настроить_отладочную_информацию(контекст, &модуль, путь)),
@@ -1672,6 +1679,10 @@ impl<'ctx> Кодогенератор<'ctx> {
         // превышение молча перезапишет память (нет проверки переполнения),
         // тот же компромисс "простота вместо динамического роста", что
         // уже был сделан для машинной части "арена"-распределителя.
+        // На микроконтроллере AVR всего 2 КБ памяти, а таблицы потоков занимали бы почти всю.
+        if цель_avr() {
+            return;
+        }
         let тип_массива_потоков = текст_указатель.array_type(256);
         let глобальный_id_потоков = self.модуль.add_global(тип_массива_потоков, None, "sfera_id_потоков");
         глобальный_id_потоков.set_initializer(&тип_массива_потоков.const_zero());
@@ -2411,12 +2422,15 @@ impl<'ctx> Кодогенератор<'ctx> {
                     ("generic-rv64", "+m,+a,+f,+d,+c")
                 } else if тройка.starts_with("riscv32") {
                     ("generic-rv32", "+m,+a,+c")
+                } else if let Some(п) = avr_цель() {
+                    (Box::leak(п.into_boxed_str()) as &str, "")
                 } else if тройка.starts_with("thumbv7em") {
                     // Cortex-M7: дробные числа (в том числе двойной точности) считает сам процессор
                     ("cortex-m7", "+fp-armv8d16")
                 } else {
                     ("generic", "")
                 };
+                let тройка = if цель_avr() { "avr-unknown-unknown" } else { тройка };
                 (inkwell::targets::TargetTriple::create(тройка), процессор.to_string(), возможности.to_string())
             }
             None => {
@@ -2455,7 +2469,8 @@ impl<'ctx> Кодогенератор<'ctx> {
                 &triple,
                 &cpu,
                 &features,
-                inkwell::OptimizationLevel::None,
+                // На AVR без оптимизации код получается в разы длиннее и медленнее.
+                if цель_avr() { inkwell::OptimizationLevel::Default } else { inkwell::OptimizationLevel::None },
                 // Ядро на x86-64 не имеет таблицы GOT: адреса берём напрямую (иначе адрес функции
                 // читался бы из несуществующей таблицы).
                 if сборка_без_операционной_системы() && triple.as_str().to_string_lossy().starts_with("x86_64") { RelocMode::Static } else { RelocMode::Default },
@@ -15707,6 +15722,25 @@ fn тип_ast_беззнаковый(тип: &Тип) -> bool {
 }
 
 /// Сборка для «голого железа»: без libc и без потоков операционной системы.
+/// Собирается ли программа для микроконтроллера AVR (Arduino Uno/Nano и др.):
+/// `--целевая-платформа avr` или `avr:<процессор>`, например `avr:atmega2560`.
+pub fn цель_avr() -> bool {
+    avr_цель().is_some()
+}
+
+/// Процессор AVR из флага `--целевая-платформа`: `avr` — это atmega328p
+/// (Arduino Uno/Nano), `avr:имя` — любой другой процессор LLVM.
+pub fn avr_цель() -> Option<String> {
+    let аргументы: Vec<String> = std::env::args().collect();
+    let позиция = аргументы.iter().position(|а| а == "--целевая-платформа")?;
+    let значение = аргументы.get(позиция + 1)?;
+    if значение == "avr" || значение.starts_with("avr-") {
+        Some("atmega328p".to_string())
+    } else {
+        значение.strip_prefix("avr:").map(|п| п.to_string())
+    }
+}
+
 pub fn сборка_без_операционной_системы() -> bool {
     std::env::args().any(|а| а == "--без-ос" || а == "--автономно")
 }

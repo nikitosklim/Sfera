@@ -1,0 +1,24 @@
+#!/bin/sh
+# Собирает мигалку на Сфере под ATmega328P и проверяет её в эмуляторе simavr:
+# вывод PB5 (светодиод на плате) должен включаться и выключаться.
+# Требуется: avr-gcc с avr-libc, simavr (libsimavr-dev, libelf-dev), gcc, собранный компилятор.
+set -e
+DIR=$(cd "$(dirname "$0")" && pwd)
+SFERA="${SFERA_BIN:-$DIR/../../../target/release/запустить}"
+WORK=$(mktemp -d)
+cp "$DIR/мигалка.код" "$DIR/проверка_порта.c" "$WORK/"
+cd "$WORK"
+"$SFERA" мигалка.код --только-собрать --без-ос --целевая-платформа avr >/dev/null
+avr-gcc -mmcu=atmega328p мигалка.o -o мигалка.elf
+avr-size мигалка.elf
+gcc проверка_порта.c -o проверка_порта -lsimavr -lelf -lm
+./проверка_порта мигалка.elf 1.0 | grep "PB5" > вывод.txt
+cat вывод.txt
+# ожидается: светодиод включается и выключается как минимум по два раза
+ON=$(grep -c "= 1" вывод.txt || true)
+OFF=$(grep -c "= 0" вывод.txt || true)
+if [ "$ON" -ge 2 ] && [ "$OFF" -ge 2 ]; then
+    echo "ПРОЙДЕНО: AVR мигалка"
+else
+    echo "НЕ ПРОЙДЕНО: AVR мигалка"; exit 1
+fi

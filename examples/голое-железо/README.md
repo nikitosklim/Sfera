@@ -37,6 +37,7 @@ qemu-system-x86_64 -kernel ядро.bin -display none -serial stdio
 
 ## Другие процессоры
 
+- `avr/` — Arduino Uno/Nano (ATmega328P), `./avr/собрать.sh` и `./avr/проверить.sh` (в эмуляторе simavr)
 - `riscv/` — RISC-V 64 (QEMU `virt`), `./riscv/проверить.sh`; нужны `qemu-system-riscv64`, `clang`, `ld.lld`
 - `cortex-m/` — ARM Cortex-M7 (QEMU `mps2-an500`), `./cortex-m/проверить.sh`; нужны `qemu-system-arm`, `clang`, `ld.lld`
 
