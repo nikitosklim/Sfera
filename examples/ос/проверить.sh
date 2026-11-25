@@ -19,9 +19,9 @@ else
     TITLE="мини-ОС"
 fi
 # F1 (русская раскладка), «помощь», Enter, Shift+В Shift+Ы, Enter, «память», «страницы», «память»,
-# «задачи», «программа» (кольцо 3), «нарушение» (защита памяти), «сбой» (ошибка страницы → паника), снимок экрана, выход из QEMU
+# «задачи», «программа» (кольцо 3), «нарушение» (защита памяти), «создать/показать/удалить» (запись файлов на диск), «сбой» (ошибка страницы → паника), снимок экрана, выход из QEMU
 ( sleep 1
-  for K in f1 g j v j o m ret shift-d shift-s ret g f v z n m ret c n h f y b w s ret g f v z n m ret p f l f x b ret g h j u h f v v f ret y f h e i t y b t ret a f q k s ret p f g e c n b n m spc g h b d t n ret p f g e c n b n m spc c x b n f k r f ret p f g e c n b n m spc y t n ret c comma j q ret; do echo "sendkey $K"; sleep 0.15; done
+  for K in f1 g j v j o m ret shift-d shift-s ret g f v z n m ret c n h f y b w s ret g f v z n m ret p f l f x b ret g h j u h f v v f ret y f h e i t y b t ret a f q k s ret p f g e c n b n m spc g h b d t n ret p f g e c n b n m spc c x b n f k r f ret p f g e c n b n m spc y t n ret c j p l f n m spc f spc g h b d t n spc v b h ret g j r f p f n m spc f ret c j p l f n m spc f spc n t c n ret g j r f p f n m spc f ret e l f k b n m spc f ret a f q k s ret c comma j q ret; do echo "sendkey $K"; sleep 0.15; done
   sleep 1; echo "screendump $WORK/экран.ppm"; sleep 0.5; echo quit ) | timeout 40 qemu-system-x86_64 -m 64M $BOOT -drive file=данные.img,format=raw,if=ide,index=2 -vga std -display none -serial "file:ос.вывод" -monitor stdio -no-reboot >/dev/null 2>&1 || true
 RESULT=0
 if cmp -s ос.вывод "$DIR/ос.ожидание"; then
