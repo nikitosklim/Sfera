@@ -44,6 +44,8 @@
     .skip 4096
 пд_высокий:
     .skip 4096
+пд_средний:
+    .skip 4096
 .align 8
 инфо_загрузчика:
     .skip 8
@@ -196,6 +198,87 @@ _start:
 остановка:
     cli
     hlt
+    jmp остановка
+
+# ---------------- Вход из UEFI ----------------
+# Загрузчик UEFI (uefi/загрузчик_uefi.s) уже включил 64-битный режим и положил ядро по адресу 1 МБ.
+# Здесь мы строим свои таблицы страниц и GDT, как в 32-битном пути выше, и идём в main.
+# На входе: rbx — адрес «сведений загрузчика» (в том же виде, что у Multiboot), память после ядра обнулена.
+.global _start_uefi
+.code64
+_start_uefi:
+    cli
+    mov dword ptr [rip + инфо_загрузчика], ebx
+    lea rsp, [rip + стек_сверху]
+    lea rax, [rip + пдпт]
+    or rax, 3
+    mov qword ptr [rip + пмл4], rax
+    lea rax, [rip + пд]
+    or rax, 3
+    mov qword ptr [rip + пдпт], rax
+    lea rdx, [rip + пд]
+    xor ecx, ecx
+1:  mov rax, rcx
+    shl rax, 21
+    or rax, 0x83
+    mov qword ptr [rdx + rcx * 8], rax
+    inc ecx
+    cmp ecx, 512
+    jne 1b
+    # 3–4 ГБ (видеопамять и устройства PCI) и 2–3 ГБ (туда UEFI часто ставит видеопамять): без кэширования
+    lea rax, [rip + пд_высокий]
+    or rax, 3
+    mov qword ptr [rip + пдпт + 24], rax
+    lea rdx, [rip + пд_высокий]
+    xor ecx, ecx
+2:  mov rax, rcx
+    shl rax, 21
+    mov r8, 0xC0000000
+    add rax, r8
+    or rax, 0x93
+    mov qword ptr [rdx + rcx * 8], rax
+    inc ecx
+    cmp ecx, 512
+    jne 2b
+    lea rax, [rip + пд_средний]
+    or rax, 3
+    mov qword ptr [rip + пдпт + 16], rax
+    lea rdx, [rip + пд_средний]
+    xor ecx, ecx
+3:  mov rax, rcx
+    shl rax, 21
+    mov r8, 0x80000000
+    add rax, r8
+    or rax, 0x93
+    mov qword ptr [rdx + rcx * 8], rax
+    inc ecx
+    cmp ecx, 512
+    jne 3b
+    lea rax, [rip + пмл4]
+    mov cr3, rax
+    lea rax, [rip + gdt64_указатель]
+    lgdt [rax]
+    push 0x08
+    lea rax, [rip + 4f]
+    push rax
+    lretq
+4:  mov ax, 0x10
+    mov ds, ax
+    mov es, ax
+    mov ss, ax
+    xor eax, eax
+    mov fs, ax
+    mov gs, ax
+    mov rax, cr0
+    and ax, 0xFFFB
+    or ax, 0x2
+    mov cr0, rax
+    mov rax, cr4
+    or ax, 0x600
+    mov cr4, rax
+    call sfera_idt_init
+    call sfera_tss_init
+    call main
     jmp остановка
 
 # Куча для распределителя на Сфере (стандартная_библиотека/голое_железо.код).
