@@ -1,0 +1,48 @@
+Content-Type: multipart/mixed; boundary="===============5766303164567660812=="
+MIME-Version: 1.0
+Subject: =?utf-8?b?0JLQu9C+0LbQtdC90L3QvtC1?=
+From: n@b.c
+
+--===============5766303164567660812==
+Content-Type: multipart/alternative;
+ boundary="===============7693083936204101902=="
+MIME-Version: 1.0
+
+--===============7693083936204101902==
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+
+0KLQtdC60YHRgiDQstC70L7QttC10L3QvdC+0LPQviDQv9C40YHRjNC80LA=
+
+--===============7693083936204101902==
+Content-Type: text/html; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+
+PGI+aHRtbDwvYj4=
+
+--===============7693083936204101902==--
+
+--===============5766303164567660812==
+Content-Type: application/octet-stream;
+ Name*=utf-8''%D0%B1%D0%B8%D0%BD%D0%B0%D1%80%D0%BD%D1%8B%D0%B9.dat
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename*=utf-8''%D0%B1%D0%B8%D0%BD%D0%B0%D1%80%D0%BD%D1%8B%D0%B9%20%D1%84%D0%B0%D0%B9%D0%BB.dat
+
+AAEC/wABAv8AAQL/AAEC/wABAv8AAQL/AAEC/wABAv8AAQL/AAEC/wABAv8AAQL/AAEC/wABAv8A
+AQL/AAEC/wABAv8AAQL/AAEC/wABAv8AAQL/AAEC/wABAv8AAQL/AAEC/wABAv8AAQL/AAEC/wAB
+Av8AAQL/AAEC/wABAv8AAQL/AAEC/wABAv8AAQL/AAEC/wABAv8AAQL/AAEC/wABAv8AAQL/AAEC
+/wABAv8AAQL/AAEC/wABAv8AAQL/AAEC/wABAv8=
+
+--===============5766303164567660812==
+Content-Type: application/octet-stream
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="plain.txt"
+
+0L/RgNC40LLQtdGC
+
+--===============5766303164567660812==--

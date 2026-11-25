@@ -1,0 +1,21 @@
+Content-Type: multipart/alternative;
+ boundary="===============8283645725426763159=="
+MIME-Version: 1.0
+Subject: =?utf-8?b?0JDQu9GM0YLQtdGA0L3QsNGC0LjQstCw?=
+From: a@b.c
+
+--===============8283645725426763159==
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+
+0J/QtdGA0LLQsNGPINGH0LDRgdGC0Yw6INC/0YDQvtGB0YLQvtC5INGC0LXQutGB0YI=
+
+--===============8283645725426763159==
+Content-Type: text/html; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+
+PHA+0J/QtdGA0LLQsNGPINGH0LDRgdGC0Yw6IDxiPkhUTUw8L2I+PC9wPg==
+
+--===============8283645725426763159==--

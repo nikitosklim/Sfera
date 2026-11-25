@@ -1,0 +1,11 @@
+From: robot@example.org
+To: pochta@x
+Subject: Plain ascii subject
+Date: Wed, 25 Nov 2026 12:33:20 -0000
+Message-ID: <2@t>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+MIME-Version: 1.0
+
+Just ascii body.
+Line two.
