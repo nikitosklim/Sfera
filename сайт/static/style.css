@@ -753,3 +753,24 @@ html{scroll-behavior:smooth}
 .витрина-текст li{margin:.35em 0}
 .витрина-текст .ссылки{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px}
 @media (max-width:860px){.витрина{grid-template-columns:1fr;gap:28px}}
+
+/* карусель главных карточек на главной */
+.лента{padding:20px 0 0}
+.лента-окно{position:relative}
+.лента-путь{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;border-radius:20px;scrollbar-width:none}
+.лента-путь::-webkit-scrollbar{display:none}
+.лента-карточка{flex:0 0 100%;scroll-snap-align:start;min-height:200px;display:flex;align-items:center;padding:28px 44px;color:#fff;background:linear-gradient(135deg,#1b2a6b,#4a2f9c)}
+.лента-карточка.к-курс{background:linear-gradient(135deg,#0f5c63,#2446f5)}
+.лента-карточка.к-скачать{background:linear-gradient(135deg,#12224f,#0a1020)}
+.лента-текст{max-width:40rem}
+.лента-карточка h2{margin:0 0 8px;font-size:1.7rem;line-height:1.2;color:#fff}
+.лента-карточка p{margin:0 0 16px;color:#e3e9ff}
+.лента-карточка .лента-метка{margin:0 0 8px;font-weight:650;color:#b7c4ff;font-size:.95rem}
+.лента-карточка .button{--accent-ink:#0a1020;background:#fff;border-color:#fff;color:#0a1020}
+.лента-управление{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:14px}
+.лента-стрелка{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--bg-soft);color:var(--ink);font-size:1.3rem;line-height:1;cursor:pointer}
+.лента-точки{display:flex;gap:8px}
+.лента-точка{width:10px;height:10px;padding:0;border-radius:50%;border:0;background:var(--line);cursor:pointer}
+.лента-точка[aria-selected="true"]{background:var(--accent);width:26px;border-radius:6px}
+@media (max-width:640px){.лента-карточка{padding:28px 22px;min-height:300px}.лента-карточка h2{font-size:1.5rem}}
+@media (prefers-reduced-motion:reduce){.лента-путь{scroll-behavior:auto}}
